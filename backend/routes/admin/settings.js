@@ -1,0 +1,62 @@
+/**
+ * 後台：系統設定 Routes
+ */
+const router   = require('express').Router();
+const auth     = require('../../middleware/auth');
+const { pool } = require('../../config/database');
+const EmailSvc = require('../../services/emailService');
+const SmsSvc   = require('../../services/smsService');
+
+router.use(auth);
+
+// 取得所有設定
+router.get('/', async (req, res, next) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM settings ORDER BY key_name ASC');
+    const settings = {};
+    rows.forEach(r => { settings[r.key_name] = r.key_value; });
+    res.json({ success: true, data: settings });
+  } catch (err) { next(err); }
+});
+
+// 批次更新設定
+router.put('/', async (req, res, next) => {
+  try {
+    const { settings } = req.body;
+    if (!settings || typeof settings !== 'object')
+      return res.status(400).json({ success: false, message: '請提供 settings 物件' });
+
+    for (const [key, value] of Object.entries(settings)) {
+      await pool.query(
+        'INSERT INTO settings (key_name, key_value) VALUES (?,?) ON DUPLICATE KEY UPDATE key_value=?',
+        [key, value, value]
+      );
+    }
+    res.json({ success: true, message: '設定已更新' });
+  } catch (err) { next(err); }
+});
+
+// 測試 Email
+router.post('/test-email', async (req, res, next) => {
+  try {
+    const { to } = req.body;
+    await EmailSvc.send({
+      to: to || req.admin.email,
+      subject: '【Studio Space】Email 設定測試',
+      html: '<h2>測試成功！</h2><p>您的 Email 通知設定正常運作。</p>'
+    });
+    res.json({ success: true, message: `測試信已發送至 ${to || req.admin.email}` });
+  } catch (err) { next(err); }
+});
+
+// 測試 SMS
+router.post('/test-sms', async (req, res, next) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ success: false, message: '請提供手機號碼' });
+    await SmsSvc.send(phone, '【Studio Space】SMS 設定測試成功！');
+    res.json({ success: true, message: `測試簡訊已發送至 ${phone}` });
+  } catch (err) { next(err); }
+});
+
+module.exports = router;

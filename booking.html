@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>線上預約 · Studio Space</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #1A1A1A;
+      --accent:  #B07D5A;
+      --gold:    #C4956A;
+      --light:   #FAFAF8;
+      --cream:   #F5F0EB;
+      --gray:    #8A8580;
+      --border:  #E8E4DF;
+      --success: #5A9E6B;
+      --card-bg: #FFFFFF;
+      --text:    #1A1A1A;
+      --shadow:  0 2px 16px rgba(0,0,0,0.05);
+      --radius:  14px;
+      --step-active: var(--accent);
+      --step-done: var(--success);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans TC', sans-serif; background: var(--light); color: var(--text); }
+
+    /* ─── NAV ─────────────────────────────── */
+    nav {
+      background: rgba(250,250,248,0.96); height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo .logo-icon { width:32px;height:32px;background:var(--primary);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px; }
+    .nav-logo span { color:var(--primary); font-family:'DM Mono',monospace; font-size:0.9rem; font-weight:500; letter-spacing:0.06em; }
+    .back-link { color:var(--gray); text-decoration:none; font-size:.85rem; transition:color .2s; }
+    .back-link:hover { color:var(--primary); }
+
+    /* ─── PROGRESS STEPPER ────────────────── */
+    .stepper-wrap { background: #fff; border-bottom: 1px solid var(--border); padding: 18px 5%; }
+    .stepper {
+      max-width: 640px; margin: 0 auto;
+      display: flex; align-items: center;
+    }
+    .step {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      position: relative;
+    }
+    .step:not(:last-child)::after {
+      content: ''; position: absolute;
+      top: 16px; left: 50%; width: 100%; height: 1px;
+      background: var(--border); z-index: 0;
+    }
+    .step.done:not(:last-child)::after { background: var(--success); }
+    .step-circle {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 1.5px solid var(--border); background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem; font-weight: 500; z-index: 1;
+      transition: all .3s; color: var(--gray);
+    }
+    .step.active .step-circle { border-color: var(--primary); background: var(--primary); color: #fff; }
+    .step.done .step-circle { border-color: var(--success); background: var(--success); color: #fff; }
+    .step-label { font-size: 0.68rem; margin-top: 6px; color: var(--gray); font-weight: 500; text-align: center; letter-spacing: 0.04em; }
+    .step.active .step-label { color: var(--primary); }
+    .step.done .step-label { color: var(--success); }
+
+    /* ─── LAYOUT ──────────────────────────── */
+    .booking-layout {
+      max-width: 1080px; margin: 32px auto;
+      padding: 0 5%;
+      display: grid; grid-template-columns: 1fr 340px; gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 860px) { .booking-layout { grid-template-columns: 1fr; } }
+
+    /* ─── CARD ────────────────────────────── */
+    .card {
+      background: var(--card-bg); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 32px;
+    }
+    .card-title {
+      font-size: 1rem; font-weight: 700; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 10px;
+      padding-bottom: 16px; border-bottom: 1px solid var(--border);
+      letter-spacing: 0.02em;
+    }
+    .card-title .icon { font-size: 1.2rem; }
+
+    /* ─── STUDIO SELECTOR ─────────────────── */
+    .studio-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .studio-opt {
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      padding: 16px; cursor: pointer; transition: all .2s;
+      position: relative;
+    }
+    .studio-opt:hover { border-color: var(--accent); background: rgba(176,125,90,.04); }
+    .studio-opt.selected { border-color: var(--primary); background: rgba(26,26,26,.03); }
+    .studio-opt input[type=radio] { position: absolute; opacity: 0; }
+    .studio-opt-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .studio-opt-name { font-weight: 700; font-size: 0.9rem; font-family: 'DM Mono', monospace; letter-spacing: 0.03em; }
+    .studio-opt-badge {
+      font-size: 0.68rem; font-weight: 600;
+      background: var(--primary); color: #fff;
+      padding: 2px 8px; border-radius: 4px; letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .studio-opt-badge.b { background: var(--accent); color: #fff; }
+    .studio-opt-desc { font-size: 0.78rem; color: var(--gray); margin-bottom: 10px; font-weight: 300; }
+    .studio-opt-price { font-size: 1rem; font-weight: 700; color: var(--primary); font-family: 'DM Serif Display', serif; }
+    .selected-check {
+      display: none; position: absolute; top: 10px; right: 10px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--primary); color: #fff;
+      font-size: 11px; align-items: center; justify-content: center;
+    }
+    .studio-opt.selected .selected-check { display: flex; }
+
+    /* ─── CALENDAR ────────────────────────── */
+    .calendar-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .cal-nav-btn {
+      background: none; border: 1px solid var(--border); border-radius: 7px;
+      width: 32px; height: 32px; cursor: pointer; font-size: 0.95rem;
+      transition: all .2s; color: var(--gray);
+    }
+    .cal-nav-btn:hover { background: var(--cream); border-color: var(--accent); color: var(--primary); }
+    .cal-month { font-weight: 600; font-size: 0.95rem; letter-spacing: 0.04em; }
+    .calendar-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+    }
+    .cal-day-label {
+      text-align: center; font-size: 0.7rem; font-weight: 600;
+      color: var(--gray); padding: 6px 0; letter-spacing: 0.06em;
+    }
+    .cal-day {
+      aspect-ratio: 1; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.82rem; cursor: pointer;
+      transition: all .2s; border: 1px solid transparent;
+    }
+    .cal-day:hover:not(.disabled):not(.other-month) { background: var(--cream); border-color: var(--border); }
+    .cal-day.today { font-weight: 700; color: var(--accent); }
+    .cal-day.selected { background: var(--primary); color: #fff; font-weight: 700; border-radius: 50%; }
+    .cal-day.disabled { color: var(--border); cursor: not-allowed; }
+    .cal-day.other-month { color: var(--border); }
+    .cal-day.has-booking { position: relative; }
+    .cal-day.has-booking::after {
+      content: ''; position: absolute; bottom: 4px;
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--accent);
+    }
+
+    /* ─── TIME SLOTS ──────────────────────── */
+    .time-section { margin-top: 24px; }
+    .time-label { font-size: 0.82rem; font-weight: 600; margin-bottom: 10px; color: var(--gray); letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.72rem; }
+    .time-slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+    .time-slot {
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 4px; text-align: center;
+      font-size: 0.76rem; cursor: pointer; transition: all .2s;
+    }
+    .time-slot:hover:not(.booked) { border-color: var(--primary); color: var(--primary); background: var(--cream); }
+    .time-slot.selected { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
+    .time-slot.booked { background: var(--light); color: var(--border); cursor: not-allowed; }
+    .time-slot.booked-label { font-size: 0.65rem; }
+    .duration-row {
+      display: flex; align-items: center; gap: 14px;
+      margin-top: 18px; padding: 14px; background: var(--cream); border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .duration-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 1px solid var(--border); background: #fff;
+      font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+    }
+    .duration-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .duration-value { font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400; min-width: 60px; text-align: center; }
+
+    /* ─── FORM ────────────────────────────── */
+    .form-section { margin-bottom: 24px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 0.78rem; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gray); }
+    .form-label .required { color: var(--accent); }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 10px 14px;
+      border: 1px solid var(--border); border-radius: 9px;
+      font-family: inherit; font-size: 0.88rem; color: var(--primary);
+      background: #fff; transition: border-color .2s;
+      outline: none;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .form-hint { font-size: 0.73rem; color: var(--gray); margin-top: 4px; font-weight: 300; }
+
+    /* ─── INVOICE SECTION ─────────────────── */
+    .invoice-toggle {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px; border: 1px solid var(--border); border-radius: 9px;
+      cursor: pointer; transition: all .2s; background: #fff;
+    }
+    .invoice-toggle:hover { border-color: var(--primary); }
+    .invoice-toggle.active { border-color: var(--primary); background: var(--cream); }
+    .toggle-switch {
+      width: 40px; height: 22px; border-radius: 11px;
+      background: var(--border); position: relative; transition: background .2s;
+    }
+    .toggle-switch::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.15);
+    }
+    .invoice-toggle.active .toggle-switch { background: var(--primary); }
+    .invoice-toggle.active .toggle-switch::after { transform: translateX(18px); }
+    .invoice-fields { display: none; margin-top: 16px; padding: 16px; background: var(--cream); border-radius: 9px; border: 1px solid var(--border); }
+    .invoice-fields.show { display: block; }
+    .invoice-type-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .inv-tab {
+      flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 7px;
+      text-align: center; font-size: 0.8rem; cursor: pointer; transition: all .2s;
+    }
+    .inv-tab.active { border-color: var(--primary); background: var(--primary); color: #fff; font-weight: 600; }
+
+    /* ─── AGREE ───────────────────────────── */
+    .agree-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 20px; }
+    .agree-row input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--primary); margin-top: 2px; flex-shrink: 0; }
+    .agree-text { font-size: 0.82rem; color: var(--gray); line-height: 1.7; font-weight: 300; }
+    .agree-text a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+    /* ─── SIDEBAR SUMMARY ─────────────────── */
+    .summary-card { position: sticky; top: 76px; }
+    .summary-studio {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+    }
+    .summary-icon {
+      width: 46px; height: 46px; border-radius: 9px;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    }
+    .summary-studio-name { font-weight: 700; font-size: 0.92rem; }
+    .summary-studio-sub { font-size: 0.78rem; color: var(--gray); font-weight: 300; }
+    .summary-row {
+      display: flex; justify-content: space-between;
+      font-size: 0.85rem; padding: 7px 0; color: var(--gray);
+    }
+    .summary-row span:last-child { color: var(--primary); font-weight: 500; }
+    .summary-total {
+      display: flex; justify-content: space-between;
+      padding: 16px 0; border-top: 1px solid var(--border);
+      margin-top: 8px; font-weight: 700; font-size: 1rem;
+    }
+    .summary-total .amount {
+      font-family: 'DM Serif Display', serif;
+      color: var(--primary); font-size: 1.5rem; font-weight: 400;
+    }
+    .pay-methods { display: flex; gap: 8px; margin: 16px 0; }
+    .pay-method {
+      flex: 1; border: 1px solid var(--border); border-radius: 9px;
+      padding: 10px 6px; text-align: center; cursor: pointer; transition: all .2s;
+    }
+    .pay-method:hover { border-color: var(--primary); background: var(--cream); }
+    .pay-method.selected { border-color: var(--primary); background: var(--cream); }
+    .pay-method-icon { font-size: 1.3rem; margin-bottom: 4px; }
+    .pay-method-name { font-size: 0.7rem; font-weight: 600; color: var(--gray); }
+    .btn-submit {
+      width: 100%; padding: 14px;
+      background: var(--primary); color: #fff;
+      border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; transition: opacity .2s, transform .2s;
+      letter-spacing: 0.03em;
+    }
+    .btn-submit:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-submit:disabled { background: var(--border); opacity: 1; transform: none; cursor: not-allowed; }
+    .secure-badges { display: flex; justify-content: center; gap: 12px; margin-top: 12px; }
+    .secure-badge { font-size: 0.7rem; color: var(--gray); display: flex; align-items: center; gap: 4px; }
+
+    /* ─── STEPS PANELS ────────────────────── */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+    .step-nav { display: flex; justify-content: space-between; margin-top: 24px; }
+    .btn-next, .btn-prev {
+      padding: 11px 28px; border-radius: 9px; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: all .2s; border: none;
+      letter-spacing: 0.03em;
+    }
+    .btn-next { background: var(--primary); color: #fff; }
+    .btn-next:hover { opacity: 0.82; }
+    .btn-prev { background: #fff; color: var(--gray); border: 1px solid var(--border); }
+    .btn-prev:hover { border-color: var(--primary); color: var(--primary); }
+  </style>
+</head>
+<body>
+
+<!-- ─── NAV ─────────────────────────────── -->
+<nav>
+  <a class="nav-logo" href="index.html">
+    <div class="logo-icon">📸</div>
+    <span>Studio Space</span>
+  </a>
+  <a class="back-link" href="index.html">← 返回首頁</a>
+</nav>
+
+<!-- ─── PROGRESS BAR ──────────────────────── -->
+<div class="stepper-wrap">
+  <div class="stepper">
+    <div class="step active" id="stepper-1">
+      <div class="step-circle">1</div>
+      <div class="step-label">選擇場地</div>
+    </div>
+    <div class="step" id="stepper-2">
+      <div class="step-circle">2</div>
+      <div class="step-label">選擇時間</div>
+    </div>
+    <div class="step" id="stepper-3">
+      <div class="step-circle">3</div>
+      <div class="step-label">填寫資料</div>
+    </div>
+    <div class="step" id="stepper-4">
+      <div class="step-circle">4</div>
+      <div class="step-label">付款</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MAIN LAYOUT ──────────────────────── -->
+<div class="booking-layout">
+
+  <!-- LEFT: PANELS -->
+  <div>
+
+    <!-- ─── STEP 1: 選擇場地 ─────────────── -->
+    <div class="card step-panel active" id="panel-1">
+      <div class="card-title"><span class="icon">🏠</span> 選擇場地</div>
+      <!-- 動態場地選項（由 JS 產生） -->
+      <div class="studio-options" id="studio-options">
+        <div style="grid-column:1/-1;text-align:center;padding:24px;color:#aaa;">⏳ 載入場地中...</div>
+      </div>
+      <div class="step-nav">
+        <div></div>
+        <button class="btn-next" onclick="goStep(2)">下一步：選擇時間 →</button>
+      </div>
+    </div>
+
+    <!-- ─── STEP 2: 選擇日期與時間 ──────── -->
+    <div class="card step-panel" id="panel-2">
+      <div class="card-title"><span class="icon">📅</span> 選擇日期與時間</div>
+
+      <!-- Calendar -->
+      <div class="calendar-header">
+        <button class="cal-nav-btn" onclick="changeMonth(-1)">◀</button>
+        <span class="cal-month" id="cal-month-label"></span>
+        <button class="cal-nav-btn" onclick="changeMonth(1)">▶</button>
+      </div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+
+      <!-- Time Slots -->
+      <div class="time-section">
+        <div class="time-label">選擇開始時間</div>
+        <div class="time-slots" id="time-slots"></div>
+      </div>
+
+      <!-- Duration -->
+      <div class="time-section">
+        <div class="time-label">使用時數</div>
+        <div class="duration-row">
+          <button class="duration-btn" onclick="changeDuration(-1)">−</button>
+          <div class="duration-value" id="duration-val">2 小時</div>
+          <button class="duration-btn" onclick="changeDuration(1)">＋</button>
+          <span style="font-size:.8rem;color:var(--gray)">（最少 2 小時，最多 8 小時）</span>
+        </div>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn-prev" onclick="goStep(1)">← 返回</button>
+        <button class="btn-next" onclick="goStep(3)">下一步：填寫資料 →</button>
+      </div>
+    </div>
+
+    <!-- ─── STEP 3: 填寫資料 ──────────────── -->
+    <div class="card step-panel" id="panel-3">
+      <div class="card-title"><span class="icon">📝</span> 填寫預約資料</div>
+
+      <div class="form-section">
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">姓名 <span class="required">*</span></div>
+            <input type="text" class="form-input" id="f-name" placeholder="請輸入姓名" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">電話 <span class="required">*</span></div>
+            <input type="tel" class="form-input" id="f-phone" placeholder="09XX-XXXXXX" />
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">電子信箱 <span class="required">*</span></div>
+          <input type="email" class="form-input" id="f-email" placeholder="example@email.com" />
+          <div class="form-hint">預約確認信及發票將寄送至此信箱</div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">拍攝用途</div>
+          <select class="form-select" id="f-purpose" onchange="onPurposeChange()">
+            <option value="">請選擇用途（可不填）</option>
+            <option value="商業攝影">商業攝影</option>
+            <option value="個人寫真">個人寫真</option>
+            <option value="服裝拍攝">服裝拍攝</option>
+            <option value="產品拍攝">產品拍攝</option>
+            <option value="影片拍攝">影片拍攝 🎬（費率 NT$1,200/hr）</option>
+            <option value="Podcast錄製">Podcast 錄製</option>
+            <option value="其他">其他</option>
+          </select>
+          <div id="purpose-rate-note" style="display:none;margin-top:6px;padding:8px 12px;background:#fff8e1;border:1px solid #ffe082;border-radius:6px;font-size:.83rem;color:#b8860b;"></div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">備注</div>
+          <textarea class="form-textarea" id="f-note" placeholder="如有特殊設備需求或其他說明，請填寫於此..."></textarea>
+        </div>
+      </div>
+
+      <!-- PROMO CODE SECTION -->
+      <div class="card-title" style="font-size:.95rem;"><span class="icon">🎁</span> 優惠碼</div>
+      <div id="promo-section" style="margin-bottom:20px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="flex:1;">
+            <input type="text" class="form-input" id="promo-code-input"
+              placeholder="輸入優惠碼（如有）" style="text-transform:uppercase;"
+              oninput="this.value=this.value.toUpperCase()" />
+          </div>
+          <button onclick="applyPromoCode()" style="padding:10px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:.9rem;white-space:nowrap;font-weight:600;">套用</button>
+          <button id="promo-remove-btn" onclick="removePromoCode()" style="display:none;padding:10px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:.9rem;color:#888;">✕</button>
+        </div>
+        <div id="promo-msg" style="display:none;margin-top:8px;padding:8px 12px;border-radius:6px;font-size:.85rem;"></div>
+      </div>
+
+      <!-- INVOICE SECTION -->
+      <div class="card-title" style="font-size:.95rem;"><span class="icon">🧾</span> 電子發票</div>
+      <div class="invoice-toggle" id="invoice-toggle" onclick="toggleInvoice()">
+        <div class="toggle-switch" id="toggle-switch"></div>
+        <div>
+          <div style="font-weight:600;font-size:.9rem;">需要開立電子發票</div>
+          <div style="font-size:.78rem;color:var(--gray);">付款完成後自動開立並寄送至信箱</div>
+        </div>
+      </div>
+      <div class="invoice-fields" id="invoice-fields">
+        <div class="invoice-type-tabs">
+          <div class="inv-tab active" onclick="switchInvTab(this,'personal')">個人（手機條碼）</div>
+          <div class="inv-tab" onclick="switchInvTab(this,'company')">公司（統一編號）</div>
+          <div class="inv-tab" onclick="switchInvTab(this,'donate')">捐贈發票</div>
+        </div>
+        <div id="inv-personal">
+          <div class="form-group">
+            <div class="form-label">手機條碼載具</div>
+            <input type="text" class="form-input" placeholder="/XXXXXXX（8碼）" />
+            <div class="form-hint">填入您的手機條碼，發票將存入您的電子發票載具</div>
+          </div>
+        </div>
+        <div id="inv-company" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <div class="form-label">統一編號 <span class="required">*</span></div>
+              <input type="text" class="form-input" placeholder="00000000（8碼）" maxlength="8" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">公司名稱 <span class="required">*</span></div>
+              <input type="text" class="form-input" placeholder="請輸入公司名稱" />
+            </div>
+          </div>
+        </div>
+        <div id="inv-donate" style="display:none">
+          <div class="form-group">
+            <div class="form-label">捐贈碼</div>
+            <input type="text" class="form-input" placeholder="請輸入捐贈碼（如 25885）" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Agree -->
+      <div class="agree-row" style="margin-top:20px;">
+        <input type="checkbox" id="agree" />
+        <div class="agree-text">
+          我已閱讀並同意
+          <a href="#">服務條款</a>、
+          <a href="#">退款政策</a>
+          與
+          <a href="#">隱私權政策</a>，
+          並確認預約資料正確無誤。
+        </div>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn-prev" onclick="goStep(2)">← 返回</button>
+        <button class="btn-next" onclick="goStep(4)">下一步：確認付款 →</button>
+      </div>
+    </div>
+
+    <!-- ─── STEP 4: 付款確認 ──────────────── -->
+    <div class="card step-panel" id="panel-4">
+      <div class="card-title"><span class="icon">💳</span> 確認並付款</div>
+
+      <!-- Order Review -->
+      <div style="background:var(--light);border-radius:10px;padding:20px;margin-bottom:24px;">
+        <div style="font-weight:700;margin-bottom:14px;font-size:.95rem;">📋 預約摘要</div>
+        <div class="summary-row"><span>場地</span><span id="confirm-studio">—</span></div>
+        <div class="summary-row"><span>日期</span><span id="confirm-date">—</span></div>
+        <div class="summary-row"><span>時間</span><span id="confirm-time">—</span></div>
+        <div class="summary-row"><span>時數</span><span id="confirm-hours">—</span></div>
+        <div class="summary-row"><span>聯絡人</span><span id="confirm-name">—</span></div>
+        <div class="summary-row"><span>電話</span><span id="confirm-phone">—</span></div>
+        <div class="summary-row"><span>信箱</span><span id="confirm-email">—</span></div>
+        <div id="confirm-rate-note" style="display:none;margin-top:8px;padding:7px 12px;background:#fff8e1;border:1px solid #ffe082;border-radius:6px;font-size:.82rem;color:#b8860b;"></div>
+        <div id="confirm-discount-row" style="display:none;margin-top:8px;padding:7px 12px;background:#f0fff4;border:1px solid #b2dfdb;border-radius:6px;font-size:.82rem;color:#27ae60;"></div>
+      </div>
+
+      <!-- Payment Methods -->
+      <div class="card-title" style="font-size:.95rem;"><span class="icon">💰</span> 選擇付款方式</div>
+      <div class="pay-methods">
+        <div class="pay-method selected" id="pm-newebpay" onclick="selectPayMethod('newebpay',this)">
+          <div class="pay-method-icon">💳</div>
+          <div class="pay-method-name">藍新金流</div>
+        </div>
+        <div class="pay-method" id="pm-linepay" onclick="selectPayMethod('linepay',this)">
+          <div class="pay-method-icon">💚</div>
+          <div class="pay-method-name">LINE Pay</div>
+        </div>
+      </div>
+
+      <!-- NewebPay Sub-options -->
+      <div id="newebpay-opts" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;">
+          <input type="radio" name="pay-sub" value="credit" checked /> 信用卡
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;">
+          <input type="radio" name="pay-sub" value="atm" /> ATM 轉帳
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;">
+          <input type="radio" name="pay-sub" value="cvs" /> 超商代碼
+        </label>
+      </div>
+
+      <div style="background:rgba(233,69,96,.05);border:1px solid rgba(233,69,96,.2);border-radius:8px;padding:14px;font-size:.82rem;color:#666;margin-bottom:20px;">
+        ⏰ 請於 <strong>2 小時內</strong>完成付款，否則預約將自動取消。<br />
+        付款完成後將立即寄出確認信及簡訊通知。
+      </div>
+
+      <div class="summary-total">
+        <span>應付金額</span>
+        <span class="amount" id="confirm-total">NT$ 0</span>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn-prev" onclick="goStep(3)">← 返回修改</button>
+        <button class="btn-submit" onclick="submitBooking()">🔐 確認並前往付款</button>
+      </div>
+      <div class="secure-badges" style="margin-top:16px;">
+        <span class="secure-badge">🔒 SSL 加密傳輸</span>
+        <span class="secure-badge">✅ 藍新金流認證</span>
+        <span class="secure-badge">📧 自動確認通知</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: SUMMARY SIDEBAR -->
+  <div class="summary-card card">
+    <div class="card-title" style="font-size:.95rem;"><span class="icon">🗒</span> 預約摘要</div>
+    <div class="summary-studio">
+      <div class="summary-icon" id="sidebar-icon">📸</div>
+      <div>
+        <div class="summary-studio-name" id="sidebar-name">尚未選擇場地</div>
+        <div class="summary-studio-sub" id="sidebar-sub">請先選擇場地</div>
+      </div>
+    </div>
+    <div class="summary-row"><span>日期</span><span id="sb-date">—</span></div>
+    <div class="summary-row"><span>開始時間</span><span id="sb-start">—</span></div>
+    <div class="summary-row"><span>結束時間</span><span id="sb-end">—</span></div>
+    <div class="summary-row"><span>使用時數</span><span id="sb-hours">—</span></div>
+    <div class="summary-row"><span>單價</span><span id="sb-rate">—</span></div>
+    <div class="summary-row" id="sb-discount-row" style="display:none;color:#27ae60;"><span id="sb-discount-label">優惠折扣</span><span id="sb-discount">—</span></div>
+    <div class="summary-total">
+      <span>小計</span>
+      <span class="amount" id="sb-total">NT$ 0</span>
+    </div>
+    <div style="font-size:.75rem;color:var(--gray);text-align:center;">含 5% 營業稅 · 如需發票請於步驟三填寫</div>
+  </div>
+
+</div>
+
+<script>
+  // ─── 套用外觀設定 ────────────────────────────
+  (async () => {
+    try {
+      const r = await fetch('/api/appearance');
+      if (!r.ok) return;
+      const { data: ap } = await r.json();
+      if (!ap) return;
+      const root = document.documentElement;
+      if (ap.theme_primary)       root.style.setProperty('--primary', ap.theme_primary);
+      if (ap.theme_accent)        root.style.setProperty('--accent',  ap.theme_accent);
+      if (ap.theme_gold)          root.style.setProperty('--gold',    ap.theme_gold);
+      if (ap.theme_bg)            root.style.setProperty('--light',   ap.theme_bg);
+      if (ap.theme_card_bg)       root.style.setProperty('--card-bg', ap.theme_card_bg);
+      if (ap.theme_text)          root.style.setProperty('--text',    ap.theme_text);
+      if (ap.theme_border_radius) root.style.setProperty('--radius',  ap.theme_border_radius + 'px');
+      if (ap.theme_font) document.body.style.fontFamily = `'${ap.theme_font}', sans-serif`;
+    } catch(e) { /* 外觀載入失敗不影響主功能 */ }
+  })();
+
+  // ─── STATE ─────────────────────────────────
+  const VIDEO_RATE = 1200;  // 影片拍攝固定費率
+  const PURPOSE_RATES = { '影片拍攝': VIDEO_RATE };
+
+  const state = {
+    studioId: null, studioName: '', studioRate: 0, studioMinHours: 2,
+    effectiveRate: 0,  // 依用途調整後的實際費率
+    date: null, startHour: null, duration: 2,
+    promo: null,       // 套用中的優惠方案物件
+    discountAmount: 0, // 折抵金額
+  };
+  let availableSlots = []; // 由 API 回傳
+  let bookedSlots    = []; // 由 API 回傳
+
+  // ─── 動態載入場地 ──────────────────────────
+  const EMOJIS_BK = ['📸','🎬','🎭','🌟','🏠'];
+  async function loadStudios() {
+    try {
+      const r = await fetch('/api/studios');
+      if (!r.ok) throw new Error();
+      const { data: studios } = await r.json();
+      const container = document.getElementById('studio-options');
+      if (!studios || studios.length === 0) {
+        container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#aaa;">目前無可用場地，請稍後再試</div>';
+        return;
+      }
+      container.innerHTML = studios.map((s, i) => {
+        const desc = [
+          s.size_sqm   ? `${s.size_sqm}坪` : '',
+          s.capacity   ? `最多${s.capacity}人` : '',
+          s.min_hours  ? `最少${s.min_hours}小時` : '',
+        ].filter(Boolean).join(' · ');
+        return `
+          <label class="studio-opt" onclick="selectStudio(${s.id}, this)" id="opt-${s.id}">
+            <input type="radio" name="studio" value="${s.id}" />
+            <div class="selected-check">✓</div>
+            <div class="studio-opt-header">
+              <div class="studio-opt-name">${s.name}</div>
+              <span class="studio-opt-badge${i > 0 ? ' b' : ''}">${s.name_en || ''}</span>
+            </div>
+            <div class="studio-opt-desc">${desc || s.description || ''}</div>
+            <div class="studio-opt-price">$${Number(s.hourly_rate||0).toLocaleString()} / 小時</div>
+          </label>`;
+      }).join('');
+
+      window._studiosData = studios; // 快取（必須在 selectStudio 之前設定）
+
+      // URL 參數預選場地
+      const preId = new URLSearchParams(location.search).get('studio');
+      if (preId) {
+        const target = studios.find(s => String(s.id) === preId);
+        if (target) selectStudio(target.id, document.getElementById('opt-' + target.id));
+      }
+    } catch(e) {
+      document.getElementById('studio-options').innerHTML =
+        '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#e94560;">⚠️ 無法載入場地，請確認後端服務是否啟動</div>';
+    }
+  }
+
+  function selectStudio(id, el) {
+    document.querySelectorAll('.studio-opt').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    const studios = window._studiosData || [];
+    const s = studios.find(x => x.id === id);
+    state.studioId    = id;
+    state.studioName  = s ? s.name : `場地 ${id}`;
+    state.studioRate  = s ? +s.hourly_rate : 0;
+    state.studioMinHours = s ? (+s.min_hours || 2) : 2;
+    state.duration    = Math.max(state.duration, state.studioMinHours);
+    // 重新計算含用途加成的費率
+    recalcRate();
+    document.getElementById('duration-val').textContent = `${state.duration} 小時`;
+    updateSidebar();
+    document.getElementById('sidebar-icon').textContent = EMOJIS_BK[(studios.indexOf(s)||0) % EMOJIS_BK.length];
+    document.getElementById('sidebar-name').textContent = state.studioName;
+    document.getElementById('sidebar-sub').textContent  = `NT$ ${state.effectiveRate.toLocaleString()} / 小時`;
+    document.getElementById('sb-rate').textContent      = `NT$ ${state.effectiveRate.toLocaleString()}`;
+    // 若已選日期，重新載入時段
+    if (state.date) loadAvailability();
+  }
+
+  // ─── 用途費率計算 ────────────────────────────
+  function recalcRate() {
+    const purpose = document.getElementById('f-purpose')?.value || '';
+    const purposeRate = PURPOSE_RATES[purpose] || 0;
+    state.effectiveRate = Math.max(state.studioRate, purposeRate);
+  }
+
+  function onPurposeChange() {
+    recalcRate();
+    const purpose = document.getElementById('f-purpose').value;
+    const noteEl  = document.getElementById('purpose-rate-note');
+    if (purpose === '影片拍攝') {
+      noteEl.style.display = '';
+      noteEl.textContent   = `💡 影片拍攝費率為 NT$${VIDEO_RATE.toLocaleString()} / 小時`;
+    } else {
+      noteEl.style.display = 'none';
+    }
+    document.getElementById('sidebar-sub').textContent = `NT$ ${state.effectiveRate.toLocaleString()} / 小時`;
+    document.getElementById('sb-rate').textContent     = `NT$ ${state.effectiveRate.toLocaleString()}`;
+    updateSidebar();
+  }
+
+  // ─── CALENDAR ──────────────────────────────
+  let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
+  const weekdays = ['日','一','二','三','四','五','六'];
+  const months   = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+
+  function renderCalendar() {
+    const today = new Date();
+    document.getElementById('cal-month-label').textContent = `${calYear} 年 ${months[calMonth]}`;
+    const grid = document.getElementById('calendar-grid');
+    grid.innerHTML = weekdays.map(d => `<div class="cal-day-label">${d}</div>`).join('');
+    const first = new Date(calYear, calMonth, 1).getDay();
+    const days  = new Date(calYear, calMonth + 1, 0).getDate();
+    for (let i = 0; i < first; i++) grid.innerHTML += `<div class="cal-day other-month"></div>`;
+    for (let d = 1; d <= days; d++) {
+      const date   = new Date(calYear, calMonth, d);
+      const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+      const selD  = state.date;
+      const isSel = selD && selD.y === calYear && selD.m === calMonth && selD.d === d;
+      let cls = 'cal-day';
+      if (isPast)   cls += ' disabled';
+      if (isToday)  cls += ' today';
+      if (isSel)    cls += ' selected';
+      grid.innerHTML += `<div class="${cls}" onclick="${isPast ? '' : `pickDate(${calYear},${calMonth},${d})`}">${d}</div>`;
+    }
+  }
+
+  function pickDate(y, m, d) {
+    state.date = { y, m, d };
+    state.startHour = null;
+    renderCalendar();
+    const months2 = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    document.getElementById('sb-date').textContent = `${y}年${months2[m]}${d}日`;
+    loadAvailability();
+    updateSidebar();
+  }
+
+  function changeMonth(dir) {
+    calMonth += dir;
+    if (calMonth < 0)  { calMonth = 11; calYear--; }
+    if (calMonth > 11) { calMonth = 0;  calYear++; }
+    renderCalendar();
+  }
+
+  // ─── 取得真實時段 ─────────────────────────
+  async function loadAvailability() {
+    if (!state.studioId || !state.date) return;
+    const { y, m, d } = state.date;
+    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const container = document.getElementById('time-slots');
+    container.innerHTML = '<div style="text-align:center;padding:16px;color:#aaa;">⏳ 查詢時段中...</div>';
+    try {
+      const r = await fetch(`/api/availability?studio_id=${state.studioId}&date=${dateStr}`);
+      const { success, data } = await r.json();
+      if (!success) { container.innerHTML = '<div style="text-align:center;padding:16px;color:#e94560;">無法取得時段資料</div>'; return; }
+      // 已預約時段轉為小時數字集合
+      bookedSlots    = (data.booked_slots    || []).map(s => parseInt(s));
+      availableSlots = (data.available_slots || []).map(s => parseInt(s));
+      if (!data.available_slots || data.available_slots.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:16px;color:#aaa;">此日期不開放預約或已全天額滿</div>';
+        return;
+      }
+      renderTimeSlots();
+    } catch(e) {
+      container.innerHTML = '<div style="text-align:center;padding:16px;color:#e94560;">⚠️ 無法連線後端，請確認服務是否啟動</div>';
+    }
+  }
+
+  // ─── TIME SLOTS ────────────────────────────
+  function renderTimeSlots() {
+    const container = document.getElementById('time-slots');
+    container.innerHTML = '';
+    // 顯示範圍：所有時段（已預約 + 可用）聯集
+    const allHours = [...new Set([...bookedSlots, ...availableSlots])].sort((a,b)=>a-b);
+    if (allHours.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:16px;color:#aaa;">請先選擇場地與日期</div>';
+      return;
+    }
+    allHours.forEach(h => {
+      const isBooked = bookedSlots.includes(h);
+      const isSel = state.startHour === h;
+      let cls = 'time-slot' + (isBooked ? ' booked' : '') + (isSel ? ' selected' : '');
+      const label = isBooked ? `${h}:00<br><span class="booked-label">已預約</span>` : `${h}:00`;
+      container.innerHTML += `<div class="${cls}" onclick="${isBooked ? '' : `pickTime(${h})`}">${label}</div>`;
+    });
+  }
+
+  function pickTime(h) {
+    state.startHour = h;
+    renderTimeSlots();
+    // 若未手動套用優惠碼，嘗試自動套用時段/平日優惠
+    if (!state.promo) autoApplySchedulePromo();
+    updateSidebar();
+  }
+
+  function changeDuration(d) {
+    const min = state.studioMinHours || 2;
+    state.duration = Math.min(8, Math.max(min, state.duration + d));
+    document.getElementById('duration-val').textContent = `${state.duration} 小時`;
+    updateSidebar();
+  }
+
+  // ─── SIDEBAR UPDATE ─────────────────────────
+  function updateSidebar() {
+    if (state.startHour !== null) {
+      document.getElementById('sb-start').textContent = `${state.startHour}:00`;
+      document.getElementById('sb-end').textContent   = `${state.startHour + state.duration}:00`;
+    }
+    document.getElementById('sb-hours').textContent = `${state.duration} 小時`;
+    const rate  = state.effectiveRate || state.studioRate;
+    document.getElementById('sb-rate').textContent  = rate ? `NT$ ${rate.toLocaleString()}` : '—';
+    const subtotal = rate * state.duration;
+    // 計算折扣
+    const discRow = document.getElementById('sb-discount-row');
+    if (state.promo && subtotal > 0) {
+      const disc = calcDiscount(subtotal);
+      state.discountAmount = disc;
+      discRow.style.display = '';
+      document.getElementById('sb-discount-label').textContent = `🎁 ${state.promo.name}`;
+      document.getElementById('sb-discount').textContent = `- NT$ ${disc.toLocaleString()}`;
+    } else {
+      state.discountAmount = 0;
+      if (discRow) discRow.style.display = 'none';
+    }
+    const total = Math.max(0, subtotal - state.discountAmount);
+    document.getElementById('sb-total').textContent = `NT$ ${total.toLocaleString()}`;
+  }
+
+  function calcDiscount(subtotal) {
+    if (!state.promo) return 0;
+    if (state.promo.discount_type === 'fixed') return Math.min(subtotal, parseFloat(state.promo.discount_value));
+    return Math.round(subtotal * parseFloat(state.promo.discount_value) / 100);
+  }
+
+  // ─── STEP NAVIGATION ─────────────────────────
+  function goStep(n) {
+    if (n === 2 && !state.studioId) { alert('請先選擇場地'); return; }
+    if (n === 3 && (!state.date || state.startHour === null)) { alert('請先選擇日期與開始時間'); return; }
+    document.querySelectorAll('.step-panel').forEach((p, i) => p.classList.toggle('active', i === n - 1));
+    document.querySelectorAll('.step').forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i < n - 1) s.classList.add('done');
+      if (i === n - 1) s.classList.add('active');
+    });
+    if (n === 2) { renderCalendar(); renderTimeSlots(); }
+    if (n === 4) fillConfirm();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ─── FILL CONFIRM ─────────────────────────────
+  function fillConfirm() {
+    const months2 = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    const purpose = document.getElementById('f-purpose')?.value || '';
+    recalcRate();
+    document.getElementById('confirm-studio').textContent = state.studioName || '—';
+    const sd = state.date;
+    document.getElementById('confirm-date').textContent = sd ? `${sd.y}年${months2[sd.m]}${sd.d}日` : '—';
+    document.getElementById('confirm-time').textContent  = state.startHour !== null ? `${state.startHour}:00 – ${state.startHour + state.duration}:00` : '—';
+    document.getElementById('confirm-hours').textContent = `${state.duration} 小時`;
+    document.getElementById('confirm-name').textContent  = document.getElementById('f-name').value  || '—';
+    document.getElementById('confirm-phone').textContent = document.getElementById('f-phone').value || '—';
+    document.getElementById('confirm-email').textContent = document.getElementById('f-email').value || '—';
+    const rate    = state.effectiveRate || state.studioRate;
+    const subtotal = rate * state.duration;
+    const disc    = state.promo ? calcDiscount(subtotal) : 0;
+    state.discountAmount = disc;
+    const total   = Math.max(0, subtotal - disc);
+    document.getElementById('confirm-total').textContent = `NT$ ${total.toLocaleString()}`;
+    // 顯示費率備注（影片拍攝加成時）
+    const rateNote = document.getElementById('confirm-rate-note');
+    if (rateNote) {
+      rateNote.style.display = purpose === '影片拍攝' ? '' : 'none';
+      rateNote.textContent   = purpose === '影片拍攝' ? `🎬 影片拍攝費率 NT$${rate.toLocaleString()}/hr` : '';
+    }
+    // 顯示折扣備注
+    const discRow = document.getElementById('confirm-discount-row');
+    if (discRow) {
+      if (state.promo && disc > 0) {
+        discRow.style.display = '';
+        discRow.textContent   = `🎁 已套用「${state.promo.name}」折扣 - NT$ ${disc.toLocaleString()}`;
+      } else {
+        discRow.style.display = 'none';
+      }
+    }
+  }
+
+  // ─── PROMO CODE ────────────────────────────────
+  let _allPromos = null; // 快取自動套用優惠列表
+
+  // 自動套用符合時段/平日條件的優惠（schedule 類型且無需優惠碼）
+  async function autoApplySchedulePromo() {
+    try {
+      if (!_allPromos) {
+        const r = await fetch('/api/promotions');
+        const { data } = await r.json();
+        _allPromos = data || [];
+      }
+      // 篩選 schedule 類型且無優惠碼（自動套用）
+      const schedulePromos = _allPromos.filter(p =>
+        p.discount_type === 'schedule' && !p.promo_code
+      );
+      if (!schedulePromos.length) return;
+
+      const { date, startHour, studioId } = state;
+      if (!date || startHour === null) return;
+
+      const d = new Date(date.y, date.m, date.d);
+      const dayOfWeek = d.getDay(); // 0=週日
+
+      for (const p of schedulePromos) {
+        // 場地檢查
+        if (p.studio_id && p.studio_id !== studioId) continue;
+        // 最少時數
+        if (state.duration < (p.min_hours || 1)) continue;
+        // 星期適用
+        if (p.applicable_days) {
+          const days = JSON.parse(p.applicable_days);
+          if (!days.includes(dayOfWeek)) continue;
+        }
+        // 時段適用
+        if (p.start_hour != null && startHour < p.start_hour) continue;
+        if (p.end_hour   != null && startHour >= p.end_hour)  continue;
+
+        // 找到符合的優惠
+        state.promo = p;
+        showPromoMsg(`🎁 已自動套用「${p.name}」優惠`, 'success');
+        document.getElementById('promo-msg').style.display = '';
+        return;
+      }
+      // 清除上次自動套用（若條件不再符合）
+      if (state.promo && state.promo.discount_type === 'schedule' && !state.promo.promo_code) {
+        state.promo = null;
+        const msgEl = document.getElementById('promo-msg');
+        if (msgEl) msgEl.style.display = 'none';
+      }
+    } catch(e) { /* 靜默失敗 */ }
+  }
+
+  async function applyPromoCode() {
+    const code = document.getElementById('promo-code-input').value.trim();
+    const msgEl = document.getElementById('promo-msg');
+    if (!code) { showPromoMsg('請輸入優惠碼', 'error'); return; }
+
+    showPromoMsg('驗證中...', 'info');
+    try {
+      const r = await fetch('/api/promotions/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          promo_code: code,
+          studio_id: state.studioId,
+          hours: state.duration,
+          booking_date: state.date ? `${state.date.y}-${String(state.date.m+1).padStart(2,'0')}-${String(state.date.d).padStart(2,'0')}` : null,
+          start_hour: state.startHour
+        })
+      });
+      const { success, data, message } = await r.json();
+      if (!success) { showPromoMsg(message || '優惠碼無效', 'error'); return; }
+      state.promo = data;
+      document.getElementById('promo-remove-btn').style.display = '';
+      showPromoMsg(`✅ ${message}`, 'success');
+      updateSidebar();
+    } catch(e) {
+      showPromoMsg('連線失敗，請重試', 'error');
+    }
+  }
+
+  function removePromoCode() {
+    state.promo = null;
+    state.discountAmount = 0;
+    document.getElementById('promo-code-input').value = '';
+    document.getElementById('promo-remove-btn').style.display = 'none';
+    document.getElementById('promo-msg').style.display = 'none';
+    updateSidebar();
+  }
+
+  function showPromoMsg(text, type) {
+    const el = document.getElementById('promo-msg');
+    el.style.display = '';
+    el.style.background = type === 'success' ? '#f0fff4' : type === 'error' ? '#fff3f3' : '#f0f4ff';
+    el.style.color      = type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#4a90e2';
+    el.style.border     = `1px solid ${type === 'success' ? '#b2dfdb' : type === 'error' ? '#ffcccc' : '#c5d8f5'}`;
+    el.textContent = text;
+  }
+
+  // ─── PAYMENT SELECTION ─────────────────────────
+  function selectPayMethod(method, el) {
+    document.querySelectorAll('.pay-method').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('newebpay-opts').style.display = method === 'newebpay' ? 'flex' : 'none';
+  }
+
+  // ─── INVOICE TOGGLE ─────────────────────────────
+  function toggleInvoice() {
+    document.getElementById('invoice-toggle').classList.toggle('active');
+    document.getElementById('invoice-fields').classList.toggle('show');
+  }
+
+  function switchInvTab(el, type) {
+    document.querySelectorAll('.inv-tab').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+    ['personal','company','donate'].forEach(t => {
+      document.getElementById(`inv-${t}`).style.display = t === type ? 'block' : 'none';
+    });
+  }
+
+  // ─── SUBMIT ────────────────────────────────────
+  async function submitBooking() {
+    if (!document.getElementById('agree').checked) {
+      alert('請先勾選同意服務條款'); return;
+    }
+    const name  = document.getElementById('f-name').value.trim();
+    const phone = document.getElementById('f-phone').value.trim();
+    const email = document.getElementById('f-email').value.trim();
+    if (!name || !phone || !email) { alert('請填寫姓名、電話及 Email'); return; }
+    if (!state.studioId || !state.date || state.startHour === null) {
+      alert('請確認已選擇場地、日期與時間'); return;
+    }
+
+    const { y, m, d } = state.date;
+    const booking_date = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const start_time   = `${String(state.startHour).padStart(2,'0')}:00`;
+    const purpose      = document.getElementById('f-purpose').value;
+    const note         = document.getElementById('f-note').value.trim();
+    recalcRate();
+    const rate         = state.effectiveRate || state.studioRate;
+    const subtotal     = rate * state.duration;
+    const discountAmt  = state.promo ? calcDiscount(subtotal) : 0;
+    const total_amount = Math.max(0, subtotal - discountAmt);
+
+    // 取得選取的付款子選項
+    const subPay = document.querySelector('input[name="pay-sub"]:checked')?.value || 'credit';
+    const pm     = document.getElementById('pm-linepay')?.classList.contains('selected') ? 'linepay' : subPay;
+
+    const submitBtn = document.querySelector('.btn-submit');
+    submitBtn.disabled    = true;
+    submitBtn.textContent = '⏳ 送出中...';
+
+    // 儲存表單資料（供 confirmation.html 顯示）
+    const snapshot = {
+      studioId: state.studioId, studioName: state.studioName,
+      booking_date, start_time,
+      end_time: `${String(state.startHour + state.duration).padStart(2,'0')}:00`,
+      duration_hours: state.duration,
+      unit_price: rate, total_amount,
+      contact_name: name, contact_phone: phone, contact_email: email,
+      purpose, note, payment_method: pm,
+    };
+
+    try {
+      const r = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studio_id: state.studioId,
+          booking_date, start_time,
+          duration_hours: state.duration,
+          contact_name: name, contact_phone: phone, contact_email: email,
+          purpose, note,
+          payment_method: pm,
+          need_invoice: document.getElementById('invoice-toggle')?.classList.contains('active') ? 1 : 0,
+          promo_code:   state.promo?.promo_code || null,
+          discount_amount: discountAmt || null,
+          promo_id:     state.promo?.id || null,
+        })
+      });
+      const result = await r.json();
+      if (result.success) {
+        snapshot.booking_no    = result.data.booking_no;
+        snapshot.payment_expire = result.data.payment_expire;
+        snapshot.payment_url   = result.data.payment_url;
+        snapshot.total_amount  = result.data.total_amount; // 以後端為準
+      } else {
+        // 驗證錯誤：顯示給使用者
+        const msg = result.errors ? result.errors.map(e => e.message).join('\n') : result.message;
+        alert('預約失敗：' + msg);
+        submitBtn.disabled = false; submitBtn.textContent = '🔐 確認並前往付款';
+        return;
+      }
+    } catch(e) {
+      // 後端未啟動：只儲存前端資料，仍進入確認頁（測試用）
+      console.warn('後端未連線，以前端資料建立測試確認頁');
+      snapshot.booking_no = 'SS-DEMO-' + Date.now();
+    }
+
+    sessionStorage.setItem('bookingSnapshot', JSON.stringify(snapshot));
+    window.location.href = 'confirmation.html';
+  }
+
+  // Init
+  loadStudios();
+  renderCalendar();
+  renderTimeSlots();
+</script>
+</body>
+</html>

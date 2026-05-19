@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>電子發票通知</title>
+<style>
+  body{margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);}
+  .header{background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:28px;text-align:center;}
+  .header h1{color:#fff;font-size:1.2rem;margin:0;}
+  .body{padding:28px 32px;}
+  .inv-box{background:#f0fff4;border:1px solid #a8e6c2;border-radius:10px;padding:20px;text-align:center;margin-bottom:20px;}
+  .inv-box .inv-no{font-size:1.4rem;font-weight:700;color:#2e7d32;letter-spacing:.1em;font-family:monospace;}
+  .detail-box{background:#f8f9fb;border-radius:10px;padding:16px;margin-bottom:18px;}
+  .detail-row{display:flex;justify-content:space-between;padding:5px 0;font-size:.87rem;border-bottom:1px solid #eee;}
+  .detail-row:last-child{border-bottom:none;font-weight:700;}
+  .detail-row span:first-child{color:#6c757d;}
+  .footer{background:#f0f2f5;padding:16px 32px;text-align:center;font-size:.75rem;color:#888;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header"><h1>📸 Studio Space 電子發票</h1></div>
+  <div class="body">
+    <p style="font-size:.9rem;">親愛的 <strong>{{contact_name}}</strong>，<br>
+    感謝您的消費，您的電子發票已開立。</p>
+    <div class="inv-box">
+      <div style="font-size:.82rem;color:#666;margin-bottom:6px;">🧾 電子發票號碼</div>
+      <div class="inv-no">{{invoice_no}}</div>
+      <div style="font-size:.78rem;color:#888;margin-top:6px;">可至財政部電子發票整合服務平台查詢</div>
+    </div>
+    <div class="detail-box">
+      <div class="detail-row"><span>訂單編號</span><span>{{booking_no}}</span></div>
+      <div class="detail-row"><span>場地</span><span>{{studio_name}}</span></div>
+      <div class="detail-row"><span>消費日期</span><span>{{booking_date}}</span></div>
+      <div class="detail-row"><span>消費金額</span><span>NT$ {{total_amount}}</span></div>
+    </div>
+    <p style="font-size:.8rem;color:#888;line-height:1.7;">
+      • 電子發票已存入您的載具，可至財政部網站查詢：<a href="https://www.einvoice.nat.gov.tw">einvoice.nat.gov.tw</a><br>
+      • 如有發票問題請聯繫：<a href="mailto:{{site_email}}">{{site_email}}</a>
+    </p>
+  </div>
+  <div class="footer">© 2026 Studio Space ｜ 系統自動發送</div>
+</div></body></html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>場地使用提醒</title>
+<style>
+  body{margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);}
+  .header{background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:28px;text-align:center;}
+  .header h1{color:#fff;font-size:1.2rem;margin:0;}
+  .body{padding:28px 32px;}
+  .remind-box{background:#e8f4fd;border:1px solid #b3d9f5;border-radius:10px;padding:18px;margin-bottom:20px;text-align:center;}
+  .remind-box .icon{font-size:2rem;}
+  .remind-box h2{font-size:1rem;color:#1565c0;margin:8px 0 4px;}
+  .detail-box{background:#f8f9fb;border-radius:10px;padding:18px;margin-bottom:18px;}
+  .detail-row{display:flex;justify-content:space-between;padding:5px 0;font-size:.87rem;border-bottom:1px solid #eee;}
+  .detail-row:last-child{border-bottom:none;}
+  .detail-row span:first-child{color:#6c757d;}
+  .checklist{list-style:none;padding:0;font-size:.85rem;color:#444;}
+  .checklist li{padding:5px 0;display:flex;gap:8px;}
+  .checklist li::before{content:'✅';flex-shrink:0;}
+  .cta-btn{display:block;background:#1a1a2e;color:#fff;text-decoration:none;text-align:center;padding:13px;border-radius:8px;font-weight:700;font-size:.92rem;margin:16px 0;}
+  .footer{background:#f0f2f5;padding:16px 32px;text-align:center;font-size:.75rem;color:#888;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header"><h1>📸 Studio Space 場地提醒</h1></div>
+  <div class="body">
+    <div class="remind-box">
+      <div class="icon">📅</div>
+      <h2>您明天有一個場地預約！</h2>
+      <p style="font-size:.85rem;color:#444;margin:0;">記得提前準備，準時到場！</p>
+    </div>
+    <p style="font-size:.9rem;color:#333;">親愛的 <strong>{{contact_name}}</strong>，</p>
+    <div class="detail-box">
+      <div class="detail-row"><span>場地</span><span>{{studio_name}}</span></div>
+      <div class="detail-row"><span>日期</span><span>{{booking_date}}</span></div>
+      <div class="detail-row"><span>時間</span><span>{{start_time}} – {{end_time}}</span></div>
+      <div class="detail-row"><span>訂單編號</span><span>{{booking_no}}</span></div>
+    </div>
+    <strong style="font-size:.87rem;">入場前請注意：</strong>
+    <ul class="checklist">
+      <li>請於預約開始時間前 10 分鐘抵達</li>
+      <li>出示此確認信或 QR Code 給工作人員確認</li>
+      <li>如需延長使用，請提前告知工作人員</li>
+      <li>超時使用以每 30 分鐘計費</li>
+    </ul>
+    <a href="{{base_url}}/confirmation.html?booking_no={{booking_no}}" class="cta-btn">查看 QR Code 入場碼</a>
+    <p style="font-size:.8rem;color:#888;">需要取消或修改？請在 48 小時前聯繫我們：<a href="mailto:{{site_email}}">{{site_email}}</a></p>
+  </div>
+  <div class="footer">© 2026 Studio Space ｜ 系統自動發送</div>
+</div></body></html>

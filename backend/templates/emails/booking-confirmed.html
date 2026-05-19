@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>預約成功確認</title>
+<style>
+  body{margin:0;padding:0;background:#f4f6f9;font-family:'Noto Sans TC',Arial,sans-serif;}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);}
+  .header{background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:32px;text-align:center;}
+  .header .logo{font-size:2rem;margin-bottom:8px;}
+  .header h1{color:#fff;font-size:1.3rem;margin:0;font-weight:700;}
+  .header p{color:rgba(255,255,255,.7);font-size:.85rem;margin:6px 0 0;}
+  .success-badge{background:#28a745;color:#fff;display:inline-block;padding:6px 20px;border-radius:20px;font-size:.82rem;font-weight:700;margin:20px auto;display:block;text-align:center;width:120px;}
+  .body{padding:28px 32px;}
+  .greeting{font-size:1rem;color:#333;margin-bottom:20px;}
+  .detail-box{background:#f8f9fb;border-radius:10px;padding:20px;margin-bottom:20px;}
+  .detail-box h3{font-size:.85rem;color:#6c757d;text-transform:uppercase;letter-spacing:.08em;margin:0 0 14px;}
+  .detail-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:.88rem;}
+  .detail-row:last-child{border-bottom:none;}
+  .detail-row span:first-child{color:#6c757d;}
+  .detail-row span:last-child{font-weight:600;color:#222;}
+  .amount-row{display:flex;justify-content:space-between;padding:12px 0;font-weight:700;font-size:1rem;}
+  .amount-row span:last-child{color:#e94560;font-size:1.2rem;}
+  .cta-btn{display:block;background:#e94560;color:#fff;text-decoration:none;text-align:center;padding:14px;border-radius:8px;font-weight:700;font-size:.95rem;margin:24px 0;}
+  .notice{background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:14px;font-size:.82rem;color:#856404;margin-bottom:20px;}
+  .footer{background:#f0f2f5;padding:20px 32px;text-align:center;font-size:.78rem;color:#888;border-top:1px solid #e0e0e0;}
+  .footer a{color:#e94560;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">📸</div>
+    <h1>Studio Space</h1>
+    <p>專業攝影棚空間預約系統</p>
+  </div>
+  <div class="body">
+    <div class="success-badge">✅ 預約成功</div>
+    <p class="greeting">親愛的 <strong>{{contact_name}}</strong> 您好，<br>
+    感謝您預約 Studio Space，付款已完成，您的預約正式確認。</p>
+
+    <div class="detail-box">
+      <h3>📋 預約詳情</h3>
+      <div class="detail-row"><span>訂單編號</span><span>{{booking_no}}</span></div>
+      <div class="detail-row"><span>場地</span><span>{{studio_name}}</span></div>
+      <div class="detail-row"><span>預約日期</span><span>{{booking_date}}</span></div>
+      <div class="detail-row"><span>使用時段</span><span>{{start_time}} – {{end_time}}</span></div>
+      <div class="detail-row"><span>使用時數</span><span>{{duration_hours}} 小時</span></div>
+      <div class="detail-row"><span>付款方式</span><span>{{payment_method}}</span></div>
+      <div class="amount-row"><span>付款金額</span><span>NT$ {{total_amount}}</span></div>
+    </div>
+
+    <div class="notice">
+      ⏰ <strong>入場提醒：</strong>請於預約開始時間前 10 分鐘抵達，並出示此確認信或 QR Code 給工作人員掃描。
+    </div>
+
+    <a href="{{base_url}}/confirmation.html?booking_no={{booking_no}}" class="cta-btn">
+      查看預約詳情 &amp; 入場 QR Code
+    </a>
+
+    <p style="font-size:.82rem;color:#888;line-height:1.7;">
+      如需修改或取消預約，請於使用前 48 小時前聯絡我們。<br>
+      如有任何問題，歡迎聯繫：<a href="mailto:{{site_email}}">{{site_email}}</a>
+    </p>
+  </div>
+  <div class="footer">
+    © 2026 Studio Space ｜ <a href="{{base_url}}">{{base_url}}</a>
+    <br>此信件由系統自動發送，請勿直接回覆。
+  </div>
+</div>
+</body></html>

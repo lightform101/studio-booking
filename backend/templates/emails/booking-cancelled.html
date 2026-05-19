@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>預約取消確認</title>
+<style>
+  body{margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);}
+  .header{background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:28px;text-align:center;}
+  .header h1{color:#fff;font-size:1.2rem;margin:0;}
+  .body{padding:28px 32px;}
+  .cancel-box{background:#fde8e8;border:1px solid #f5c2c2;border-radius:10px;padding:16px;text-align:center;margin-bottom:20px;}
+  .cancel-box h2{color:#dc3545;font-size:1rem;margin:0 0 6px;}
+  .detail-box{background:#f8f9fb;border-radius:10px;padding:16px;margin-bottom:18px;}
+  .detail-row{display:flex;justify-content:space-between;padding:5px 0;font-size:.87rem;border-bottom:1px solid #eee;}
+  .detail-row:last-child{border-bottom:none;}
+  .detail-row span:first-child{color:#6c757d;}
+  .refund-box{background:#e8f5e9;border:1px solid #a8e6a8;border-radius:8px;padding:14px;font-size:.85rem;color:#2e7d32;margin-bottom:18px;}
+  .footer{background:#f0f2f5;padding:16px 32px;text-align:center;font-size:.75rem;color:#888;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header"><h1>📸 Studio Space</h1></div>
+  <div class="body">
+    <div class="cancel-box">
+      <h2>❌ 預約已取消</h2>
+      <p style="font-size:.85rem;color:#666;margin:0;">訂單 {{booking_no}} 已成功取消</p>
+    </div>
+    <p style="font-size:.9rem;">親愛的 <strong>{{contact_name}}</strong>，您的預約已取消。</p>
+    <div class="detail-box">
+      <div class="detail-row"><span>訂單編號</span><span>{{booking_no}}</span></div>
+      <div class="detail-row"><span>場地</span><span>{{studio_name}}</span></div>
+      <div class="detail-row"><span>原預約日期</span><span>{{booking_date}} {{start_time}}-{{end_time}}</span></div>
+      <div class="detail-row"><span>原付款金額</span><span>NT$ {{total_amount}}</span></div>
+    </div>
+    <div class="refund-box">
+      💰 <strong>退款說明：</strong>退款 NT$ {{refund_amount}} 將於 5–7 個工作天退回原付款帳戶。
+      如超過 7 天未收到退款，請聯繫我們。
+    </div>
+    <p style="font-size:.82rem;color:#888;">如有任何問題，請聯繫：<a href="mailto:{{site_email}}">{{site_email}}</a><br>期待再次為您服務！</p>
+  </div>
+  <div class="footer">© 2026 Studio Space ｜ 系統自動發送</div>
+</div></body></html>

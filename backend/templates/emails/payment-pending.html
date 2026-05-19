@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>請完成付款</title>
+<style>
+  body{margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);}
+  .header{background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:28px;text-align:center;}
+  .header .logo{font-size:1.8rem;margin-bottom:6px;}
+  .header h1{color:#fff;font-size:1.2rem;margin:0;}
+  .body{padding:28px 32px;}
+  .warn-box{background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:18px;margin-bottom:20px;text-align:center;}
+  .warn-box .icon{font-size:2rem;margin-bottom:8px;}
+  .warn-box h2{font-size:1.1rem;color:#856404;margin:0 0 6px;}
+  .warn-box p{font-size:.85rem;color:#856404;margin:0;}
+  .detail-box{background:#f8f9fb;border-radius:10px;padding:18px;margin-bottom:20px;}
+  .detail-row{display:flex;justify-content:space-between;padding:5px 0;font-size:.87rem;border-bottom:1px solid #eee;}
+  .detail-row:last-child{border-bottom:none;font-weight:700;font-size:.95rem;}
+  .detail-row span:first-child{color:#6c757d;}
+  .cta-btn{display:block;background:#e94560;color:#fff;text-decoration:none;text-align:center;padding:14px;border-radius:8px;font-weight:700;font-size:.95rem;margin:16px 0;}
+  .footer{background:#f0f2f5;padding:16px 32px;text-align:center;font-size:.75rem;color:#888;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header"><div class="logo">📸</div><h1>Studio Space</h1></div>
+  <div class="body">
+    <div class="warn-box">
+      <div class="icon">⏰</div>
+      <h2>請在 {{payment_expire}} 前完成付款</h2>
+      <p>付款期限到期後，預約將自動取消並釋出時段。</p>
+    </div>
+    <p style="font-size:.92rem;color:#333;">親愛的 <strong>{{contact_name}}</strong> 您好，<br>
+    您的場地預約已建立，請盡快完成付款以確保訂單成立。</p>
+    <div class="detail-box">
+      <div class="detail-row"><span>訂單編號</span><span>{{booking_no}}</span></div>
+      <div class="detail-row"><span>場地</span><span>{{studio_name}}</span></div>
+      <div class="detail-row"><span>日期</span><span>{{booking_date}} {{start_time}}-{{end_time}}</span></div>
+      <div class="detail-row"><span>應付金額</span><span>NT$ {{total_amount}}</span></div>
+    </div>
+    <a href="{{base_url}}/booking.html?booking_no={{booking_no}}" class="cta-btn">立即前往付款 →</a>
+    <p style="font-size:.8rem;color:#888;">如已完成付款，請忽略此信件。如有疑問請聯繫 <a href="mailto:{{site_email}}">{{site_email}}</a></p>
+  </div>
+  <div class="footer">© 2026 Studio Space ｜ 系統自動發送，請勿回覆</div>
+</div></body></html>

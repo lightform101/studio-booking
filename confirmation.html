@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>預約成功 · Studio Space</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #1a1a2e;
+      --accent: #e94560;
+      --gold: #c9a84c;
+      --success: #28a745;
+      --light: #f4f6f9;
+      --border: #dee2e6;
+      --gray: #6c757d;
+      --text: #1a1a2e;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans TC', sans-serif; background: var(--light); color: var(--text); }
+
+    nav {
+      background: var(--primary); height: 60px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 5%;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo .logo-icon { width:32px;height:32px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px; }
+    .nav-logo span { color:#fff;font-weight:700; }
+
+    .page-wrap { max-width: 680px; margin: 48px auto; padding: 0 20px; }
+
+    /* SUCCESS HERO */
+    .success-hero {
+      background: #fff; border-radius: var(--radius);
+      padding: 48px 40px; text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,.07);
+      margin-bottom: 24px;
+      border-top: 4px solid var(--success);
+    }
+    .success-anim {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem; margin: 0 auto 20px;
+      animation: pop .5s cubic-bezier(.175,.885,.32,1.275);
+    }
+    @keyframes pop {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .success-hero h1 { font-size: 1.6rem; font-weight: 700; color: var(--success); margin-bottom: 10px; }
+    .success-hero p { color: var(--gray); font-size: 0.9rem; line-height: 1.7; }
+    .booking-id {
+      display: inline-block; margin-top: 16px;
+      background: var(--light); border: 1px solid var(--border);
+      padding: 8px 20px; border-radius: 6px;
+      font-family: monospace; font-size: 1rem; font-weight: 700;
+      letter-spacing: 0.1em; color: var(--primary);
+    }
+
+    /* DETAIL CARD */
+    .detail-card {
+      background: #fff; border-radius: var(--radius);
+      padding: 28px 32px; box-shadow: 0 4px 24px rgba(0,0,0,.07);
+      margin-bottom: 20px;
+    }
+    .detail-section-title {
+      font-size: 0.85rem; font-weight: 700; color: var(--gray);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 480px) { .detail-grid { grid-template-columns: 1fr; } }
+    .detail-item label { font-size: 0.75rem; color: var(--gray); display: block; margin-bottom: 3px; }
+    .detail-item .val { font-size: 0.92rem; font-weight: 600; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .amount-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 1rem;
+    }
+    .amount-row .total { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+
+    /* NOTICE BOXES */
+    .notice-box {
+      border-radius: 10px; padding: 16px 18px;
+      display: flex; gap: 12px; margin-bottom: 14px;
+      font-size: 0.85rem; line-height: 1.7;
+    }
+    .notice-box.email { background: #e8f4fd; border: 1px solid #b3d9f5; }
+    .notice-box.sms { background: #e8fde8; border: 1px solid #a8e6a8; }
+    .notice-box.calendar { background: #fef9e7; border: 1px solid #f5e08a; }
+    .notice-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .notice-box strong { display: block; margin-bottom: 3px; color: var(--primary); }
+
+    /* ACTIONS */
+    .action-buttons { display: flex; gap: 12px; margin-top: 8px; }
+    .btn-primary {
+      flex: 1; padding: 13px; background: var(--primary); color: #fff;
+      border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; text-align: center; text-decoration: none; display: block;
+      transition: background .2s;
+    }
+    .btn-primary:hover { background: #0f3460; }
+    .btn-outline {
+      flex: 1; padding: 13px; border: 1.5px solid var(--border); color: var(--primary);
+      background: #fff; border-radius: 8px; font-size: 0.95rem; font-weight: 500;
+      cursor: pointer; text-align: center; text-decoration: none; display: block;
+      transition: all .2s;
+    }
+    .btn-outline:hover { border-color: var(--primary); }
+
+    /* QR CODE PLACEHOLDER */
+    .qr-section { text-align: center; margin: 20px 0; }
+    .qr-placeholder {
+      width: 120px; height: 120px; margin: 0 auto 10px;
+      background: var(--light); border: 1px solid var(--border);
+      border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; font-size: 2.5rem;
+    }
+    .qr-section p { font-size: 0.75rem; color: var(--gray); }
+
+    /* TIMELINE */
+    .timeline { margin: 16px 0; }
+    .tl-item { display: flex; gap: 14px; margin-bottom: 14px; }
+    .tl-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+    .tl-dot.green { background: var(--success); }
+    .tl-dot.blue { background: #4a90d9; }
+    .tl-dot.gray { background: var(--border); }
+    .tl-content { font-size: 0.83rem; }
+    .tl-time { color: var(--gray); font-size: 0.75rem; }
+
+    footer {
+      text-align: center; padding: 32px 20px;
+      font-size: 0.8rem; color: var(--gray);
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <div class="logo-icon">📸</div>
+    <span>Studio Space</span>
+  </a>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- SUCCESS HERO -->
+  <div class="success-hero">
+    <div class="success-anim">✅</div>
+    <h1>預約已送出！</h1>
+    <p>
+      感謝您的預約，我們已收到您的訂單。<br />
+      請於 2 小時內完成付款，確認後將寄出通知。
+    </p>
+    <div class="booking-id" id="conf-booking-no">訂單編號：載入中…</div>
+  </div>
+
+  <!-- BOOKING DETAILS -->
+  <div class="detail-card">
+    <div class="detail-section-title">📋 預約詳情</div>
+    <div class="detail-grid">
+      <div class="detail-item"><label>場地</label><div class="val" id="conf-studio">—</div></div>
+      <div class="detail-item"><label>預約日期</label><div class="val" id="conf-date">—</div></div>
+      <div class="detail-item"><label>使用時段</label><div class="val" id="conf-time">—</div></div>
+      <div class="detail-item"><label>使用時數</label><div class="val" id="conf-hours">—</div></div>
+      <div class="detail-item"><label>聯絡人</label><div class="val" id="conf-name">—</div></div>
+      <div class="detail-item"><label>聯絡電話</label><div class="val" id="conf-phone">—</div></div>
+      <div class="detail-item"><label>用途</label><div class="val" id="conf-purpose">—</div></div>
+      <div class="detail-item"><label>信箱</label><div class="val" id="conf-email">—</div></div>
+    </div>
+    <hr class="divider" />
+    <div class="detail-section-title">💳 付款資訊</div>
+    <div class="detail-grid">
+      <div class="detail-item"><label>費率</label><div class="val" id="conf-rate">—</div></div>
+      <div class="detail-item"><label>付款狀態</label><div class="val" style="color:#f39c12;">⏳ 待付款</div></div>
+    </div>
+    <div id="conf-payment-link-box" style="display:none;margin:12px 0;padding:12px;background:#e8f5e9;border-radius:8px;text-align:center;">
+      <div style="font-size:.85rem;margin-bottom:8px;">點擊下方按鈕前往付款頁面</div>
+      <a id="conf-payment-link" href="#" target="_blank"
+        style="display:inline-block;padding:10px 28px;background:#28a745;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;">
+        💳 前往付款
+      </a>
+    </div>
+    <hr class="divider" />
+    <div class="amount-row">
+      <span>應付金額</span>
+      <span class="total" id="conf-total">NT$ —</span>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <div class="notice-box email">
+    <span class="notice-icon">📧</span>
+    <div>
+      <strong>確認信將於付款後發送</strong>
+      完成付款後確認信將寄至 <strong id="conf-email-notice">您的信箱</strong>，內含預約詳情。
+    </div>
+  </div>
+  <div class="notice-box sms">
+    <span class="notice-icon">📱</span>
+    <div>
+      <strong>簡訊通知將於付款後發送</strong>
+      簡訊將發送至 <strong id="conf-phone-notice">您的手機</strong>，包含訂單編號及入場說明。
+    </div>
+  </div>
+  <div class="notice-box calendar">
+    <span class="notice-icon">📅</span>
+    <div>
+      <strong>加入行事曆</strong>
+      提醒自己不要錯過場地使用時間。
+      <br />
+      <a href="#" style="color:#c9a84c;font-weight:600;">+ 加入 Google Calendar</a>
+
+      <a href="#" style="color:#c9a84c;font-weight:600;">+ 加入 Apple 行事曆</a>
+    </div>
+  </div>
+
+  <!-- QR CODE -->
+  <div class="detail-card">
+    <div class="detail-section-title">🔑 入場 QR Code</div>
+    <div class="qr-section">
+      <div class="qr-placeholder">▦</div>
+      <p>請於入場時出示此 QR Code 給工作人員掃描確認</p>
+    </div>
+    <div class="detail-section-title" style="margin-top:16px;">📍 入場注意</div>
+    <ul style="list-style:none;font-size:.84rem;color:var(--gray);line-height:2;">
+      <li>✅ 請於預約開始時間前 10 分鐘抵達</li>
+      <li>✅ 請在入口處出示此頁面或確認信中的 QR Code</li>
+      <li>✅ 超時將按 30 分鐘計費（NT$ 400/30min）</li>
+      <li>⚠️ 若需延長使用，請提前告知工作人員</li>
+    </ul>
+  </div>
+
+  <!-- STATUS TIMELINE -->
+  <div class="detail-card">
+    <div class="detail-section-title">🕐 處理進度</div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot green"></div>
+        <div class="tl-content">
+          <div><strong>預約已確認</strong></div>
+          <div class="tl-time">2026/03/30 14:28 · 付款成功，預約已確認</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot green"></div>
+        <div class="tl-content">
+          <div><strong>確認信與簡訊已發送</strong></div>
+          <div class="tl-time">2026/03/30 14:28 · 通知已送出</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot blue"></div>
+        <div class="tl-content">
+          <div><strong>使用前提醒（將於 24 小時前發送）</strong></div>
+          <div class="tl-time">預計 2026/04/04 14:28</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot gray"></div>
+        <div class="tl-content">
+          <div><strong>場地使用</strong></div>
+          <div class="tl-time">2026/04/05 13:00 – 17:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="action-buttons">
+    <a href="index.html" class="btn-primary">🏠 返回首頁</a>
+    <a href="#" class="btn-outline">📋 查看我的預約</a>
+  </div>
+  <div style="text-align:center;margin-top:16px;font-size:.82rem;color:var(--gray);">
+    如需修改或取消預約，請於使用前 48 小時前聯絡客服<br />
+    📧 contact@studiospace.tw ｜ 📞 02-XXXX-XXXX
+  </div>
+
+</div>
+
+<footer>
+  © 2026 Studio Space. All rights reserved.
+</footer>
+
+<script>
+  // ─── 套用外觀設定 ────────────────────────────
+  (async () => {
+    try {
+      const r = await fetch('/api/appearance');
+      if (!r.ok) return;
+      const { data: ap } = await r.json();
+      if (!ap) return;
+      const root = document.documentElement;
+      if (ap.theme_primary)       root.style.setProperty('--primary', ap.theme_primary);
+      if (ap.theme_accent)        root.style.setProperty('--accent',  ap.theme_accent);
+      if (ap.theme_gold)          root.style.setProperty('--gold',    ap.theme_gold);
+      if (ap.theme_bg)            root.style.setProperty('--light',   ap.theme_bg);
+      if (ap.theme_text)          root.style.setProperty('--text',    ap.theme_text);
+      if (ap.theme_border_radius) root.style.setProperty('--radius',  ap.theme_border_radius + 'px');
+      if (ap.theme_font) document.body.style.fontFamily = `'${ap.theme_font}', sans-serif`;
+    } catch(e) { /* 外觀載入失敗不影響主功能 */ }
+  })();
+
+  (function() {
+    const raw = sessionStorage.getItem('bookingSnapshot');
+    if (!raw) return; // 直接進入此頁時不覆蓋
+    let bk;
+    try { bk = JSON.parse(raw); } catch(e) { return; }
+    sessionStorage.removeItem('bookingSnapshot'); // 讀完即清除
+
+    const weekDay = ['日','一','二','三','四','五','六'];
+    const months  = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+    // 格式化日期
+    function fmtDate(str) {
+      if (!str) return '—';
+      const [y, m, d] = str.split('-').map(Number);
+      const w = new Date(y, m-1, d).getDay();
+      return `${y}年${months[m-1]}${d}日（週${weekDay[w]}）`;
+    }
+
+    // 付款方式顯示
+    const pmMap = { credit:'信用卡', atm:'ATM 轉帳', cvs:'超商代碼', linepay:'LINE Pay' };
+
+    // 填入資料
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('conf-booking-no', `訂單編號：${bk.booking_no || '(建立中)'}`);
+    set('conf-studio',  bk.studioName || '—');
+    set('conf-date',    fmtDate(bk.booking_date));
+    set('conf-time',    `${(bk.start_time||'').slice(0,5)} – ${(bk.end_time||'').slice(0,5)}`);
+    set('conf-hours',   `${bk.duration_hours} 小時`);
+    set('conf-name',    bk.contact_name  || '—');
+    set('conf-phone',   bk.contact_phone || '—');
+    set('conf-email',   bk.contact_email || '—');
+    set('conf-purpose', bk.purpose || '—');
+    set('conf-rate',    `NT$ ${Number(bk.unit_price||0).toLocaleString()} / 小時`);
+    set('conf-total',   `NT$ ${Number(bk.total_amount||0).toLocaleString()}`);
+    set('conf-email-notice', bk.contact_email || '您的信箱');
+    set('conf-phone-notice', bk.contact_phone || '您的手機');
+
+    // 付款連結
+    if (bk.payment_url) {
+      const box  = document.getElementById('conf-payment-link-box');
+      const link = document.getElementById('conf-payment-link');
+      if (box)  box.style.display  = '';
+      if (link) link.href = bk.payment_url;
+    }
+  })();
+</script>
+</body>
+</html>
