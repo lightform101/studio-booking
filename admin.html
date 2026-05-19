@@ -2158,11 +2158,12 @@
           </div>
           <!-- 上傳區 -->
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
-            <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:var(--accent);color:#fff;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;">
+            <button onclick="document.getElementById('upload_${s.id}').click()"
+              style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:var(--accent);color:#fff;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;border:none;">
               ＋ 上傳照片
-              <input type="file" multiple accept="image/*" style="display:none;"
-                onchange="uploadImages(${s.id}, this)" />
-            </label>
+            </button>
+            <input type="file" id="upload_${s.id}" multiple accept="image/*" style="display:none;"
+              onchange="uploadImages(${s.id}, this)" />
             <div id="uploadProgress_${s.id}" style="display:none;flex:1;">
               <div style="background:#eee;border-radius:4px;height:6px;overflow:hidden;">
                 <div id="uploadBar_${s.id}" style="background:var(--accent);height:100%;width:0;transition:width .3s;"></div>
