@@ -386,9 +386,18 @@
           <div class="type-opt-desc">展覽、發表會<br>工作坊、小型活動</div>
         </label>
       </div>
+      <!-- 已預選場地提示（從首頁「預約此場地」進來時顯示） -->
+      <div id="preselected-banner" style="display:none;margin-top:20px;padding:12px 16px;background:var(--cream);border:1px solid var(--border);border-radius:10px;display:none;align-items:center;gap:10px;font-size:.88rem;">
+        <span style="font-size:1.2rem;">🏠</span>
+        <div>
+          <div style="font-weight:600;" id="preselected-studio-name">—</div>
+          <div style="font-size:.78rem;color:var(--gray);">已選擇場地，選完類型可直接進入時間選擇</div>
+        </div>
+        <button onclick="goStep(2)" style="margin-left:auto;border:1px solid var(--border);background:#fff;color:var(--gray);font-size:.78rem;padding:4px 10px;border-radius:6px;cursor:pointer;">更換場地</button>
+      </div>
       <div class="step-nav">
         <div></div>
-        <button class="btn-next" onclick="goStep(2)">下一步：選擇場地 →</button>
+        <button class="btn-next" id="step1-next-btn" onclick="goNextFromType()">下一步：選擇場地 →</button>
       </div>
     </div>
 
@@ -441,7 +450,7 @@
       </div>
 
       <div class="step-nav">
-        <button class="btn-prev" onclick="goStep(2)">← 返回</button>
+        <button class="btn-prev" onclick="goPrevFromTime()">← 返回</button>
         <button class="btn-next" onclick="goStep(4)">下一步：填寫資料 →</button>
       </div>
     </div>
@@ -683,6 +692,7 @@
     date: null, startHour: null, duration: 2,
     promo: null,       // 套用中的優惠方案物件
     discountAmount: 0, // 折抵金額
+    preSelectedStudio: false, // 從首頁「預約此場地」進來，已預選場地
   };
 
   // ─── 拍攝類型設定 ──────────────────────────
@@ -724,7 +734,19 @@
       const preId = new URLSearchParams(location.search).get('studio');
       if (preId) {
         const target = studios.find(s => String(s.id) === preId);
-        if (target) selectStudio(target.id, document.getElementById('opt-' + target.id));
+        if (target) {
+          selectStudio(target.id, document.getElementById('opt-' + target.id));
+          // 標記為預選，並顯示 Step 1 的場地提示 banner
+          state.preSelectedStudio = true;
+          const banner = document.getElementById('preselected-banner');
+          if (banner) {
+            document.getElementById('preselected-studio-name').textContent = target.name;
+            banner.style.display = 'flex';
+          }
+          // 更新 Step 1 按鈕文字
+          const nextBtn = document.getElementById('step1-next-btn');
+          if (nextBtn) nextBtn.textContent = '下一步：選擇時間 →';
+        }
       }
     } catch(e) {
       document.getElementById('studio-options').innerHTML =
@@ -765,6 +787,15 @@
     el.classList.add('selected');
     const studios = window._studiosData || [];
     const s = studios.find(x => x.id === id);
+    // 若在 Step 2 手動選了場地（非預選），清除預選旗標
+    const currentPanel = document.querySelector('.step-panel.active');
+    if (currentPanel && currentPanel.id === 'panel-2') {
+      state.preSelectedStudio = false;
+      const banner = document.getElementById('preselected-banner');
+      if (banner) banner.style.display = 'none';
+      const nextBtn = document.getElementById('step1-next-btn');
+      if (nextBtn) nextBtn.textContent = '下一步：選擇場地 →';
+    }
     state.studioId    = id;
     state.studioName  = s ? s.name : `場地 ${id}`;
     state.studioRate  = s ? +s.hourly_rate : 0;
@@ -926,6 +957,26 @@
     return Math.round(subtotal * parseFloat(state.promo.discount_value) / 100);
   }
 
+  // ─── 從 Step 1 按「下一步」────────────────────
+  function goNextFromType() {
+    // 已預選場地：跳過 Step 2，直接進 Step 3
+    if (state.preSelectedStudio && state.studioId) {
+      goStep(3);
+    } else {
+      goStep(2);
+    }
+  }
+
+  // ─── 從 Step 3 按「返回」─────────────────────
+  function goPrevFromTime() {
+    // 已預選場地：返回 Step 1（跳過 Step 2）
+    if (state.preSelectedStudio && state.studioId) {
+      goStep(1);
+    } else {
+      goStep(2);
+    }
+  }
+
   // ─── STEP NAVIGATION ─────────────────────────
   function goStep(n) {
     if (n === 3 && !state.studioId)  { alert('請先選擇場地'); return; }
@@ -942,6 +993,13 @@
       document.getElementById('type-badge-icon').textContent = cfg.icon;
       document.getElementById('type-badge-name').textContent = cfg.name;
       if (window._studiosData) renderStudios(window._studiosData);
+      // 從 Step 2 選了新場地後，取消預選旗標（使用者主動選了別的場地）
+      // （只在用戶點了「更換場地」後才到此，preSelectedStudio 暫保留）
+    }
+    // 回到 Step 1 時，若已預選場地確保 banner 狀態正確
+    if (n === 1 && state.preSelectedStudio && state.studioId) {
+      const nextBtn = document.getElementById('step1-next-btn');
+      if (nextBtn) nextBtn.textContent = '下一步：選擇時間 →';
     }
     if (n === 3) { renderCalendar(); renderTimeSlots(); }
     if (n === 5) fillConfirm();
