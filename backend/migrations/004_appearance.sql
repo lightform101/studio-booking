@@ -1,7 +1,6 @@
 -- =============================================
 -- 外觀設定初始資料
 -- =============================================
-USE studio_booking;
 
 INSERT INTO settings (key_name, key_value, description) VALUES
 -- 色彩主題

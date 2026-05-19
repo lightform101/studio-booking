@@ -2,7 +2,6 @@
 -- 場地照片功能 Migration
 -- =============================================
 
-USE studio_booking;
 
 -- 場地照片表
 CREATE TABLE IF NOT EXISTS studio_images (

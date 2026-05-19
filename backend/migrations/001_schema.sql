@@ -3,8 +3,6 @@
 -- 執行方式: mysql -u root -p studio_booking < migrations/001_schema.sql
 -- =============================================
 
-CREATE DATABASE IF NOT EXISTS studio_booking CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE studio_booking;
 
 -- 管理員帳號
 CREATE TABLE IF NOT EXISTS admins (

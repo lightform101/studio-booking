@@ -2,7 +2,6 @@
 -- 初始資料（種子資料）
 -- 執行方式: mysql -u root -p studio_booking < migrations/002_seed.sql
 -- =============================================
-USE studio_booking;
 
 -- 管理員帳號 (密碼: Admin@1234，已 bcrypt 雜湊)
 INSERT INTO admins (name, email, password) VALUES
