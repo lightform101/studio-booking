@@ -11,6 +11,7 @@ const router = require('express').Router({ mergeParams: true });
 const path   = require('path');
 const fs     = require('fs');
 const multer = require('multer');
+const sharp  = require('sharp');
 const auth   = require('../../middleware/auth');
 const { pool } = require('../../config/database');
 
@@ -18,17 +19,18 @@ router.use(auth);
 
 // ─── Multer 設定 ─────────────────────────────────────────────────────────────
 const UPLOAD_DIR = path.join(__dirname, '../../uploads/studios');
+const TEMP_DIR   = path.join(__dirname, '../../uploads/tmp');
 
 // 確保資料夾存在
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+if (!fs.existsSync(TEMP_DIR))   fs.mkdirSync(TEMP_DIR,   { recursive: true });
 
+// 先存到 tmp，後續用 sharp 壓縮再移到正式目錄
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  destination: (req, file, cb) => cb(null, TEMP_DIR),
   filename: (req, file, cb) => {
     const ext  = path.extname(file.originalname).toLowerCase();
-    const name = `studio_${req.params.id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}${ext}`;
+    const name = `tmp_${req.params.id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}${ext}`;
     cb(null, name);
   }
 });
@@ -85,14 +87,33 @@ router.post('/:id/images', upload.array('images', 10), async (req, res, next) =>
 
     const inserted = [];
     for (let i = 0; i < req.files.length; i++) {
-      const file  = req.files[i];
-      const isMain = (!hasMain && i === 0); // 第一張設為主圖（若目前無主圖）
-      const url   = `/uploads/studios/${file.filename}`;
+      const file   = req.files[i];
+      const isMain = (!hasMain && i === 0);
+
+      // ─── 用 sharp 壓縮並轉為 JPEG（最寬 1920px，品質 82）───
+      const outName = `studio_${studioId}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.jpg`;
+      const outPath = path.join(UPLOAD_DIR, outName);
+      try {
+        await sharp(file.path)
+          .rotate()                          // 自動依 EXIF 旋轉
+          .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality: 82, progressive: true })
+          .toFile(outPath);
+      } catch (sharpErr) {
+        // 壓縮失敗時直接複製原檔
+        fs.copyFileSync(file.path, outPath);
+      } finally {
+        // 刪除暫存原檔
+        fs.unlink(file.path, () => {});
+      }
+
+      const outStat = fs.existsSync(outPath) ? fs.statSync(outPath).size : file.size;
+      const url     = `/uploads/studios/${outName}`;
       const [result] = await pool.query(
         `INSERT INTO studio_images (studio_id, filename, original, url, alt_text, sort_order, is_main, file_size)
          VALUES (?,?,?,?,?,?,?,?)`,
-        [studioId, file.filename, file.originalname, url,
-         req.body.alt_text || null, sortBase + i, isMain, file.size]
+        [studioId, outName, file.originalname, url,
+         req.body.alt_text || null, sortBase + i, isMain, outStat]
       );
       inserted.push({ id: result.insertId, url, is_main: isMain });
     }
