@@ -1102,7 +1102,7 @@
           const priceEl = heroRows[i].querySelector('[style*="rgba(255,255,255"]');
           if (priceEl) priceEl.textContent = `$${Number(s.hourly_rate||0).toLocaleString()} / 小時起`;
           const nameEl = heroRows[i].querySelector('.avail-dot + span');
-          if (nameEl && i > 0) nameEl.textContent = `${s.name}`;
+          if (nameEl) nameEl.textContent = s.name;
         }
       });
     } catch (e) {
