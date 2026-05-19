@@ -119,6 +119,27 @@
     }
     .studio-opt.selected .selected-check { display: flex; }
 
+    /* ─── SHOOTING TYPE SELECTOR ─────────── */
+    .type-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 640px) { .type-options { grid-template-columns: 1fr; } }
+    .type-opt {
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      padding: 24px 16px; cursor: pointer; transition: all .2s;
+      text-align: center; position: relative;
+    }
+    .type-opt:hover { border-color: var(--accent); background: rgba(176,125,90,.04); }
+    .type-opt.selected { border-color: var(--primary); background: rgba(26,26,26,.03); box-shadow: 0 0 0 1px var(--primary); }
+    .type-opt input[type=radio] { position: absolute; opacity: 0; pointer-events: none; }
+    .type-opt-icon { font-size: 2.4rem; margin-bottom: 12px; }
+    .type-opt-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; letter-spacing: 0.02em; }
+    .type-opt-desc { font-size: 0.75rem; color: var(--gray); font-weight: 300; line-height: 1.6; }
+    .type-opt.selected::after {
+      content: '✓'; position: absolute; top: 10px; right: 12px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--primary); color: #fff;
+      font-size: 11px; line-height: 20px; text-align: center;
+    }
+
     /* ─── CALENDAR ────────────────────────── */
     .calendar-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -315,18 +336,22 @@
   <div class="stepper">
     <div class="step active" id="stepper-1">
       <div class="step-circle">1</div>
-      <div class="step-label">選擇場地</div>
+      <div class="step-label">拍攝類型</div>
     </div>
     <div class="step" id="stepper-2">
       <div class="step-circle">2</div>
-      <div class="step-label">選擇時間</div>
+      <div class="step-label">選擇場地</div>
     </div>
     <div class="step" id="stepper-3">
       <div class="step-circle">3</div>
-      <div class="step-label">填寫資料</div>
+      <div class="step-label">選擇時間</div>
     </div>
     <div class="step" id="stepper-4">
       <div class="step-circle">4</div>
+      <div class="step-label">填寫資料</div>
+    </div>
+    <div class="step" id="stepper-5">
+      <div class="step-circle">5</div>
       <div class="step-label">付款</div>
     </div>
   </div>
@@ -338,21 +363,56 @@
   <!-- LEFT: PANELS -->
   <div>
 
-    <!-- ─── STEP 1: 選擇場地 ─────────────── -->
+    <!-- ─── STEP 1: 選擇拍攝類型 ─────────── -->
     <div class="card step-panel active" id="panel-1">
+      <div class="card-title"><span class="icon">🎯</span> 選擇拍攝類型</div>
+      <div class="type-options">
+        <label class="type-opt selected" id="type-opt-photo" onclick="selectShootingType('photo', this)">
+          <input type="radio" name="shooting_type" value="photo" checked />
+          <div class="type-opt-icon">📷</div>
+          <div class="type-opt-name">平面攝影</div>
+          <div class="type-opt-desc">商業攝影、個人寫真<br>服裝拍攝、產品攝影</div>
+        </label>
+        <label class="type-opt" id="type-opt-video" onclick="selectShootingType('video', this)">
+          <input type="radio" name="shooting_type" value="video" />
+          <div class="type-opt-icon">🎬</div>
+          <div class="type-opt-name">動態攝影</div>
+          <div class="type-opt-desc">MV 拍攝、廣告影片<br>YouTube、Podcast</div>
+        </label>
+        <label class="type-opt" id="type-opt-event" onclick="selectShootingType('event', this)">
+          <input type="radio" name="shooting_type" value="event" />
+          <div class="type-opt-icon">🎉</div>
+          <div class="type-opt-name">辦活動</div>
+          <div class="type-opt-desc">展覽、發表會<br>工作坊、小型活動</div>
+        </label>
+      </div>
+      <div class="step-nav">
+        <div></div>
+        <button class="btn-next" onclick="goStep(2)">下一步：選擇場地 →</button>
+      </div>
+    </div>
+
+    <!-- ─── STEP 2: 選擇場地 ─────────────── -->
+    <div class="card step-panel" id="panel-2">
       <div class="card-title"><span class="icon">🏠</span> 選擇場地</div>
+      <!-- 拍攝類型標籤 -->
+      <div id="selected-type-badge" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px 14px;background:var(--cream);border-radius:9px;border:1px solid var(--border);font-size:.85rem;">
+        <span id="type-badge-icon">📷</span>
+        <span>拍攝類型：<strong id="type-badge-name">平面攝影</strong></span>
+        <button onclick="goStep(1)" style="margin-left:auto;border:none;background:none;color:var(--accent);font-size:.8rem;cursor:pointer;padding:0;">變更</button>
+      </div>
       <!-- 動態場地選項（由 JS 產生） -->
       <div class="studio-options" id="studio-options">
         <div style="grid-column:1/-1;text-align:center;padding:24px;color:#aaa;">⏳ 載入場地中...</div>
       </div>
       <div class="step-nav">
-        <div></div>
-        <button class="btn-next" onclick="goStep(2)">下一步：選擇時間 →</button>
+        <button class="btn-prev" onclick="goStep(1)">← 返回</button>
+        <button class="btn-next" onclick="goStep(3)">下一步：選擇時間 →</button>
       </div>
     </div>
 
-    <!-- ─── STEP 2: 選擇日期與時間 ──────── -->
-    <div class="card step-panel" id="panel-2">
+    <!-- ─── STEP 3: 選擇日期與時間 ──────── -->
+    <div class="card step-panel" id="panel-3">
       <div class="card-title"><span class="icon">📅</span> 選擇日期與時間</div>
 
       <!-- Calendar -->
@@ -381,13 +441,13 @@
       </div>
 
       <div class="step-nav">
-        <button class="btn-prev" onclick="goStep(1)">← 返回</button>
-        <button class="btn-next" onclick="goStep(3)">下一步：填寫資料 →</button>
+        <button class="btn-prev" onclick="goStep(2)">← 返回</button>
+        <button class="btn-next" onclick="goStep(4)">下一步：填寫資料 →</button>
       </div>
     </div>
 
-    <!-- ─── STEP 3: 填寫資料 ──────────────── -->
-    <div class="card step-panel" id="panel-3">
+    <!-- ─── STEP 4: 填寫資料 ──────────────── -->
+    <div class="card step-panel" id="panel-4">
       <div class="card-title"><span class="icon">📝</span> 填寫預約資料</div>
 
       <div class="form-section">
@@ -407,21 +467,16 @@
           <div class="form-hint">預約確認信及發票將寄送至此信箱</div>
         </div>
         <div class="form-group">
-          <div class="form-label">拍攝類型 <span style="color:var(--accent);">*</span></div>
-          <select class="form-select" id="f-shooting-type" onchange="onShootingTypeChange()">
-            <option value="photo" id="shooting-photo">📷 平面攝影</option>
-            <option value="video" id="shooting-video">🎬 動態攝影</option>
-          </select>
-        </div>
-        <div class="form-group">
           <div class="form-label">拍攝用途</div>
-          <select class="form-select" id="f-purpose" onchange="onPurposeChange()">
+          <select class="form-select" id="f-purpose">
             <option value="">請選擇用途（可不填）</option>
             <option value="商業攝影">商業攝影</option>
             <option value="個人寫真">個人寫真</option>
             <option value="服裝拍攝">服裝拍攝</option>
             <option value="產品拍攝">產品拍攝</option>
             <option value="Podcast錄製">Podcast 錄製</option>
+            <option value="展覽發表">展覽發表</option>
+            <option value="工作坊">工作坊</option>
             <option value="其他">其他</option>
           </select>
         </div>
@@ -502,13 +557,13 @@
       </div>
 
       <div class="step-nav">
-        <button class="btn-prev" onclick="goStep(2)">← 返回</button>
-        <button class="btn-next" onclick="goStep(4)">下一步：確認付款 →</button>
+        <button class="btn-prev" onclick="goStep(3)">← 返回</button>
+        <button class="btn-next" onclick="goStep(5)">下一步：確認付款 →</button>
       </div>
     </div>
 
-    <!-- ─── STEP 4: 付款確認 ──────────────── -->
-    <div class="card step-panel" id="panel-4">
+    <!-- ─── STEP 5: 付款確認 ──────────────── -->
+    <div class="card step-panel" id="panel-5">
       <div class="card-title"><span class="icon">💳</span> 確認並付款</div>
 
       <!-- Order Review -->
@@ -562,7 +617,7 @@
       </div>
 
       <div class="step-nav">
-        <button class="btn-prev" onclick="goStep(3)">← 返回修改</button>
+        <button class="btn-prev" onclick="goStep(4)">← 返回修改</button>
         <button class="btn-submit" onclick="submitBooking()">🔐 確認並前往付款</button>
       </div>
       <div class="secure-badges" style="margin-top:16px;">
@@ -581,7 +636,7 @@
       <div class="summary-icon" id="sidebar-icon">📸</div>
       <div>
         <div class="summary-studio-name" id="sidebar-name">尚未選擇場地</div>
-        <div class="summary-studio-sub" id="sidebar-sub">請先選擇場地</div>
+        <div class="summary-studio-sub" id="sidebar-sub">請先選擇拍攝類型與場地</div>
       </div>
     </div>
     <div class="summary-row"><span>日期</span><span id="sb-date">—</span></div>
@@ -623,14 +678,37 @@
   const state = {
     studioId: null, studioName: '', studioRate: 0, studioMinHours: 2,
     photoRate: 0, videoRate: 0,  // 從 DB 讀取的費率
-    shootingType: 'photo',       // 'photo' | 'video'
-    effectiveRate: 0,  // 依用途調整後的實際費率
+    shootingType: 'photo',       // 'photo' | 'video' | 'event'
+    effectiveRate: 0,  // 依類型決定的實際費率
     date: null, startHour: null, duration: 2,
     promo: null,       // 套用中的優惠方案物件
     discountAmount: 0, // 折抵金額
   };
+
+  // ─── 拍攝類型設定 ──────────────────────────
+  const TYPE_CONFIG = {
+    photo: { icon: '📷', name: '平面攝影' },
+    video: { icon: '🎬', name: '動態攝影' },
+    event: { icon: '🎉', name: '辦活動' },
+  };
   let availableSlots = []; // 由 API 回傳
   let bookedSlots    = []; // 由 API 回傳
+
+  // ─── 依拍攝類型取得場地費率 ──────────────────
+  function getStudioRate(s) {
+    if (state.shootingType === 'video' && s.video_rate) return +s.video_rate;
+    if (state.shootingType === 'photo' && s.photo_rate) return +s.photo_rate;
+    return +s.hourly_rate; // event 或 fallback
+  }
+
+  // ─── 選擇拍攝類型 ─────────────────────────
+  function selectShootingType(type, el) {
+    state.shootingType = type;
+    document.querySelectorAll('.type-opt').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    // 若場地已快取，重新渲染以更新費率顯示
+    if (window._studiosData) renderStudios(window._studiosData);
+  }
 
   // ─── 動態載入場地 ──────────────────────────
   const EMOJIS_BK = ['📸','🎬','🎭','🌟','🏠'];
@@ -639,31 +717,8 @@
       const r = await fetch('/api/studios');
       if (!r.ok) throw new Error();
       const { data: studios } = await r.json();
-      const container = document.getElementById('studio-options');
-      if (!studios || studios.length === 0) {
-        container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#aaa;">目前無可用場地，請稍後再試</div>';
-        return;
-      }
-      container.innerHTML = studios.map((s, i) => {
-        const desc = [
-          s.size_sqm   ? `${s.size_sqm}坪` : '',
-          s.capacity   ? `最多${s.capacity}人` : '',
-          s.min_hours  ? `最少${s.min_hours}小時` : '',
-        ].filter(Boolean).join(' · ');
-        return `
-          <label class="studio-opt" onclick="selectStudio(${s.id}, this)" id="opt-${s.id}">
-            <input type="radio" name="studio" value="${s.id}" />
-            <div class="selected-check">✓</div>
-            <div class="studio-opt-header">
-              <div class="studio-opt-name">${s.name}</div>
-              <span class="studio-opt-badge${i > 0 ? ' b' : ''}">${s.name_en || ''}</span>
-            </div>
-            <div class="studio-opt-desc">${desc || s.description || ''}</div>
-            <div class="studio-opt-price">$${Number(s.hourly_rate||0).toLocaleString()} / 小時</div>
-          </label>`;
-      }).join('');
-
-      window._studiosData = studios; // 快取（必須在 selectStudio 之前設定）
+      window._studiosData = studios; // 快取
+      renderStudios(studios);
 
       // URL 參數預選場地
       const preId = new URLSearchParams(location.search).get('studio');
@@ -675,6 +730,34 @@
       document.getElementById('studio-options').innerHTML =
         '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#e94560;">⚠️ 無法載入場地，請確認後端服務是否啟動</div>';
     }
+  }
+
+  function renderStudios(studios) {
+    const container = document.getElementById('studio-options');
+    if (!studios || studios.length === 0) {
+      container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#aaa;">目前無可用場地，請稍後再試</div>';
+      return;
+    }
+    container.innerHTML = studios.map((s, i) => {
+      const desc = [
+        s.size_sqm   ? `${s.size_sqm}坪` : '',
+        s.capacity   ? `最多${s.capacity}人` : '',
+        s.min_hours  ? `最少${s.min_hours}小時` : '',
+      ].filter(Boolean).join(' · ');
+      const displayRate = getStudioRate(s);
+      const isSelected  = state.studioId === s.id;
+      return `
+        <label class="studio-opt${isSelected ? ' selected' : ''}" onclick="selectStudio(${s.id}, this)" id="opt-${s.id}">
+          <input type="radio" name="studio" value="${s.id}"${isSelected ? ' checked' : ''} />
+          <div class="selected-check">✓</div>
+          <div class="studio-opt-header">
+            <div class="studio-opt-name">${s.name}</div>
+            <span class="studio-opt-badge${i > 0 ? ' b' : ''}">${s.name_en || ''}</span>
+          </div>
+          <div class="studio-opt-desc">${desc || s.description || ''}</div>
+          <div class="studio-opt-price">$${displayRate.toLocaleString()} / 小時</div>
+        </label>`;
+    }).join('');
   }
 
   function selectStudio(id, el) {
@@ -689,9 +772,6 @@
     state.videoRate   = s && s.video_rate ? +s.video_rate : 0;
     state.studioMinHours = s ? (+s.min_hours || 2) : 2;
     state.duration    = Math.max(state.duration, state.studioMinHours);
-    // 更新拍攝類型選項的費率顯示
-    updateShootingTypeOptions();
-    // 重新計算含用途加成的費率
     recalcRate();
     document.getElementById('duration-val').textContent = `${state.duration} 小時`;
     updateSidebar();
@@ -699,55 +779,17 @@
     document.getElementById('sidebar-name').textContent = state.studioName;
     document.getElementById('sidebar-sub').textContent  = `NT$ ${state.effectiveRate.toLocaleString()} / 小時`;
     document.getElementById('sb-rate').textContent      = `NT$ ${state.effectiveRate.toLocaleString()}`;
-    // 若已選日期，重新載入時段
     if (state.date) loadAvailability();
   }
 
-  // ─── 拍攝類型費率更新 ────────────────────────
-  function updateShootingTypeOptions() {
-    const photoOpt = document.getElementById('shooting-photo');
-    const videoOpt = document.getElementById('shooting-video');
-    if (photoOpt && state.photoRate) {
-      photoOpt.textContent = `📷 平面攝影 － NT$${state.photoRate.toLocaleString()} / 小時`;
-    }
-    if (videoOpt) {
-      if (state.videoRate) {
-        videoOpt.textContent = `🎬 動態攝影 － NT$${state.videoRate.toLocaleString()} / 小時`;
-        videoOpt.style.display = '';
-      } else {
-        videoOpt.style.display = 'none';
-      }
-    }
-  }
-
-  function onShootingTypeChange() {
-    state.shootingType = document.getElementById('f-shooting-type')?.value || 'photo';
-    recalcRate();
-    updateSidebar();
-  }
-
-  // ─── 用途費率計算 ────────────────────────────
+  // ─── 費率計算（依拍攝類型）────────────────────
   function recalcRate() {
-    if (state.shootingType === 'video' && state.videoRate) {
-      state.effectiveRate = state.videoRate;
-    } else {
-      state.effectiveRate = state.photoRate || state.studioRate;
+    if (state.studioId && window._studiosData) {
+      const s = window._studiosData.find(x => x.id === state.studioId);
+      if (s) { state.effectiveRate = getStudioRate(s); return; }
     }
-  }
-
-  function onPurposeChange() {
-    recalcRate();
-    const purpose = document.getElementById('f-purpose').value;
-    const noteEl  = document.getElementById('purpose-rate-note');
-    if (purpose === '影片拍攝') {
-      noteEl.style.display = '';
-      noteEl.textContent   = `💡 影片拍攝費率為 NT$${VIDEO_RATE.toLocaleString()} / 小時`;
-    } else {
-      noteEl.style.display = 'none';
-    }
-    document.getElementById('sidebar-sub').textContent = `NT$ ${state.effectiveRate.toLocaleString()} / 小時`;
-    document.getElementById('sb-rate').textContent     = `NT$ ${state.effectiveRate.toLocaleString()}`;
-    updateSidebar();
+    // fallback：無場地時
+    state.effectiveRate = state.studioRate || 0;
   }
 
   // ─── CALENDAR ──────────────────────────────
@@ -886,25 +928,32 @@
 
   // ─── STEP NAVIGATION ─────────────────────────
   function goStep(n) {
-    if (n === 2 && !state.studioId) { alert('請先選擇場地'); return; }
-    if (n === 3 && (!state.date || state.startHour === null)) { alert('請先選擇日期與開始時間'); return; }
+    if (n === 3 && !state.studioId)  { alert('請先選擇場地'); return; }
+    if (n === 4 && (!state.date || state.startHour === null)) { alert('請先選擇日期與開始時間'); return; }
     document.querySelectorAll('.step-panel').forEach((p, i) => p.classList.toggle('active', i === n - 1));
     document.querySelectorAll('.step').forEach((s, i) => {
       s.classList.remove('active', 'done');
       if (i < n - 1) s.classList.add('done');
       if (i === n - 1) s.classList.add('active');
     });
-    if (n === 2) { renderCalendar(); renderTimeSlots(); }
-    if (n === 4) fillConfirm();
+    // 進入場地選擇時，更新類型標籤並重新渲染場地費率
+    if (n === 2) {
+      const cfg = TYPE_CONFIG[state.shootingType] || TYPE_CONFIG.photo;
+      document.getElementById('type-badge-icon').textContent = cfg.icon;
+      document.getElementById('type-badge-name').textContent = cfg.name;
+      if (window._studiosData) renderStudios(window._studiosData);
+    }
+    if (n === 3) { renderCalendar(); renderTimeSlots(); }
+    if (n === 5) fillConfirm();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   // ─── FILL CONFIRM ─────────────────────────────
   function fillConfirm() {
     const months2 = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-    const purpose = document.getElementById('f-purpose')?.value || '';
     recalcRate();
-    document.getElementById('confirm-studio').textContent = state.studioName || '—';
+    const cfg = TYPE_CONFIG[state.shootingType] || TYPE_CONFIG.photo;
+    document.getElementById('confirm-studio').textContent = `${state.studioName || '—'}　${cfg.icon} ${cfg.name}`;
     const sd = state.date;
     document.getElementById('confirm-date').textContent = sd ? `${sd.y}年${months2[sd.m]}${sd.d}日` : '—';
     document.getElementById('confirm-time').textContent  = state.startHour !== null ? `${state.startHour}:00 – ${state.startHour + state.duration}:00` : '—';
@@ -918,13 +967,13 @@
     state.discountAmount = disc;
     const total   = Math.max(0, subtotal - disc);
     document.getElementById('confirm-total').textContent = `NT$ ${total.toLocaleString()}`;
-    // 顯示費率備注（影片拍攝加成時）
+    // 費率備注（顯示拍攝類型與費率）
     const rateNote = document.getElementById('confirm-rate-note');
     if (rateNote) {
-      rateNote.style.display = purpose === '影片拍攝' ? '' : 'none';
-      rateNote.textContent   = purpose === '影片拍攝' ? `🎬 影片拍攝費率 NT$${rate.toLocaleString()}/hr` : '';
+      rateNote.style.display = '';
+      rateNote.textContent   = `${cfg.icon} ${cfg.name}費率 NT$${rate.toLocaleString()}/hr`;
     }
-    // 顯示折扣備注
+    // 折扣備注
     const discRow = document.getElementById('confirm-discount-row');
     if (discRow) {
       if (state.promo && disc > 0) {
@@ -1074,6 +1123,7 @@
     const start_time   = `${String(state.startHour).padStart(2,'0')}:00`;
     const purpose      = document.getElementById('f-purpose').value;
     const note         = document.getElementById('f-note').value.trim();
+    const shooting_type = state.shootingType;
     recalcRate();
     const rate         = state.effectiveRate || state.studioRate;
     const subtotal     = rate * state.duration;
@@ -1109,6 +1159,7 @@
           duration_hours: state.duration,
           contact_name: name, contact_phone: phone, contact_email: email,
           purpose, note,
+          shooting_type,
           payment_method: pm,
           need_invoice: document.getElementById('invoice-toggle')?.classList.contains('active') ? 1 : 0,
           promo_code:   state.promo?.promo_code || null,
