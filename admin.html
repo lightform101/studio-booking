@@ -342,6 +342,9 @@
     <button class="sb-item" onclick="showPage('studios', this)">
       <span class="icon">🏠</span> 場地設定
     </button>
+    <button class="sb-item" onclick="showPage('photos', this)">
+      <span class="icon">📷</span> 場地照片
+    </button>
     <button class="sb-item" onclick="showPage('promotions', this)">
       <span class="icon">🎁</span> 優惠方案
     </button>
@@ -658,6 +661,13 @@
       <div class="card" style="margin-top:20px;">
         <div class="card-header"><h3>💳 付款方式分佈</h3></div>
         <div class="card-body" id="revenue-payment"><div style="color:#aaa;padding:20px;text-align:center;">載入中...</div></div>
+      </div>
+    </div>
+
+    <!-- ═══ PHOTO MANAGER ═══════════════════════ -->
+    <div class="page" id="page-photos">
+      <div id="photo-mgr-content">
+        <div style="text-align:center;padding:60px;color:#aaa;">⏳ 載入中...</div>
       </div>
     </div>
 
@@ -1553,9 +1563,10 @@
   // ═══════════════════════════════════════════════
   const titles = {
     dashboard: '📊 儀表板', bookings: '📅 預約管理', calendar: '🗓 排程日曆',
-    revenue: '💰 收入報表', studios: '🏠 場地設定', promotions: '🎁 優惠方案',
-    notify: '🔔 通知設定', invoice: '🧾 發票設定', system: '⚙️ 系統設定',
-    appearance: '🎨 外觀設定', content: '📝 頁面內容', admins: '👤 帳號管理'
+    revenue: '💰 收入報表', studios: '🏠 場地設定', photos: '📷 場地照片',
+    promotions: '🎁 優惠方案', notify: '🔔 通知設定', invoice: '🧾 發票設定',
+    system: '⚙️ 系統設定', appearance: '🎨 外觀設定', content: '📝 頁面內容',
+    admins: '👤 帳號管理'
   };
 
   // 屬於「系統設定」子選單的頁面 ID
@@ -1601,6 +1612,7 @@
     if (id === 'calendar')   { initCalendarStudios().then(() => loadCalendarData()); }
     if (id === 'bookings')   { loadBookings(); loadStudiosForFilter(); }
     if (id === 'studios')    loadStudioList();
+    if (id === 'photos')     loadPhotoManager();
     if (id === 'revenue')    loadRevenue();
     if (id === 'content')    loadPageContent();
     if (id === 'admins')     loadAdmins();
@@ -2122,6 +2134,55 @@
   const API = '/api';
   let adminToken = localStorage.getItem('adminToken') || '';
   let currentStudioId = null;
+
+  // ─── 場地照片管理頁 ───────────────────────────
+  async function loadPhotoManager() {
+    const container = document.getElementById('photo-mgr-content');
+    container.innerHTML = '<div style="text-align:center;padding:60px;color:#aaa;">⏳ 載入中...</div>';
+    try {
+      const r = await fetch(`${API}/admin/studios`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+      const { success, data: studios } = await r.json();
+      if (!success || !studios || studios.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:60px;color:#aaa;">目前無場地資料</div>';
+        return;
+      }
+      container.innerHTML = studios.map(s => `
+        <div style="margin-bottom:36px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+            <div>
+              <span style="font-weight:700;font-size:1rem;">${s.name}</span>
+              ${s.name_en ? `<span style="font-size:.75rem;color:var(--gray);margin-left:8px;">${s.name_en}</span>` : ''}
+            </div>
+            <a href="gallery.html?studio=${s.id}" target="_blank"
+              style="font-size:.8rem;color:var(--accent);text-decoration:none;">↗ 查看相簿</a>
+          </div>
+          <!-- 上傳區 -->
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
+            <label style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:var(--accent);color:#fff;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;">
+              ＋ 上傳照片
+              <input type="file" multiple accept="image/*" style="display:none;"
+                onchange="uploadImages(${s.id}, this)" />
+            </label>
+            <div id="uploadProgress_${s.id}" style="display:none;flex:1;">
+              <div style="background:#eee;border-radius:4px;height:6px;overflow:hidden;">
+                <div id="uploadBar_${s.id}" style="background:var(--accent);height:100%;width:0;transition:width .3s;"></div>
+              </div>
+              <div id="uploadStatus_${s.id}" style="font-size:.75rem;color:var(--gray);margin-top:4px;"></div>
+            </div>
+          </div>
+          <!-- 照片格子 -->
+          <div id="imgGrid_${s.id}"
+            style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;">
+            <div style="text-align:center;padding:24px;color:#aaa;font-size:.8rem;">⏳ 載入照片...</div>
+          </div>
+        </div>`).join('');
+
+      // 載入每個場地的照片
+      studios.forEach(s => loadImages(s.id));
+    } catch(e) {
+      container.innerHTML = '<div style="text-align:center;padding:60px;color:#e94560;">⚠️ 無法載入場地資料</div>';
+    }
+  }
 
   // ─── 載入場地列表並渲染 Tab ───────────────────
   async function loadStudioList() {

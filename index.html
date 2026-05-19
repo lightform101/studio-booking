@@ -183,24 +183,49 @@
       font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em;
       background: var(--primary); color: #fff; padding: 4px 12px; border-radius: 5px;
     }
-    .availability-row {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-top: 12px; padding: 12px 0; border-top: 1px solid var(--border);
+    /* Studio photo cards in hero */
+    .studio-photo-cards {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin-top: 16px;
     }
-    .avail-dot {
-      display: inline-block; width: 7px; height: 7px;
-      border-radius: 50%; margin-right: 7px;
+    .studio-photo-card {
+      position: relative; border-radius: 12px; overflow: hidden;
+      aspect-ratio: 4/3; display: block; text-decoration: none;
+      background: var(--cream); cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
     }
-    .avail-dot.green { background: #5A9E6B; }
-    .avail-dot.red { background: #C0554A; }
-    .quick-book-btn {
-      background: var(--primary); color: #fff;
-      border: none; border-radius: 7px;
-      padding: 7px 16px; font-size: 0.8rem; font-weight: 600;
-      cursor: pointer; transition: opacity .2s;
-      letter-spacing: 0.02em;
+    .studio-photo-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.15); }
+    .studio-photo-card img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform .3s;
     }
-    .quick-book-btn:hover { opacity: 0.8; }
+    .studio-photo-card:hover img { transform: scale(1.04); }
+    .studio-photo-card .card-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem; background: linear-gradient(135deg, var(--cream), #E8E0D6);
+    }
+    .studio-photo-card .card-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,.65));
+    }
+    .studio-photo-card .card-info {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 10px 12px; color: #fff;
+    }
+    .studio-photo-card .card-name {
+      font-size: .8rem; font-weight: 700; letter-spacing: .02em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .studio-photo-card .card-price {
+      font-size: .7rem; opacity: .8; margin-top: 2px;
+    }
+    .studio-photo-card .card-badge {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(255,255,255,.18); backdrop-filter: blur(4px);
+      color: #fff; font-size: .65rem; font-weight: 600;
+      padding: 3px 8px; border-radius: 5px; letter-spacing: .04em;
+    }
 
     /* ─── SECTION ─────────────────────────── */
     section { padding: 96px 5%; }
@@ -534,26 +559,21 @@
     </div>
     <div class="hero-visual">
       <div class="hero-card-main">
-        <div class="studio-preview studio-img-a">
-          📷
-          <span class="studio-preview-label">Studio A · 攝影棚甲</span>
-        </div>
-        <div class="availability-row">
-          <div>
-            <span class="avail-dot green"></span>
-            <span style="font-size:.85rem">今日尚有空檔</span>
+        <div style="font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:10px;">📷 場地相簿</div>
+        <div class="studio-photo-cards" id="hero-photo-cards">
+          <!-- 由 JS 動態產生 -->
+          <div class="studio-photo-card">
+            <div class="card-placeholder">📷</div>
+            <div class="card-overlay"></div>
+            <div class="card-info"><div class="card-name">載入中...</div></div>
           </div>
-          <span style="font-size:.82rem;color:rgba(255,255,255,.5)">$800 / 小時起</span>
-          <button class="quick-book-btn" onclick="location.href='booking.html?studio=A'">快速預約</button>
-        </div>
-        <div class="availability-row">
-          <div>
-            <span class="avail-dot green"></span>
-            <span style="font-size:.85rem">Studio B · 攝影棚乙</span>
+          <div class="studio-photo-card">
+            <div class="card-placeholder">🎬</div>
+            <div class="card-overlay"></div>
+            <div class="card-info"><div class="card-name">載入中...</div></div>
           </div>
-          <span style="font-size:.82rem;color:rgba(255,255,255,.5)">$600 / 小時起</span>
-          <button class="quick-book-btn" onclick="location.href='booking.html?studio=B'">快速預約</button>
         </div>
+        <div style="margin-top:14px;font-size:.72rem;color:var(--gray);text-align:center;letter-spacing:.02em;">點擊照片查看相簿 · 可直接預約</div>
       </div>
     </div>
   </div>
@@ -1093,18 +1113,28 @@
         }
       });
 
-      // 更新 Hero 快速預約按鈕
-      const heroRows = document.querySelectorAll('.availability-row');
-      studios.forEach((s, i) => {
-        if (heroRows[i]) {
-          const btn = heroRows[i].querySelector('.quick-book-btn');
-          if (btn) btn.onclick = () => location.href = `booking.html?studio=${s.id}`;
-          const priceEl = heroRows[i].querySelector('[style*="rgba(255,255,255"]');
-          if (priceEl) priceEl.textContent = `$${Number(s.hourly_rate||0).toLocaleString()} / 小時起`;
-          const nameEl = heroRows[i].querySelector('.avail-dot + span');
-          if (nameEl) nameEl.textContent = s.name;
-        }
-      });
+      // 更新 Hero 場地照片卡
+      const heroContainer = document.getElementById('hero-photo-cards');
+      if (heroContainer) {
+        const PLACEHOLDERS = ['📷','🎬','🎭','🌟'];
+        heroContainer.innerHTML = studios.slice(0, 4).map((s, i) => {
+          const mainImg = s.images && s.images.find(img => img.is_main) || (s.images && s.images[0]);
+          const rate    = s.photo_rate || s.hourly_rate || 0;
+          const imgHtml = mainImg
+            ? `<img src="${mainImg.url}" alt="${s.name}" loading="lazy" />`
+            : `<div class="card-placeholder">${PLACEHOLDERS[i % PLACEHOLDERS.length]}</div>`;
+          return `
+            <a class="studio-photo-card" href="gallery.html?studio=${s.id}" title="查看 ${s.name} 相簿">
+              ${imgHtml}
+              <div class="card-overlay"></div>
+              ${s.name_en ? `<div class="card-badge">${s.name_en}</div>` : ''}
+              <div class="card-info">
+                <div class="card-name">${s.name}</div>
+                <div class="card-price">$${Number(rate).toLocaleString()} / 小時起 · 點擊查看相簿</div>
+              </div>
+            </a>`;
+        }).join('');
+      }
     } catch (e) {
       // 後端未啟動時保持預設佔位
     }
