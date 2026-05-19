@@ -407,6 +407,13 @@
           <div class="form-hint">預約確認信及發票將寄送至此信箱</div>
         </div>
         <div class="form-group">
+          <div class="form-label">拍攝類型 <span style="color:var(--accent);">*</span></div>
+          <select class="form-select" id="f-shooting-type" onchange="onShootingTypeChange()">
+            <option value="photo" id="shooting-photo">📷 平面攝影</option>
+            <option value="video" id="shooting-video">🎬 動態攝影</option>
+          </select>
+        </div>
+        <div class="form-group">
           <div class="form-label">拍攝用途</div>
           <select class="form-select" id="f-purpose" onchange="onPurposeChange()">
             <option value="">請選擇用途（可不填）</option>
@@ -414,11 +421,9 @@
             <option value="個人寫真">個人寫真</option>
             <option value="服裝拍攝">服裝拍攝</option>
             <option value="產品拍攝">產品拍攝</option>
-            <option value="影片拍攝">影片拍攝 🎬（費率 NT$1,200/hr）</option>
             <option value="Podcast錄製">Podcast 錄製</option>
             <option value="其他">其他</option>
           </select>
-          <div id="purpose-rate-note" style="display:none;margin-top:6px;padding:8px 12px;background:#fff8e1;border:1px solid #ffe082;border-radius:6px;font-size:.83rem;color:#b8860b;"></div>
         </div>
         <div class="form-group">
           <div class="form-label">備注</div>
@@ -615,11 +620,10 @@
   })();
 
   // ─── STATE ─────────────────────────────────
-  const VIDEO_RATE = 1200;  // 影片拍攝固定費率
-  const PURPOSE_RATES = { '影片拍攝': VIDEO_RATE };
-
   const state = {
     studioId: null, studioName: '', studioRate: 0, studioMinHours: 2,
+    photoRate: 0, videoRate: 0,  // 從 DB 讀取的費率
+    shootingType: 'photo',       // 'photo' | 'video'
     effectiveRate: 0,  // 依用途調整後的實際費率
     date: null, startHour: null, duration: 2,
     promo: null,       // 套用中的優惠方案物件
@@ -681,8 +685,12 @@
     state.studioId    = id;
     state.studioName  = s ? s.name : `場地 ${id}`;
     state.studioRate  = s ? +s.hourly_rate : 0;
+    state.photoRate   = s && s.photo_rate ? +s.photo_rate : (s ? +s.hourly_rate : 0);
+    state.videoRate   = s && s.video_rate ? +s.video_rate : 0;
     state.studioMinHours = s ? (+s.min_hours || 2) : 2;
     state.duration    = Math.max(state.duration, state.studioMinHours);
+    // 更新拍攝類型選項的費率顯示
+    updateShootingTypeOptions();
     // 重新計算含用途加成的費率
     recalcRate();
     document.getElementById('duration-val').textContent = `${state.duration} 小時`;
@@ -695,11 +703,36 @@
     if (state.date) loadAvailability();
   }
 
+  // ─── 拍攝類型費率更新 ────────────────────────
+  function updateShootingTypeOptions() {
+    const photoOpt = document.getElementById('shooting-photo');
+    const videoOpt = document.getElementById('shooting-video');
+    if (photoOpt && state.photoRate) {
+      photoOpt.textContent = `📷 平面攝影 － NT$${state.photoRate.toLocaleString()} / 小時`;
+    }
+    if (videoOpt) {
+      if (state.videoRate) {
+        videoOpt.textContent = `🎬 動態攝影 － NT$${state.videoRate.toLocaleString()} / 小時`;
+        videoOpt.style.display = '';
+      } else {
+        videoOpt.style.display = 'none';
+      }
+    }
+  }
+
+  function onShootingTypeChange() {
+    state.shootingType = document.getElementById('f-shooting-type')?.value || 'photo';
+    recalcRate();
+    updateSidebar();
+  }
+
   // ─── 用途費率計算 ────────────────────────────
   function recalcRate() {
-    const purpose = document.getElementById('f-purpose')?.value || '';
-    const purposeRate = PURPOSE_RATES[purpose] || 0;
-    state.effectiveRate = Math.max(state.studioRate, purposeRate);
+    if (state.shootingType === 'video' && state.videoRate) {
+      state.effectiveRate = state.videoRate;
+    } else {
+      state.effectiveRate = state.photoRate || state.studioRate;
+    }
   }
 
   function onPurposeChange() {
