@@ -2341,11 +2341,10 @@
         </div>
         <div id="imgGrid_${sid}"
           style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;">
-          <div style="border:2px dashed #d0d4db;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;height:130px;color:#aaa;cursor:pointer;"
-            onclick="document.getElementById('upload_${sid}').click()">
+          <label for="upload_${sid}" style="border:2px dashed #d0d4db;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;height:130px;color:#aaa;cursor:pointer;">
             <div style="font-size:2rem;">📷</div>
             <div style="font-size:.8rem;margin-top:6px;">點此上傳</div>
-          </div>
+          </label>
         </div>
         <input type="file" id="upload_${sid}" multiple accept="image/*" style="display:none;"
           onchange="uploadImages(${sid}, this)" />
@@ -2500,11 +2499,10 @@
     if (!grid) return;
 
     const placeholder = `
-      <div style="border:2px dashed #d0d4db;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;height:130px;color:#aaa;cursor:pointer;"
-        onclick="document.getElementById('upload_${studioId}').click()">
+      <label for="upload_${studioId}" style="border:2px dashed #d0d4db;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;height:130px;color:#aaa;cursor:pointer;">
         <div style="font-size:2rem;">📷</div>
         <div style="font-size:.8rem;margin-top:6px;">點此上傳</div>
-      </div>`;
+      </label>`;
 
     if (!images || images.length === 0) {
       grid.innerHTML = placeholder;
