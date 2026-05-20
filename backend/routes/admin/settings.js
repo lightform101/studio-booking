@@ -129,20 +129,16 @@ router.post('/test-ttlock', async (req, res) => {
 
     // 3. 測試取得 Token
     report.push('--- 測試 TTLock API Token ---');
-    const { createPasscode } = TTLockSvc;
-    // 直接測試取 token（不建立密碼）
     const crypto = require('crypto');
+    const axios  = require('axios');
+    const qs     = require('querystring');
     const md5 = str => crypto.createHash('md5').update(str).digest('hex');
-    const params = new URLSearchParams({
-      client_id: clientId, client_secret: clientSec,
-      grant_type: 'password', username, password: md5(password),
-    });
-    const tokenResp = await fetch('https://euapi.ttlock.com/oauth2/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString(),
-    });
-    const tokenData = await tokenResp.json();
+    const tokenResp = await axios.post(
+      'https://euapi.ttlock.com/oauth2/token',
+      qs.stringify({ client_id: clientId, client_secret: clientSec, grant_type: 'password', username, password: md5(password) }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+    const tokenData = tokenResp.data;
     if (tokenData.access_token) {
       report.push(`✅ Token 取得成功（${tokenData.access_token.slice(0,10)}...）`);
     } else {
