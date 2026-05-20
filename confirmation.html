@@ -273,8 +273,8 @@
     <a href="#" class="btn-outline">📋 查看我的預約</a>
   </div>
   <div style="text-align:center;margin-top:16px;font-size:.82rem;color:var(--gray);">
-    如需修改或取消預約，請於使用前 48 小時前聯絡客服<br />
-    📧 contact@studiospace.tw ｜ 📞 02-XXXX-XXXX
+    如需修改或取消預約，請於使用前 48 小時前聯絡我們<br />
+    📧 <span id="conf-contact-email">uiestudio123@gmail.com</span>
   </div>
 
 </div>
@@ -301,9 +301,13 @@
       if (ap.theme_border_radius) root.style.setProperty('--radius',  ap.theme_border_radius + 'px');
       if (ap.theme_font) document.body.style.fontFamily = `'${ap.theme_font}', sans-serif`;
       if (ap.site_name) {
-        document.getElementById('nav-site-name').textContent  = ap.site_name;
+        document.getElementById('nav-site-name').textContent    = ap.site_name;
         document.getElementById('footer-site-name').textContent = ap.site_name;
         document.title = `預約成功 · ${ap.site_name}`;
+      }
+      if (ap.contact_email) {
+        const el = document.getElementById('conf-contact-email');
+        if (el) el.textContent = ap.contact_email;
       }
     } catch(e) { /* 外觀載入失敗不影響主功能 */ }
   })();
