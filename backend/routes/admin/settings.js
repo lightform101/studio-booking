@@ -127,23 +127,42 @@ router.post('/test-ttlock', async (req, res) => {
       report.push(`場地 "${s.name}": lock_id = ${s.ttlock_lock_id || '❌ 未設定'}`);
     });
 
-    // 3. 測試取得 Token
+    // 3. 測試取得 Token（同時測試兩個節點）
     report.push('--- 測試 TTLock API Token ---');
     const crypto = require('crypto');
     const axios  = require('axios');
     const qs     = require('querystring');
     const md5 = str => crypto.createHash('md5').update(str).digest('hex');
-    const tokenResp = await axios.post(
+    const tokenPayload = qs.stringify({
+      client_id: clientId, client_secret: clientSec,
+      grant_type: 'password', username, password: md5(password)
+    });
+    const endpoints = [
       'https://euapi.ttlock.com/oauth2/token',
-      qs.stringify({ client_id: clientId, client_secret: clientSec, grant_type: 'password', username, password: md5(password) }),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    );
-    const tokenData = tokenResp.data;
-    if (tokenData.access_token) {
-      report.push(`✅ Token 取得成功（${tokenData.access_token.slice(0,10)}...）`);
-    } else {
-      report.push(`❌ Token 取得失敗: ${JSON.stringify(tokenData)}`);
+      'https://api.ttlock.com/oauth2/token',
+    ];
+    let tokenSuccess = false;
+    for (const url of endpoints) {
+      try {
+        report.push(`嘗試: ${url}`);
+        const tokenResp = await axios.post(url, tokenPayload,
+          { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
+        );
+        const tokenData = tokenResp.data;
+        if (tokenData.access_token) {
+          report.push(`✅ Token 取得成功！請使用此節點: ${url}`);
+          tokenSuccess = true;
+          break;
+        } else {
+          report.push(`❌ 回應: ${JSON.stringify(tokenData)}`);
+        }
+      } catch(e) {
+        const status = e.response?.status;
+        const body   = JSON.stringify(e.response?.data)?.slice(0, 200);
+        report.push(`❌ ${status || e.message} → ${body || ''}`);
+      }
     }
+    if (!tokenSuccess) report.push('❌ 兩個節點均失敗');
 
     res.json({ success: true, report: report.join('\n') });
   } catch (e) {
