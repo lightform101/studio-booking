@@ -164,7 +164,7 @@ router.post('/test-ttlock', async (req, res) => {
     }
     if (!tokenSuccess) { report.push('❌ 兩個節點均失敗'); }
     else {
-      // 4. 查詢帳號下的鎖清單
+      // 4. 查詢帳號下的鎖清單（GET + query params）
       try {
         report.push('--- 查詢鎖清單 ---');
         const tokenResp2 = await axios.post(
@@ -174,18 +174,24 @@ router.post('/test-ttlock', async (req, res) => {
         );
         const token = tokenResp2.data.access_token;
         const now = Date.now();
-        // 用 POST + form 格式送出（部分 TTLock 節點不接受 GET params）
-        const lockResp = await axios.post(
+        // TTLock v3 鎖清單用 GET + query string
+        const lockResp = await axios.get(
           'https://euapi.ttlock.com/v3/lock/list',
-          qs.stringify({ clientId, accessToken: token, pageNum: 1, pageSize: 20, date: now }),
-          { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
+          {
+            params: { clientId, accessToken: token, pageNum: 1, pageSize: 20, date: now },
+            timeout: 8000
+          }
         );
         const lockData = lockResp.data;
         report.push(`raw: ${JSON.stringify(lockData).slice(0, 500)}`);
-        if (lockData.list && lockData.list.length > 0) {
+        if (Array.isArray(lockData.list) && lockData.list.length > 0) {
           lockData.list.forEach(l => {
             report.push(`🔑 ${l.lockName} → lockId=${l.lockId} MAC=${l.lockMac}`);
           });
+        } else if (lockData.errcode) {
+          report.push(`❌ API 錯誤 ${lockData.errcode}: ${lockData.errmsg}`);
+        } else {
+          report.push(`ℹ️ 帳號下無鎖具（${JSON.stringify(lockData).slice(0,200)}）`);
         }
       } catch(e) {
         const errBody = e.response?.data;
