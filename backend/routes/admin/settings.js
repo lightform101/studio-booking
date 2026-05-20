@@ -107,7 +107,21 @@ router.post('/test-ttlock', async (req, res) => {
       return res.json({ success: false, report: report.join('\n'), message: '環境變數未設定完整' });
     }
 
-    // 2. 檢查場地 lock_id
+    // 2. 確保欄位存在（直接 ALTER TABLE，若已存在則略過）
+    const colChecks = [
+      `ALTER TABLE studios  ADD COLUMN ttlock_lock_id    BIGINT      DEFAULT NULL COMMENT 'TTLock Lock ID'`,
+      `ALTER TABLE bookings ADD COLUMN ttlock_passcode   VARCHAR(20) DEFAULT NULL COMMENT 'TTLock 臨時密碼'`,
+      `ALTER TABLE bookings ADD COLUMN ttlock_passcode_id BIGINT     DEFAULT NULL COMMENT 'TTLock keyboardPwdId'`,
+    ];
+    for (const sql of colChecks) {
+      try { await pool.query(sql); report.push(`✅ 欄位已建立: ${sql.match(/ADD COLUMN (\w+)/)[1]}`); }
+      catch(e) {
+        if (e.code === 'ER_DUP_FIELDNAME') report.push(`⏭ 欄位已存在: ${sql.match(/ADD COLUMN (\w+)/)[1]}`);
+        else throw e;
+      }
+    }
+
+    // 3. 顯示場地 lock_id
     const [studios] = await pool.query('SELECT id, name, ttlock_lock_id FROM studios');
     studios.forEach(s => {
       report.push(`場地 "${s.name}": lock_id = ${s.ttlock_lock_id || '❌ 未設定'}`);
