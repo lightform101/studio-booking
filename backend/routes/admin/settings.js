@@ -174,28 +174,50 @@ router.post('/test-ttlock', async (req, res) => {
         );
         const token2 = tokenResp2.data.access_token;
         const now = Date.now();
+        // 顯示 token 格式（助於診斷編碼問題）
+        report.push(`Token 長度: ${token2.length}, 前10碼: ${token2.slice(0,10)}, 是否含特殊字元: ${/[^a-zA-Z0-9\-_]/.test(token2) ? '是' : '否'}`);
+        // 明確 URL encode
+        const encToken = encodeURIComponent(token2);
+        const encClient = encodeURIComponent(clientId);
 
-        // 方式A: GET with query string (手動拼接，避免 axios 編碼問題)
-        const urlA = `https://euapi.ttlock.com/v3/lock/list?clientId=${clientId}&accessToken=${token2}&pageNum=1&pageSize=20&date=${now}`;
-        report.push(`嘗試A GET: ${urlA.slice(0, 80)}...`);
+        // 方式A: GET 最小化（只帶3個必要參數，避免多餘參數被拒）
+        const urlA = `https://euapi.ttlock.com/v3/lock/list?clientId=${encClient}&accessToken=${encToken}&date=${now}`;
+        report.push(`嘗試A GET(最小): ${urlA.slice(0, 100)}...`);
         let lockData = null;
         try {
-          const rA = await axios.get(urlA, { timeout: 8000 });
+          const rA = await axios.get(urlA, {
+            headers: { 'User-Agent': 'TTLockApp/1.0', 'Accept': '*/*' },
+            timeout: 8000
+          });
           lockData = rA.data;
           report.push(`A 回應: ${JSON.stringify(lockData).slice(0, 300)}`);
         } catch(eA) {
-          report.push(`A 失敗 (${eA.response?.status}): 改試方式B`);
-          // 方式B: POST form-urlencoded（舊格式）
+          report.push(`A 失敗 (${eA.response?.status}): 改試方式B(含分頁)`);
+          // 方式B: GET 含 pageNum/pageSize
           try {
-            const rB = await axios.post(
-              'https://euapi.ttlock.com/v3/lock/list',
-              `clientId=${clientId}&accessToken=${token2}&pageNum=1&pageSize=20&date=${now}`,
-              { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
-            );
+            const urlB = `https://euapi.ttlock.com/v3/lock/list?clientId=${encClient}&accessToken=${encToken}&pageNum=1&pageSize=20&date=${now}`;
+            const rB = await axios.get(urlB, {
+              headers: { 'User-Agent': 'TTLockApp/1.0', 'Accept': 'application/json' },
+              timeout: 8000
+            });
             lockData = rB.data;
             report.push(`B 回應: ${JSON.stringify(lockData).slice(0, 300)}`);
           } catch(eB) {
-            report.push(`B 失敗 (${eB.response?.status}): 兩種格式均無法查詢鎖清單`);
+            report.push(`B 失敗 (${eB.response?.status}): 改試方式C(POST)`);
+            // 方式C: POST（api.ttlock.com 全球節點）
+            try {
+              const rC = await axios.post(
+                'https://api.ttlock.com/v3/lock/list',
+                qs.stringify({ clientId, accessToken: token2, pageNum: 1, pageSize: 20, date: now }),
+                { headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'TTLockApp/1.0' }, timeout: 8000 }
+              );
+              lockData = rC.data;
+              report.push(`C 回應(全球節點): ${JSON.stringify(lockData).slice(0, 300)}`);
+            } catch(eC) {
+              const body = eC.response?.data;
+              report.push(`C 失敗 (${eC.response?.status}): ${typeof body === 'string' ? body.slice(0,150) : JSON.stringify(body)}`);
+              report.push('❌ 三種格式均無法查詢鎖清單 → 帳號可能未開放 v3 API 權限');
+            }
           }
         }
 
