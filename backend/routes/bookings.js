@@ -59,7 +59,9 @@ router.post('/', bookingRules, validate, async (req, res, next) => {
     let paymentUrl = null;
     try {
       if (!payment_method || payment_method !== 'linepay') {
-        paymentUrl = await NewebPaySvc.createPaymentUrl(booking);
+        // 藍新：回傳自動提交表單的中介頁面 URL（需 GET 即可跳轉）
+        const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+        paymentUrl = `${baseUrl}/api/payment/newebpay/form/${booking.booking_no}`;
       } else {
         const LinePaySvc = require('../services/linepayService');
         const { paymentUrl: lp } = await LinePaySvc.requestPayment(booking);

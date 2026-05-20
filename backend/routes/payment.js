@@ -12,6 +12,70 @@ const InvoiceSvc    = require('../services/invoiceService');
 const NotifySvc     = require('../services/notifyService');
 const { pool }      = require('../config/database');
 
+// ─── 藍新金流：產生自動提交表單頁（付款中介頁）────────
+// GET /api/payment/newebpay/form/:booking_no
+router.get('/newebpay/form/:booking_no', async (req, res) => {
+  try {
+    const { booking_no } = req.params;
+
+    // 憑證未設定：提示錯誤
+    if (!process.env.NEWEBPAY_MERCHANT_ID || !process.env.NEWEBPAY_HASH_KEY || !process.env.NEWEBPAY_HASH_IV) {
+      return res.status(503).send(`<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8">
+        <title>付款系統未設定</title><style>body{font-family:sans-serif;text-align:center;padding:60px;}</style></head>
+        <body><h2>⚠️ 付款系統尚未設定</h2><p>請管理員至 Zeabur 設定 NEWEBPAY 環境變數後再試。</p>
+        <a href="javascript:history.back()">← 返回</a></body></html>`);
+    }
+
+    const booking = await BookingModel.findByNo(booking_no);
+    if (!booking) {
+      return res.status(404).send('<h2>找不到此訂單</h2>');
+    }
+    if (booking.status === 'confirmed') {
+      return res.redirect('/confirmation.html?booking_no=' + booking_no);
+    }
+
+    const formData = NewebPaySvc.createPaymentUrl(booking);
+
+    // 回傳自動提交的 HTML 表單頁面
+    res.send(`<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>前往付款中...</title>
+  <style>
+    body { font-family: sans-serif; display:flex; flex-direction:column;
+           align-items:center; justify-content:center; min-height:100vh;
+           margin:0; background:#f5f5f5; color:#333; }
+    .spinner { width:40px; height:40px; border:4px solid #ddd;
+               border-top:4px solid #2563eb; border-radius:50%;
+               animation:spin .8s linear infinite; margin-bottom:16px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    p { font-size:.95rem; color:#666; }
+  </style>
+</head>
+<body>
+  <div class="spinner"></div>
+  <p>正在前往付款頁面，請稍候...</p>
+  <form id="pay-form" method="POST" action="${formData.gateway_url}">
+    <input type="hidden" name="MerchantID" value="${formData.merchant_id}">
+    <input type="hidden" name="TradeInfo"  value="${formData.trade_info}">
+    <input type="hidden" name="TradeSha"   value="${formData.trade_sha}">
+    <input type="hidden" name="Version"    value="${formData.version}">
+  </form>
+  <noscript>
+    <p>請點擊下方按鈕前往付款：</p>
+    <button onclick="document.getElementById('pay-form').submit()">前往藍新金流付款</button>
+  </noscript>
+  <script>document.getElementById('pay-form').submit();</script>
+</body>
+</html>`);
+  } catch (err) {
+    console.error('[NewebPay Form]', err);
+    res.status(500).send('<h2>系統錯誤，請返回重試</h2>');
+  }
+});
+
 // ─── 藍新金流後端通知（NotifyURL）───────────────────
 router.post('/newebpay/notify', async (req, res, next) => {
   try {
