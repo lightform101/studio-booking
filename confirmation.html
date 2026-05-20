@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>預約成功 · Studio Space</title>
+  <title>預約成功 · LightForm Studio</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -143,7 +143,7 @@
 <nav>
   <a class="nav-logo" href="index.html">
     <div class="logo-icon"><img src="logo.png" alt="Logo"></div>
-    <span>Studio Space</span>
+    <span id="nav-site-name">LightForm Studio</span>
   </a>
 </nav>
 
@@ -220,19 +220,15 @@
     </div>
   </div>
 
-  <!-- QR CODE -->
+  <!-- 入場說明 -->
   <div class="detail-card">
-    <div class="detail-section-title">🔑 入場 QR Code</div>
-    <div class="qr-section">
-      <div class="qr-placeholder">▦</div>
-      <p>請於入場時出示此 QR Code 給工作人員掃描確認</p>
-    </div>
-    <div class="detail-section-title" style="margin-top:16px;">📍 入場注意</div>
-    <ul style="list-style:none;font-size:.84rem;color:var(--gray);line-height:2;">
+    <div class="detail-section-title">🔐 進門密碼說明</div>
+    <ul style="list-style:none;font-size:.84rem;color:var(--gray);line-height:2.2;margin-top:8px;">
+      <li>🔑 管理員確認付款並審核後，將以 <strong>Email</strong> 傳送專屬進門密碼</li>
       <li>✅ 請於預約開始時間前 10 分鐘抵達</li>
-      <li>✅ 請在入口處出示此頁面或確認信中的 QR Code</li>
-      <li>✅ 超時將按 30 分鐘計費（NT$ 400/30min）</li>
-      <li>⚠️ 若需延長使用，請提前告知工作人員</li>
+      <li>✅ 密碼於預約開始前 1 小時生效，結束後 1 小時失效</li>
+      <li>✅ 超時將按 30 分鐘計費</li>
+      <li>⚠️ 若需延長使用，請提前告知管理員</li>
     </ul>
   </div>
 
@@ -243,29 +239,29 @@
       <div class="tl-item">
         <div class="tl-dot green"></div>
         <div class="tl-content">
-          <div><strong>預約已確認</strong></div>
-          <div class="tl-time">2026/03/30 14:28 · 付款成功，預約已確認</div>
-        </div>
-      </div>
-      <div class="tl-item">
-        <div class="tl-dot green"></div>
-        <div class="tl-content">
-          <div><strong>確認信與簡訊已發送</strong></div>
-          <div class="tl-time">2026/03/30 14:28 · 通知已送出</div>
+          <div><strong>預約已送出</strong></div>
+          <div class="tl-time" id="tl-submit-time">剛剛送出</div>
         </div>
       </div>
       <div class="tl-item">
         <div class="tl-dot blue"></div>
         <div class="tl-content">
-          <div><strong>使用前提醒（將於 24 小時前發送）</strong></div>
-          <div class="tl-time">預計 2026/04/04 14:28</div>
+          <div><strong>等待管理員確認付款</strong></div>
+          <div class="tl-time">完成付款後請通知管理員，審核後將寄出確認信</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot gray"></div>
+        <div class="tl-content">
+          <div><strong>進門密碼寄送</strong></div>
+          <div class="tl-time">確認後將 Email 傳送進門密碼至您的信箱</div>
         </div>
       </div>
       <div class="tl-item">
         <div class="tl-dot gray"></div>
         <div class="tl-content">
           <div><strong>場地使用</strong></div>
-          <div class="tl-time">2026/04/05 13:00 – 17:00</div>
+          <div class="tl-time" id="tl-use-time">—</div>
         </div>
       </div>
     </div>
@@ -284,11 +280,12 @@
 </div>
 
 <footer>
-  © 2026 Studio Space. All rights reserved.
+  © <span id="footer-year"></span> <span id="footer-site-name">LightForm Studio</span>. All rights reserved.
 </footer>
 
 <script>
-  // ─── 套用外觀設定 ────────────────────────────
+  // ─── 套用外觀設定 + 動態網站名稱 ──────────────
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
   (async () => {
     try {
       const r = await fetch('/api/appearance');
@@ -303,6 +300,11 @@
       if (ap.theme_text)          root.style.setProperty('--text',    ap.theme_text);
       if (ap.theme_border_radius) root.style.setProperty('--radius',  ap.theme_border_radius + 'px');
       if (ap.theme_font) document.body.style.fontFamily = `'${ap.theme_font}', sans-serif`;
+      if (ap.site_name) {
+        document.getElementById('nav-site-name').textContent  = ap.site_name;
+        document.getElementById('footer-site-name').textContent = ap.site_name;
+        document.title = `預約成功 · ${ap.site_name}`;
+      }
     } catch(e) { /* 外觀載入失敗不影響主功能 */ }
   })();
 
@@ -349,6 +351,20 @@
       const link = document.getElementById('conf-payment-link');
       if (box)  box.style.display  = '';
       if (link) link.href = bk.payment_url;
+    }
+
+    // 時間軸：送出時間
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const nowStr = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const tlSubmit = document.getElementById('tl-submit-time');
+    if (tlSubmit) tlSubmit.textContent = nowStr + ' · 訂單已送出，請完成付款';
+
+    // 時間軸：場地使用時間
+    const tlUse = document.getElementById('tl-use-time');
+    if (tlUse && bk.booking_date && bk.start_time && bk.end_time) {
+      const [y,m,d] = bk.booking_date.split('-');
+      tlUse.textContent = `${y}/${m}/${d} ${(bk.start_time||'').slice(0,5)} – ${(bk.end_time||'').slice(0,5)}`;
     }
   })();
 </script>
