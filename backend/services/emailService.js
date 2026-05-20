@@ -69,7 +69,7 @@ const EmailService = {
     try {
       await this.send({
         to: booking.contact_email,
-        subject: `【Studio Space】預約成功確認 - ${booking.booking_no}`,
+        subject: `【LightForm Studio】預約成功確認 - ${booking.booking_no}`,
         html
       });
       await logNotification(booking.id, 'booking_confirmed', booking.contact_email, 'sent');
@@ -87,7 +87,7 @@ const EmailService = {
     try {
       await this.send({
         to: booking.contact_email,
-        subject: `【Studio Space】請於 2 小時內完成付款 - ${booking.booking_no}`,
+        subject: `【LightForm Studio】請於 2 小時內完成付款 - ${booking.booking_no}`,
         html
       });
       await logNotification(booking.id, 'payment_pending', booking.contact_email, 'sent');
@@ -104,7 +104,7 @@ const EmailService = {
     try {
       await this.send({
         to: booking.contact_email,
-        subject: `【Studio Space】明天的場地提醒 - ${booking.booking_no}`,
+        subject: `【LightForm Studio】明天的場地提醒 - ${booking.booking_no}`,
         html
       });
       await logNotification(booking.id, 'reminder_24h', booking.contact_email, 'sent');
@@ -121,7 +121,7 @@ const EmailService = {
     try {
       await this.send({
         to: booking.contact_email,
-        subject: `【Studio Space】預約取消確認 - ${booking.booking_no}`,
+        subject: `【LightForm Studio】預約取消確認 - ${booking.booking_no}`,
         html
       });
       await logNotification(booking.id, 'booking_cancelled', booking.contact_email, 'sent');
@@ -169,7 +169,7 @@ const EmailService = {
     try {
       await this.send({
         to: booking.contact_email,
-        subject: `【Studio Space】您的電子發票 - ${booking.invoice_no}`,
+        subject: `【LightForm Studio】您的電子發票 - ${booking.invoice_no}`,
         html
       });
       await logNotification(booking.id, 'invoice_issued', booking.contact_email, 'sent');

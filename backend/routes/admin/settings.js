@@ -60,10 +60,16 @@ router.put('/', async (req, res, next) => {
 router.post('/test-email', async (req, res, next) => {
   try {
     const { to } = req.body;
+    // 取得網站名稱
+    const [[nameSetting]] = await pool.query(
+      "SELECT key_value FROM settings WHERE key_name='smtp_from_name'"
+    ).catch(() => [[null]]);
+    const siteName = nameSetting?.key_value || process.env.EMAIL_FROM_NAME || 'LightForm Studio';
+
     await EmailSvc.send({
       to: to || req.admin.email,
-      subject: '【Studio Space】Email 設定測試',
-      html: '<h2>測試成功！</h2><p>您的 Email 通知設定正常運作。</p>'
+      subject: `【${siteName}】Email 設定測試`,
+      html: `<h2>✅ 測試成功！</h2><p>您的 Email 通知設定正常運作。</p><p style="color:#888;font-size:.85rem;">— ${siteName}</p>`
     });
     res.json({ success: true, message: `測試信已發送至 ${to || req.admin.email}` });
   } catch (err) { next(err); }
