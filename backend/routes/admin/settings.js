@@ -214,7 +214,7 @@ router.post('/test-ttlock', async (req, res) => {
         report.push(`❌ 查詢鎖清單例外: ${e.message}`);
       }
 
-      // 5. 直接測試密碼建立（用場地已設定的 Lock ID）
+      // 5. 直接測試密碼建立（多節點 + 帶 User-Agent）
       try {
         report.push('--- 測試建立臨時密碼 ---');
         const [[testStudio]] = await pool.query(
@@ -230,28 +230,47 @@ router.post('/test-ttlock', async (req, res) => {
             { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
           );
           const token3 = tokenResp3.data.access_token;
-          const startTest = Date.now() + 60_000;       // 1分鐘後開始
-          const endTest   = Date.now() + 2 * 60_000;  // 2分鐘後結束
-          const pwdResp = await axios.post(
+          const startTest = Date.now() + 60_000;
+          const endTest   = Date.now() + 2 * 60_000;
+          const pwdBody = qs.stringify({
+            clientId, accessToken: token3,
+            lockId: String(testStudio.ttlock_lock_id),
+            keyboardPwdType: '3',
+            keyboardPwdName: '診斷測試密碼',
+            startDate: String(startTest),
+            endDate:   String(endTest),
+            date:      String(Date.now()),
+          });
+          const commonHeaders = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'TTLockApp/1.0',
+          };
+          // 嘗試 EU 節點
+          const pwdEndpoints = [
             'https://euapi.ttlock.com/v3/keyboardPwd/add',
-            qs.stringify({
-              clientId, accessToken: token3,
-              lockId: String(testStudio.ttlock_lock_id),
-              keyboardPwdType: '3',
-              keyboardPwdName: '診斷測試密碼',
-              startDate: String(startTest),
-              endDate:   String(endTest),
-              date:      String(Date.now()),
-            }),
-            { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 }
-          );
-          const pwdData = pwdResp.data;
-          report.push(`keyboardPwd/add 回應: ${JSON.stringify(pwdData)}`);
-          if (pwdData.errcode === 0 || pwdData.keyboardPwd) {
-            report.push(`✅ 密碼建立成功! 密碼=${pwdData.keyboardPwd} id=${pwdData.keyboardPwdId}`);
-          } else {
-            report.push(`❌ 建立失敗 errcode=${pwdData.errcode}: ${pwdData.errmsg}`);
+            'https://api.ttlock.com/v3/keyboardPwd/add',
+          ];
+          let pwdSuccess = false;
+          for (const ep of pwdEndpoints) {
+            try {
+              report.push(`嘗試: ${ep}`);
+              const pwdResp = await axios.post(ep, pwdBody, { headers: commonHeaders, timeout: 10000 });
+              const pwdData = pwdResp.data;
+              report.push(`回應: ${JSON.stringify(pwdData)}`);
+              if (pwdData.errcode === 0 || pwdData.keyboardPwd != null) {
+                report.push(`✅ 密碼建立成功! 密碼=${pwdData.keyboardPwd} id=${pwdData.keyboardPwdId}`);
+                pwdSuccess = true;
+              } else {
+                report.push(`❌ errcode=${pwdData.errcode}: ${pwdData.errmsg}`);
+              }
+              break;
+            } catch(ep_e) {
+              const st = ep_e.response?.status;
+              const body = ep_e.response?.data;
+              report.push(`❌ ${ep} 失敗 (${st}): ${typeof body === 'string' ? body.slice(0,150) : JSON.stringify(body)}`);
+            }
           }
+          if (!pwdSuccess) report.push('❌ 所有節點均無法建立密碼');
         }
       } catch(e) {
         const errBody = e.response?.data;

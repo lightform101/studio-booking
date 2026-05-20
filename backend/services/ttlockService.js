@@ -66,7 +66,10 @@ async function createPasscode({ lockId, name, startDate, endDate }) {
       endDate:         String(Number(endDate)),
       date:            String(Date.now()),
     }),
-    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    { headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent':   'TTLockApp/1.0',
+    } }
   );
 
   const data = resp.data;
