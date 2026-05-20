@@ -20,6 +20,12 @@ function getTransporter() {
   return transporter;
 }
 
+// 重置 transporter（設定變更後呼叫）
+function resetTransporter() {
+  transporter = null;
+  console.log('[Email] Transporter 已重置，下次發信時套用新設定');
+}
+
 // 載入 HTML 模板並替換變數 {{key}}
 function loadTemplate(templateName, variables = {}) {
   const filePath = path.join(__dirname, '../templates/emails', `${templateName}.html`);
@@ -201,4 +207,5 @@ function mapMethodLabel(m) {
   return map[m] || m || '—';
 }
 
+EmailService.resetTransporter = resetTransporter;
 module.exports = EmailService;

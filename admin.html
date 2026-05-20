@@ -797,14 +797,18 @@
       <div class="settings-section">
         <h3>📧 Email 設定（SMTP）</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-          <div class="form-group"><div class="form-label">寄件人名稱</div><input class="form-input" value="Studio Space" /></div>
-          <div class="form-group"><div class="form-label">寄件人信箱</div><input class="form-input" value="noreply@studiospace.tw" /></div>
-          <div class="form-group"><div class="form-label">SMTP 主機</div><input class="form-input" value="smtp.gmail.com" /></div>
-          <div class="form-group"><div class="form-label">SMTP 連接埠</div><input class="form-input" value="587" /></div>
-          <div class="form-group"><div class="form-label">SMTP 帳號</div><input class="form-input" value="admin@studiospace.tw" /></div>
-          <div class="form-group"><div class="form-label">SMTP 密碼</div><input class="form-input" type="password" value="••••••••" /></div>
+          <div class="form-group"><div class="form-label">寄件人名稱</div><input class="form-input" id="smtp_from_name" placeholder="例：LightForm Studio" /></div>
+          <div class="form-group"><div class="form-label">寄件人信箱</div><input class="form-input" id="smtp_from_email" placeholder="例：uiestudio123@gmail.com" /></div>
+          <div class="form-group"><div class="form-label">SMTP 主機</div><input class="form-input" id="smtp_host" placeholder="smtp.gmail.com" /></div>
+          <div class="form-group"><div class="form-label">SMTP 連接埠</div><input class="form-input" id="smtp_port" placeholder="587" /></div>
+          <div class="form-group"><div class="form-label">SMTP 帳號</div><input class="form-input" id="smtp_user" placeholder="Gmail 帳號" /></div>
+          <div class="form-group"><div class="form-label">SMTP 密碼（App Password）</div><input class="form-input" id="smtp_pass" type="password" placeholder="16 碼應用程式密碼" /></div>
         </div>
-        <button class="btn-add" style="margin-top:8px;">📨 測試寄信</button>
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center;">
+          <button class="btn-add" onclick="saveSmtpSettings()">💾 儲存設定</button>
+          <button class="btn-add" style="background:#6c757d;" onclick="sendTestEmail()">📨 測試寄信</button>
+          <span id="smtp-msg" style="font-size:.85rem;color:#28a745;display:none;"></span>
+        </div>
       </div>
       <div class="settings-section">
         <h3>📱 簡訊設定（SMS）</h3>
@@ -1619,6 +1623,69 @@
     if (id === 'appearance') { loadAppearance(); updatePreview(); }
     if (id === 'system')     loadSystemSettings();
     if (id === 'promotions') loadPromotions();
+    if (id === 'notify')    loadSmtpSettings();
+  }
+
+  // ─── SMTP 設定載入 / 儲存 / 測試 ────────────────
+  async function loadSmtpSettings() {
+    try {
+      const r = await fetch(`${API}/admin/settings`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const { data } = await r.json();
+      if (!data) return;
+      if (data.smtp_from_name)  document.getElementById('smtp_from_name').value  = data.smtp_from_name;
+      if (data.smtp_from_email) document.getElementById('smtp_from_email').value = data.smtp_from_email;
+      if (data.smtp_host)       document.getElementById('smtp_host').value        = data.smtp_host;
+      if (data.smtp_port)       document.getElementById('smtp_port').value        = data.smtp_port;
+      if (data.smtp_user)       document.getElementById('smtp_user').value        = data.smtp_user;
+      // 密碼不回填（安全考量）
+    } catch(e) { console.error('載入 SMTP 設定失敗', e); }
+  }
+
+  async function saveSmtpSettings() {
+    const settings = {
+      smtp_from_name:  document.getElementById('smtp_from_name').value.trim(),
+      smtp_from_email: document.getElementById('smtp_from_email').value.trim(),
+      smtp_host:       document.getElementById('smtp_host').value.trim(),
+      smtp_port:       document.getElementById('smtp_port').value.trim(),
+      smtp_user:       document.getElementById('smtp_user').value.trim(),
+    };
+    const pass = document.getElementById('smtp_pass').value.trim();
+    if (pass && pass !== '••••••••') settings.smtp_pass = pass;
+
+    try {
+      const r = await fetch(`${API}/admin/settings`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings })
+      });
+      const d = await r.json();
+      showSmtpMsg(d.success ? '✅ 設定已儲存' : '❌ 儲存失敗', d.success);
+    } catch(e) { showSmtpMsg('❌ 儲存失敗：' + e.message, false); }
+  }
+
+  async function sendTestEmail() {
+    const to = document.getElementById('smtp_from_email').value.trim() || document.getElementById('smtp_user').value.trim();
+    if (!to) return alert('請先填入寄件人信箱');
+    showSmtpMsg('⏳ 發送中...', true);
+    try {
+      const r = await fetch(`${API}/admin/settings/test-email`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to })
+      });
+      const d = await r.json();
+      showSmtpMsg(d.success ? `✅ 測試信已發送至 ${to}` : `❌ 失敗：${d.message}`, d.success);
+    } catch(e) { showSmtpMsg('❌ 失敗：' + e.message, false); }
+  }
+
+  function showSmtpMsg(msg, ok) {
+    const el = document.getElementById('smtp-msg');
+    el.textContent = msg;
+    el.style.color = ok ? '#28a745' : '#dc3545';
+    el.style.display = 'inline';
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
   }
 
   function showPage(id, btn) {

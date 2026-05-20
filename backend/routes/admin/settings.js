@@ -32,6 +32,26 @@ router.put('/', async (req, res, next) => {
         [key, value, value]
       );
     }
+
+    // 同步更新環境變數讓 emailService 即時生效
+    const smtpMap = {
+      smtp_host:       'SMTP_HOST',
+      smtp_port:       'SMTP_PORT',
+      smtp_user:       'SMTP_USER',
+      smtp_pass:       'SMTP_PASS',
+      smtp_from_email: 'EMAIL_FROM',
+      smtp_from_name:  'EMAIL_FROM_NAME',
+    };
+    let smtpChanged = false;
+    for (const [dbKey, envKey] of Object.entries(smtpMap)) {
+      if (dbKey in settings) {
+        process.env[envKey] = settings[dbKey];
+        smtpChanged = true;
+      }
+    }
+    // 重置 transporter，讓新設定生效
+    if (smtpChanged) EmailSvc.resetTransporter?.();
+
     res.json({ success: true, message: '設定已更新' });
   } catch (err) { next(err); }
 });
