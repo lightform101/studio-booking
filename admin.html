@@ -1528,6 +1528,8 @@
     <div class="modal-footer">
       <button class="btn btn-danger-sm" id="bk-cancel-btn" style="padding:8px 16px;display:none;"
         onclick="cancelBookingFromModal()">🚫 取消此預約</button>
+      <button id="bk-ttlock-btn" style="padding:8px 16px;border-radius:7px;border:1px solid #6c757d;background:#f8f9fa;cursor:pointer;display:none;"
+        onclick="triggerTTLock()">🔐 發送進門密碼</button>
       <button onclick="closeModal()" style="padding:8px 18px;border-radius:7px;border:1px solid #d0d4db;background:#fff;cursor:pointer;">關閉</button>
       <button class="btn btn-add" id="bk-save-btn" onclick="saveBookingFromModal()">💾 儲存</button>
     </div>
@@ -2072,7 +2074,35 @@
       // 顯示「取消預約」按鈕（只對可取消的狀態）
       const cancelBtn = document.getElementById('bk-cancel-btn');
       cancelBtn.style.display = ['pending_payment','confirmed'].includes(b.status) ? '' : 'none';
+
+      // 顯示「發送進門密碼」按鈕（已確認的訂單）
+      const ttlockBtn = document.getElementById('bk-ttlock-btn');
+      ttlockBtn.style.display = b.status === 'confirmed' ? '' : 'none';
+      ttlockBtn.dataset.bookingId = b.id;
     } catch(e) { alert('載入失敗'); closeModal(); }
+  }
+
+  // 手動觸發 TTLock 密碼建立
+  async function triggerTTLock() {
+    const btn = document.getElementById('bk-ttlock-btn');
+    const bookingId = btn.dataset.bookingId;
+    if (!bookingId) return;
+    btn.disabled = true;
+    btn.textContent = '⏳ 處理中...';
+    try {
+      const r = await fetch(`${API}/admin/settings/trigger-ttlock/${bookingId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const d = await r.json();
+      const msg = d.report ? `\n\n${d.report}` : d.message;
+      alert(d.success ? `✅ 成功！\n${msg}` : `❌ 失敗：${msg}`);
+    } catch(e) {
+      alert('❌ 錯誤：' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔐 發送進門密碼';
+    }
   }
 
   // 儲存（新增 或 更新）

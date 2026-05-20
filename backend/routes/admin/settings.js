@@ -156,6 +156,58 @@ router.post('/test-ttlock', async (req, res) => {
   }
 });
 
+// 手動觸發 TTLock 密碼建立（診斷用）
+router.post('/trigger-ttlock/:bookingId', async (req, res) => {
+  const report = [];
+  try {
+    const bookingId = req.params.bookingId;
+    const [[booking]] = await pool.query(
+      `SELECT b.*, s.name as studio_name, s.ttlock_lock_id
+       FROM bookings b LEFT JOIN studios s ON b.studio_id = s.id
+       WHERE b.id = ?`, [bookingId]
+    );
+    if (!booking) return res.json({ success: false, message: '找不到訂單' });
+
+    report.push(`訂單: ${booking.booking_no}`);
+    report.push(`狀態: ${booking.status}`);
+    report.push(`場地: ${booking.studio_name}`);
+    report.push(`Lock ID: ${booking.ttlock_lock_id || '❌ 未設定'}`);
+    report.push(`日期: ${booking.booking_date} ${booking.start_time}~${booking.end_time}`);
+
+    if (!booking.ttlock_lock_id) {
+      return res.json({ success: false, report: report.join('\n'), message: '場地未設定 Lock ID' });
+    }
+
+    const dayjs = require('dayjs');
+    const dateStr   = dayjs(booking.booking_date).format('YYYY-MM-DD');
+    const startDate = dayjs(`${dateStr} ${String(booking.start_time).slice(0,5)}`).subtract(15,'minute').valueOf();
+    const endDate   = dayjs(`${dateStr} ${String(booking.end_time).slice(0,5)}`).add(15,'minute').valueOf();
+    report.push(`有效期: ${new Date(startDate).toLocaleString()} ~ ${new Date(endDate).toLocaleString()}`);
+
+    report.push('--- 呼叫 TTLock API ---');
+    const { passcode, passkeyId } = await TTLockSvc.createPasscode({
+      lockId: booking.ttlock_lock_id,
+      name:   `${booking.booking_no} ${booking.contact_name}`,
+      startDate, endDate,
+    });
+    report.push(`✅ 密碼建立成功: ${passcode} (id: ${passkeyId})`);
+
+    await pool.query(
+      'UPDATE bookings SET ttlock_passcode=?, ttlock_passcode_id=? WHERE id=?',
+      [passcode, passkeyId, booking.id]
+    );
+
+    report.push('--- 寄送 Email ---');
+    await EmailSvc.sendAccessCode({ ...booking }, passcode);
+    report.push(`✅ Email 已寄出 → ${booking.contact_email}`);
+
+    res.json({ success: true, report: report.join('\n') });
+  } catch(e) {
+    report.push(`❌ 錯誤: ${e.message}`);
+    res.json({ success: false, report: report.join('\n'), message: e.message });
+  }
+});
+
 // 執行 DB Migration
 router.post('/run-migration', async (req, res, next) => {
   const IGNORABLE = new Set(['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY']);
