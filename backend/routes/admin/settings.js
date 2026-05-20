@@ -162,7 +162,32 @@ router.post('/test-ttlock', async (req, res) => {
         report.push(`❌ ${status || e.message} → ${body || ''}`);
       }
     }
-    if (!tokenSuccess) report.push('❌ 兩個節點均失敗');
+    if (!tokenSuccess) { report.push('❌ 兩個節點均失敗'); }
+    else {
+      // 4. 查詢帳號下的鎖清單
+      try {
+        report.push('--- 查詢鎖清單 ---');
+        const tokenResp2 = await axios.post(
+          'https://euapi.ttlock.com/oauth2/token',
+          qs.stringify({ client_id: clientId, client_secret: clientSec, grant_type: 'password', username, password: md5(password) }),
+          { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
+        );
+        const token = tokenResp2.data.access_token;
+        const lockResp = await axios.get('https://euapi.ttlock.com/v3/lock/list', {
+          params: { clientId, accessToken: token, pageNum: 1, pageSize: 20, date: Date.now() }
+        });
+        const lockData = lockResp.data;
+        if (lockData.list && lockData.list.length > 0) {
+          lockData.list.forEach(l => {
+            report.push(`🔑 Lock: ${l.lockName} → lockId=${l.lockId} (MAC: ${l.lockMac})`);
+          });
+        } else {
+          report.push(`鎖清單: ${JSON.stringify(lockData)}`);
+        }
+      } catch(e) {
+        report.push(`❌ 查詢鎖清單失敗: ${e.response?.data ? JSON.stringify(e.response.data) : e.message}`);
+      }
+    }
 
     res.json({ success: true, report: report.join('\n') });
   } catch (e) {
