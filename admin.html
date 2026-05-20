@@ -416,33 +416,29 @@
         <div class="stat-card red">
           <div class="stat-top">
             <div class="stat-icon">📅</div>
-            <span class="stat-trend up">▲ 12%</span>
           </div>
-          <div class="stat-num">18</div>
+          <div class="stat-num" id="dash-month-count">—</div>
           <div class="stat-label">本月預約數</div>
         </div>
         <div class="stat-card green">
           <div class="stat-top">
             <div class="stat-icon">💰</div>
-            <span class="stat-trend up">▲ 8%</span>
           </div>
-          <div class="stat-num">NT$ 52,400</div>
+          <div class="stat-num" id="dash-month-revenue">—</div>
           <div class="stat-label">本月收入</div>
         </div>
         <div class="stat-card gold">
           <div class="stat-top">
             <div class="stat-icon">🕐</div>
-            <span class="stat-trend down">▼ 3%</span>
           </div>
-          <div class="stat-num">74%</div>
+          <div class="stat-num" id="dash-month-occ">—</div>
           <div class="stat-label">本月使用率</div>
         </div>
         <div class="stat-card blue">
           <div class="stat-top">
             <div class="stat-icon">⏳</div>
-            <span class="stat-trend up">3 筆</span>
           </div>
-          <div class="stat-num">3</div>
+          <div class="stat-num" id="dash-pending">—</div>
           <div class="stat-label">待確認預約</div>
         </div>
       </div>
@@ -459,52 +455,8 @@
               <thead><tr>
                 <th>訂單編號</th><th>場地</th><th>客戶</th><th>日期 / 時段</th><th>金額</th><th>狀態</th><th>操作</th>
               </tr></thead>
-              <tbody>
-                <tr>
-                  <td><code style="font-size:.78rem;">SS-2026033001</code></td>
-                  <td><span style="color:var(--accent);font-weight:700;">A</span></td>
-                  <td>王小明</td>
-                  <td>04/05 13:00–17:00</td>
-                  <td>NT$ 3,200</td>
-                  <td><span class="badge confirmed">✅ 已確認</span></td>
-                  <td><button class="btn btn-sm btn-primary-sm" onclick="openModal()">詳情</button></td>
-                </tr>
-                <tr>
-                  <td><code style="font-size:.78rem;">SS-2026032902</code></td>
-                  <td><span style="color:var(--gold);font-weight:700;">B</span></td>
-                  <td>李美華</td>
-                  <td>04/03 09:00–12:00</td>
-                  <td>NT$ 1,800</td>
-                  <td><span class="badge pending">⏳ 待付款</span></td>
-                  <td><button class="btn btn-sm btn-primary-sm" onclick="openModal()">詳情</button></td>
-                </tr>
-                <tr>
-                  <td><code style="font-size:.78rem;">SS-2026032803</code></td>
-                  <td><span style="color:var(--accent);font-weight:700;">A</span></td>
-                  <td>張志遠</td>
-                  <td>04/01 14:00–18:00</td>
-                  <td>NT$ 3,200</td>
-                  <td><span class="badge confirmed">✅ 已確認</span></td>
-                  <td><button class="btn btn-sm btn-primary-sm" onclick="openModal()">詳情</button></td>
-                </tr>
-                <tr>
-                  <td><code style="font-size:.78rem;">SS-2026032704</code></td>
-                  <td><span style="color:var(--gold);font-weight:700;">B</span></td>
-                  <td>陳怡君</td>
-                  <td>03/30 10:00–14:00</td>
-                  <td>NT$ 2,400</td>
-                  <td><span class="badge completed">🏁 已完成</span></td>
-                  <td><button class="btn btn-sm btn-primary-sm" onclick="openModal()">詳情</button></td>
-                </tr>
-                <tr>
-                  <td><code style="font-size:.78rem;">SS-2026032605</code></td>
-                  <td><span style="color:var(--accent);font-weight:700;">A</span></td>
-                  <td>劉建宏</td>
-                  <td>03/28 08:00–16:00</td>
-                  <td>NT$ 6,400</td>
-                  <td><span class="badge cancelled">❌ 已取消</span></td>
-                  <td><button class="btn btn-sm btn-primary-sm" onclick="openModal()">詳情</button></td>
-                </tr>
+              <tbody id="dash-recent-tbody">
+                <tr><td colspan="7" style="text-align:center;color:#aaa;padding:20px;">載入中...</td></tr>
               </tbody>
             </table>
           </div>
@@ -516,21 +468,7 @@
           <div class="card" style="margin-bottom:16px;">
             <div class="card-header"><h3>📈 本月使用率</h3></div>
             <div class="card-body">
-              <div class="occ-row">
-                <div class="occ-label">Studio A</div>
-                <div class="occ-bar-bg"><div class="occ-bar-fill" style="width:82%;background:var(--accent);"></div></div>
-                <div class="occ-pct" style="color:var(--accent);">82%</div>
-              </div>
-              <div class="occ-row">
-                <div class="occ-label">Studio B</div>
-                <div class="occ-bar-bg"><div class="occ-bar-fill" style="width:65%;background:var(--gold);"></div></div>
-                <div class="occ-pct" style="color:var(--gold);">65%</div>
-              </div>
-              <div class="occ-row">
-                <div class="occ-label">整體平均</div>
-                <div class="occ-bar-bg"><div class="occ-bar-fill" style="width:74%;background:var(--success);"></div></div>
-                <div class="occ-pct" style="color:var(--success);">74%</div>
-              </div>
+              <div id="dash-occ-list"><div style="color:#aaa;font-size:.82rem;padding:8px 0;">載入中...</div></div>
             </div>
           </div>
 
@@ -538,22 +476,7 @@
           <div class="card">
             <div class="card-header"><h3>🔔 最新通知</h3></div>
             <div class="card-body" style="padding:12px 20px;">
-              <div class="notif-item unread">
-                <div class="notif-avatar" style="background:#e8f5e9;">✅</div>
-                <div><div>新預約：王小明 Studio A</div><div class="notif-time">2 分鐘前</div></div>
-              </div>
-              <div class="notif-item unread">
-                <div class="notif-avatar" style="background:#fff3cd;">⏳</div>
-                <div><div>待付款提醒：SS-2026032902</div><div class="notif-time">1 小時前</div></div>
-              </div>
-              <div class="notif-item">
-                <div class="notif-avatar" style="background:#e3f2fd;">📧</div>
-                <div><div>提醒信已發送：張志遠</div><div class="notif-time">3 小時前</div></div>
-              </div>
-              <div class="notif-item">
-                <div class="notif-avatar" style="background:#fde8e8;">❌</div>
-                <div><div>取消申請：劉建宏（已退款）</div><div class="notif-time">昨天</div></div>
-              </div>
+              <div id="dash-notif-list"><div style="color:#aaa;font-size:.82rem;padding:8px 0;">載入中...</div></div>
             </div>
           </div>
         </div>
@@ -1578,6 +1501,9 @@
         }
       }
     } catch(e) { /* 靜默失敗，保持預設名稱 */ }
+
+    // 初始載入儀表板資料
+    loadDashboard();
   })();
 
   // ─── 登出 ──────────────────────────────────────
@@ -1637,6 +1563,7 @@
     const el = document.getElementById('page-' + id);
     if (el) el.classList.add('active');
     document.getElementById('page-title').textContent = titles[id] || id;
+    if (id === 'dashboard')  loadDashboard();
     if (id === 'calendar')   { initCalendarStudios().then(() => loadCalendarData()); }
     if (id === 'bookings')   { loadBookings(); loadStudiosForFilter(); }
     if (id === 'studios')    loadStudioList();
@@ -1785,6 +1712,113 @@
       if (btn) btn.classList.add('active');
     }
     showPageContent(id);
+  }
+
+  // ─── 儀表板 ────────────────────────────────────
+  async function loadDashboard() {
+    try {
+      const h = { 'Authorization': `Bearer ${adminToken}` };
+
+      // 1. Get recent bookings (last 5)
+      const rb = await fetch(`${API}/admin/bookings?limit=5&sortBy=created_at&sortDir=desc`, { headers: h });
+      const { data: recentBookings } = await rb.json();
+
+      // 2. Get this month's revenue stats
+      const rm = await fetch(`${API}/admin/revenue/monthly?months=1`, { headers: h });
+      const { data: monthlyData } = await rm.json();
+
+      // 3. Get occupancy
+      const ro = await fetch(`${API}/admin/revenue/occupancy`, { headers: h });
+      const { data: occupancy } = await ro.json();
+
+      // 4. Count pending bookings
+      const rp = await fetch(`${API}/admin/bookings?status=pending_payment&limit=1`, { headers: h });
+      const pendingData = await rp.json();
+
+      // Fill stats
+      const thisMonth = monthlyData?.[0] || {};
+      document.getElementById('dash-month-count').textContent = thisMonth.count || 0;
+      document.getElementById('dash-month-revenue').textContent = `NT$ ${Number(thisMonth.revenue || 0).toLocaleString()}`;
+
+      // Calculate overall occupancy %
+      if (occupancy?.length) {
+        const totalHours = occupancy.reduce((s,r) => s + Number(r.booked_hours||0), 0);
+        const totalAvail = occupancy.reduce((s,r) => s + Number(r.available_hours||1), 0);
+        const pct = totalAvail > 0 ? Math.round(totalHours / totalAvail * 100) : 0;
+        document.getElementById('dash-month-occ').textContent = pct + '%';
+      }
+
+      document.getElementById('dash-pending').textContent = pendingData?.total || pendingData?.data?.length || 0;
+
+      // Fill recent bookings
+      const tbody = document.getElementById('dash-recent-tbody');
+      if (tbody && recentBookings?.length) {
+        const statusMap = {
+          pending_payment: '<span class="badge pending">⏳ 待付款</span>',
+          confirmed: '<span class="badge confirmed">✅ 已確認</span>',
+          completed: '<span class="badge completed">🏁 已完成</span>',
+          cancelled: '<span class="badge cancelled">❌ 已取消</span>',
+        };
+        tbody.innerHTML = recentBookings.map(b => `
+          <tr>
+            <td><code style="font-size:.78rem;">${b.booking_no}</code></td>
+            <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.studio_name||'—'}</td>
+            <td>${b.contact_name||'—'}</td>
+            <td>${b.booking_date||''} ${(b.start_time||'').slice(0,5)}–${(b.end_time||'').slice(0,5)}</td>
+            <td>NT$ ${Number(b.total_amount||0).toLocaleString()}</td>
+            <td>${statusMap[b.status] || b.status}</td>
+            <td><button class="btn btn-sm btn-primary-sm" onclick="openModal(${b.id})">詳情</button></td>
+          </tr>
+        `).join('');
+      } else if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#aaa;padding:20px;">本月尚無預約</td></tr>';
+      }
+
+      // Fill occupancy bars
+      const occEl = document.getElementById('dash-occ-list');
+      if (occEl && occupancy?.length) {
+        const colors = ['var(--accent)', 'var(--gold)', 'var(--success)', '#8e44ad', '#2980b9'];
+        const totalHours = occupancy.reduce((s,r) => s + Number(r.booked_hours||0), 0);
+        const totalAvail = occupancy.reduce((s,r) => s + Number(r.available_hours||1), 0);
+        const avgPct = totalAvail > 0 ? Math.round(totalHours / totalAvail * 100) : 0;
+        occEl.innerHTML = occupancy.map((r, i) => {
+          const pct = Number(r.available_hours) > 0 ? Math.round(Number(r.booked_hours) / Number(r.available_hours) * 100) : 0;
+          const c = colors[i % colors.length];
+          return `<div class="occ-row">
+            <div class="occ-label" style="font-size:.8rem;">${r.studio_name}</div>
+            <div class="occ-bar-bg"><div class="occ-bar-fill" style="width:${pct}%;background:${c};"></div></div>
+            <div class="occ-pct" style="color:${c};">${pct}%</div>
+          </div>`;
+        }).join('') + `<div class="occ-row">
+          <div class="occ-label" style="font-size:.8rem;">整體平均</div>
+          <div class="occ-bar-bg"><div class="occ-bar-fill" style="width:${avgPct}%;background:var(--success);"></div></div>
+          <div class="occ-pct" style="color:var(--success);">${avgPct}%</div>
+        </div>`;
+      } else if (occEl) {
+        occEl.innerHTML = '<div style="color:#aaa;font-size:.82rem;padding:8px 0;">本月尚無資料</div>';
+      }
+
+      // Fill notifications - show recent bookings as activity
+      const notifEl = document.getElementById('dash-notif-list');
+      if (notifEl && recentBookings?.length) {
+        const iconMap = { pending_payment:'⏳', confirmed:'✅', completed:'🏁', cancelled:'❌' };
+        const bgMap = { pending_payment:'#fff3cd', confirmed:'#e8f5e9', completed:'#e3f2fd', cancelled:'#fde8e8' };
+        notifEl.innerHTML = recentBookings.slice(0,5).map(b => {
+          const d = new Date(b.created_at || b.booking_date);
+          const dateStr = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+          return `<div class="notif-item">
+            <div class="notif-avatar" style="background:${bgMap[b.status]||'#f0f0f0'};">${iconMap[b.status]||'📋'}</div>
+            <div>
+              <div>${b.contact_name} · ${b.studio_name||''}</div>
+              <div class="notif-time">${b.booking_no} · ${dateStr}</div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+
+    } catch(e) {
+      console.error('[Dashboard] 載入失敗:', e);
+    }
   }
 
   // ─── 收入報表 ──────────────────────────────────
