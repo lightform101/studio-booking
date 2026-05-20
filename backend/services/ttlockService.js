@@ -52,28 +52,53 @@ async function createPasscode({ lockId, name, startDate, endDate }) {
 
   const token = await getAccessToken();
 
-  // 使用 /v3/keyboardPwd/add 讓 TTLock 自動生成密碼
-  // keyboardPwdType=3 = 限時密碼（有 startDate / endDate）
-  const resp = await axios.post(
-    `${BASE_URL}/v3/keyboardPwd/add`,
-    qs.stringify({
-      clientId:        CLIENT_ID(),
-      accessToken:     token,
-      lockId:          String(lockId),
-      keyboardPwdType: '3',
-      keyboardPwdName: name || '臨時密碼',
-      startDate:       String(Number(startDate)),
-      endDate:         String(Number(endDate)),
-      date:            String(Date.now()),
-    }),
-    { headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent':   'TTLockApp/1.0',
-    } }
-  );
+  // 使用 /v3/keyboardPwd/get 取得隨機密碼（TTLock 算法生成，不需 Gateway）
+  // keyboardPwdType=3 = 限時密碼；TTLock 時間只精確到小時，須對齊整點
+  const startMs = Math.floor(Number(startDate) / 3600000) * 3600000;   // 無條件捨去到整點
+  const endMs   = Math.ceil(Number(endDate)   / 3600000) * 3600000;    // 無條件進位到整點
 
-  const data = resp.data;
-  console.log('[TTLock] keyboardPwd/add 回應:', JSON.stringify(data));
+  const body = qs.stringify({
+    clientId:        CLIENT_ID(),
+    accessToken:     token,
+    lockId:          String(lockId),
+    keyboardPwdType: '3',
+    keyboardPwdName: name || '臨時密碼',
+    startDate:       String(startMs),
+    endDate:         String(endMs),
+    date:            String(Date.now()),
+  });
+  const bodyBuf = Buffer.from(body, 'utf8');
+
+  // 用原生 https 模組確保 Content-Length 正確（避免老 Tomcat 拒絕 chunked）
+  const https = require('https');
+  const data = await new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'euapi.ttlock.com',
+      path:     '/v3/keyboardPwd/get',
+      method:   'POST',
+      headers: {
+        'Content-Type':   'application/x-www-form-urlencoded',
+        'Content-Length': bodyBuf.length,
+        'User-Agent':     'Mozilla/5.0',
+        'Accept':         '*/*',
+        'Connection':     'close',
+      },
+      timeout: 12000,
+    }, res => {
+      let raw = '';
+      res.on('data', d => raw += d);
+      res.on('end', () => {
+        try { resolve(JSON.parse(raw)); }
+        catch(_) { reject(new Error(`TTLock 非 JSON 回應: ${raw.slice(0, 200)}`)); }
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('TTLock API timeout')); });
+    req.write(bodyBuf);
+    req.end();
+  });
+
+  console.log('[TTLock] keyboardPwd/get 回應:', JSON.stringify(data));
 
   if (data.errcode && data.errcode !== 0) {
     throw new Error(`[TTLock] 建立密碼失敗 (errcode ${data.errcode}): ${data.errmsg || JSON.stringify(data)}`);

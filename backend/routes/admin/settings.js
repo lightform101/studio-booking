@@ -291,8 +291,8 @@ router.post('/test-ttlock', async (req, res) => {
           });
 
           const endpoints = [
-            { host: 'euapi.ttlock.com', path: '/v3/keyboardPwd/add' },
-            { host: 'api.ttlock.com',   path: '/v3/keyboardPwd/add' },
+            { host: 'euapi.ttlock.com', path: '/v3/keyboardPwd/get' },
+            { host: 'api.ttlock.com',   path: '/v3/keyboardPwd/get' },
           ];
           let pwdSuccess = false;
           for (const ep of endpoints) {
