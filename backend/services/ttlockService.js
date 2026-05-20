@@ -54,8 +54,9 @@ async function createPasscode({ lockId, name, startDate, endDate }) {
 
   // 使用 /v3/keyboardPwd/get 取得隨機密碼（TTLock 算法生成，不需 Gateway）
   // keyboardPwdType=3 = 限時密碼；TTLock 時間只精確到小時，須對齊整點
-  const startMs = Math.floor(Number(startDate) / 3600000) * 3600000;   // 無條件捨去到整點
-  const endMs   = Math.ceil(Number(endDate)   / 3600000) * 3600000;    // 無條件進位到整點
+  const startMs    = Math.floor(Number(startDate) / 3600000) * 3600000;          // 捨去到整點
+  const endMsRaw   = Math.ceil(Number(endDate)   / 3600000) * 3600000;          // 進位到整點
+  const endMs      = Math.max(endMsRaw, startMs + 3_600_000);                    // 確保至少 1 小時差距
 
   const body = qs.stringify({
     clientId:        CLIENT_ID(),

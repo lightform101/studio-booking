@@ -252,8 +252,12 @@ router.post('/test-ttlock', async (req, res) => {
             { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
           );
           const token3 = tokenResp3.data.access_token;
-          const startTest = Date.now() + 60_000;
-          const endTest   = Date.now() + 2 * 60_000;
+          // TTLock 要求 startDate/endDate 對齊整點，且差距 > 30 分鐘
+          // 用下一個整點開始，持續 2 小時
+          const nextHour  = (Math.floor(Date.now() / 3600000) + 1) * 3600000;
+          const startTest = nextHour;
+          const endTest   = nextHour + 2 * 3600000; // 2 小時後
+          report.push(`密碼有效期: ${new Date(startTest).toISOString()} ~ ${new Date(endTest).toISOString()}`);
           const pwdBody = qs.stringify({
             clientId, accessToken: token3,
             lockId: String(testStudio.ttlock_lock_id),
