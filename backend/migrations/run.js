@@ -30,6 +30,7 @@ async function runMigrations() {
     '004_appearance.sql',
     '005_studio_rates.sql',
     '006_promotions.sql',
+    '007_ttlock.sql',
   ];
 
   try {

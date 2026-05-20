@@ -6,6 +6,9 @@ const auth     = require('../../middleware/auth');
 const { pool } = require('../../config/database');
 const EmailSvc = require('../../services/emailService');
 const SmsSvc   = require('../../services/smsService');
+const fs       = require('fs');
+const path     = require('path');
+const mysql    = require('mysql2/promise');
 
 router.use(auth);
 
@@ -83,6 +86,44 @@ router.post('/test-sms', async (req, res, next) => {
     await SmsSvc.send(phone, '【Studio Space】SMS 設定測試成功！');
     res.json({ success: true, message: `測試簡訊已發送至 ${phone}` });
   } catch (err) { next(err); }
+});
+
+// 執行 DB Migration
+router.post('/run-migration', async (req, res, next) => {
+  const IGNORABLE = new Set(['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY']);
+  const migrationFiles = [
+    '001_schema.sql','002_seed.sql','003_studio_images.sql',
+    '004_appearance.sql','005_studio_rates.sql','006_promotions.sql','007_ttlock.sql',
+  ];
+  const logs = [];
+  let conn;
+  try {
+    conn = await mysql.createConnection({
+      host: process.env.DB_HOST, port: parseInt(process.env.DB_PORT) || 3306,
+      user: process.env.DB_USER, password: process.env.DB_PASS,
+      database: process.env.DB_NAME, multipleStatements: false,
+    });
+    for (const file of migrationFiles) {
+      const filePath = path.join(__dirname, '../../migrations', file);
+      if (!fs.existsSync(filePath)) { logs.push(`⏭ 跳過（找不到）: ${file}`); continue; }
+      const statements = fs.readFileSync(filePath, 'utf8')
+        .split(';').map(s => s.trim()).filter(s => s && !s.startsWith('--'));
+      let ok = 0, skipped = 0;
+      for (const sql of statements) {
+        try { await conn.query(sql); ok++; }
+        catch (err) {
+          if (IGNORABLE.has(err.code)) { skipped++; }
+          else { logs.push(`❌ 錯誤 (${file}): ${err.message}`); throw err; }
+        }
+      }
+      logs.push(`✅ ${file}（${ok} 條執行，${skipped} 條略過）`);
+    }
+    res.json({ success: true, message: 'Migration 完成', log: logs.join('\n') });
+  } catch (err) {
+    res.json({ success: false, message: err.message, log: logs.join('\n') });
+  } finally {
+    if (conn) await conn.end();
+  }
 });
 
 module.exports = router;

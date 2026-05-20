@@ -907,6 +907,17 @@
         <div class="settings-row"><div><div class="settings-label">LINE Pay</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
         <button class="btn-add" style="margin-top:16px;">💾 儲存金流設定</button>
       </div>
+
+      <!-- 資料庫 Migration -->
+      <div class="settings-section">
+        <h3>🗄 資料庫維護</h3>
+        <p style="font-size:.88rem;color:#666;margin-bottom:16px;">每次系統更新後，執行 Migration 以確保資料庫結構是最新版本。已執行過的項目會自動略過。</p>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-add" onclick="runMigration()" id="migration-btn">🚀 執行 Migration</button>
+          <span id="migration-msg" style="font-size:.85rem;display:none;"></span>
+        </div>
+        <pre id="migration-log" style="display:none;margin-top:14px;background:#1a1a2e;color:#a8ff78;padding:14px;border-radius:8px;font-size:.78rem;line-height:1.7;overflow-x:auto;white-space:pre-wrap;"></pre>
+      </div>
     </div>
 
     <!-- ═══ APPEARANCE SETTINGS ══════════════════ -->
@@ -1686,6 +1697,38 @@
     el.style.color = ok ? '#28a745' : '#dc3545';
     el.style.display = 'inline';
     setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+
+  // ─── 執行 DB Migration ───────────────────────────
+  async function runMigration() {
+    const btn = document.getElementById('migration-btn');
+    const msg = document.getElementById('migration-msg');
+    const log = document.getElementById('migration-log');
+    btn.disabled = true;
+    btn.textContent = '⏳ 執行中...';
+    msg.style.display = 'none';
+    log.style.display = 'none';
+    try {
+      const r = await fetch(`${API}/admin/settings/run-migration`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const d = await r.json();
+      msg.textContent = d.success ? '✅ Migration 完成！' : `❌ 失敗：${d.message}`;
+      msg.style.color  = d.success ? '#28a745' : '#dc3545';
+      msg.style.display = 'inline';
+      if (d.log) {
+        log.textContent = d.log;
+        log.style.display = 'block';
+      }
+    } catch(e) {
+      msg.textContent = '❌ 執行失敗：' + e.message;
+      msg.style.color = '#dc3545';
+      msg.style.display = 'inline';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🚀 執行 Migration';
+    }
   }
 
   function showPage(id, btn) {
