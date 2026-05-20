@@ -173,19 +173,23 @@ router.post('/test-ttlock', async (req, res) => {
           { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
         );
         const token = tokenResp2.data.access_token;
-        const lockResp = await axios.get('https://euapi.ttlock.com/v3/lock/list', {
-          params: { clientId, accessToken: token, pageNum: 1, pageSize: 20, date: Date.now() }
-        });
+        const now = Date.now();
+        // 用 POST + form 格式送出（部分 TTLock 節點不接受 GET params）
+        const lockResp = await axios.post(
+          'https://euapi.ttlock.com/v3/lock/list',
+          qs.stringify({ clientId, accessToken: token, pageNum: 1, pageSize: 20, date: now }),
+          { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
+        );
         const lockData = lockResp.data;
+        report.push(`raw: ${JSON.stringify(lockData).slice(0, 500)}`);
         if (lockData.list && lockData.list.length > 0) {
           lockData.list.forEach(l => {
-            report.push(`🔑 Lock: ${l.lockName} → lockId=${l.lockId} (MAC: ${l.lockMac})`);
+            report.push(`🔑 ${l.lockName} → lockId=${l.lockId} MAC=${l.lockMac}`);
           });
-        } else {
-          report.push(`鎖清單: ${JSON.stringify(lockData)}`);
         }
       } catch(e) {
-        report.push(`❌ 查詢鎖清單失敗: ${e.response?.data ? JSON.stringify(e.response.data) : e.message}`);
+        const errBody = e.response?.data;
+        report.push(`❌ 查詢鎖清單失敗 (${e.response?.status}): ${typeof errBody === 'string' ? errBody.slice(0,200) : JSON.stringify(errBody)}`);
       }
     }
 
