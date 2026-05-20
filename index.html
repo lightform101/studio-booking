@@ -763,14 +763,15 @@
     <div class="footer-brand">
       <div class="nav-logo" style="margin-bottom:12px;">
         <div class="logo-icon" style="background:var(--accent);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:18px;">📸</div>
-        <span style="color:#fff;font-weight:700;font-size:1.05rem;">Studio Space</span>
+        <span id="footer-site-name" style="color:#fff;font-weight:700;font-size:1.05rem;">Studio Space</span>
       </div>
-      <p>台北頂級攝影棚空間，提供兩間專業場地。<br />線上預約，即時確認，創作無障礙。</p>
+      <p id="footer-site-desc">台北頂級攝影棚空間，提供專業場地。<br />線上預約，即時確認，創作無障礙。</p>
     </div>
     <div class="footer-col">
       <h4>場地</h4>
-      <a href="booking.html?studio=A">Studio A 攝影棚甲</a>
-      <a href="booking.html?studio=B">Studio B 攝影棚乙</a>
+      <div id="footer-studios-list">
+        <a href="booking.html">線上預約</a>
+      </div>
       <a href="#rules">場地規定</a>
     </div>
     <div class="footer-col">
@@ -787,7 +788,7 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2026 Studio Space. All rights reserved.</span>
+    <span id="footer-copyright">© 2026 Studio Space. All rights reserved.</span>
     <span id="footer-contact">contact@studiospace.tw ｜ 02-XXXX-XXXX</span>
   </div>
 </footer>
@@ -853,6 +854,11 @@
         document.title = ap.site_name + ' 攝影棚預約系統';
         const logoSpan = document.querySelector('.nav-logo span');
         if (logoSpan) logoSpan.textContent = ap.site_name;
+        // Footer 品牌名稱與版權
+        const footerName = document.getElementById('footer-site-name');
+        if (footerName) footerName.textContent = ap.site_name;
+        const footerCopy = document.getElementById('footer-copyright');
+        if (footerCopy) footerCopy.textContent = `© ${new Date().getFullYear()} ${ap.site_name}. All rights reserved.`;
       }
 
       // Hero 文案
@@ -1112,6 +1118,14 @@
           renderCarousel(key);
         }
       });
+
+      // 更新 Footer 場地連結
+      const footerStudios = document.getElementById('footer-studios-list');
+      if (footerStudios) {
+        footerStudios.innerHTML = studios.map(s =>
+          `<a href="booking.html?studio=${s.id}">${s.name}</a>`
+        ).join('');
+      }
 
       // 更新 Hero 場地照片卡
       const heroContainer = document.getElementById('hero-photo-cards');
