@@ -1,14 +1,15 @@
 /**
  * 後台：系統設定 Routes
  */
-const router   = require('express').Router();
-const auth     = require('../../middleware/auth');
-const { pool } = require('../../config/database');
-const EmailSvc = require('../../services/emailService');
-const SmsSvc   = require('../../services/smsService');
-const fs       = require('fs');
-const path     = require('path');
-const mysql    = require('mysql2/promise');
+const router    = require('express').Router();
+const auth      = require('../../middleware/auth');
+const { pool }  = require('../../config/database');
+const EmailSvc  = require('../../services/emailService');
+const SmsSvc    = require('../../services/smsService');
+const TTLockSvc = require('../../services/ttlockService');
+const fs        = require('fs');
+const path      = require('path');
+const mysql     = require('mysql2/promise');
 
 router.use(auth);
 
@@ -86,6 +87,59 @@ router.post('/test-sms', async (req, res, next) => {
     await SmsSvc.send(phone, '【Studio Space】SMS 設定測試成功！');
     res.json({ success: true, message: `測試簡訊已發送至 ${phone}` });
   } catch (err) { next(err); }
+});
+
+// TTLock 連線診斷
+router.post('/test-ttlock', async (req, res) => {
+  const report = [];
+  try {
+    // 1. 檢查環境變數
+    const clientId  = process.env.TTLOCK_CLIENT_ID;
+    const clientSec = process.env.TTLOCK_CLIENT_SECRET;
+    const username  = process.env.TTLOCK_USERNAME;
+    const password  = process.env.TTLOCK_PASSWORD;
+    report.push(`CLIENT_ID:  ${clientId  ? '✅ 已設定' : '❌ 未設定'}`);
+    report.push(`CLIENT_SEC: ${clientSec ? '✅ 已設定' : '❌ 未設定'}`);
+    report.push(`USERNAME:   ${username  ? '✅ ' + username : '❌ 未設定'}`);
+    report.push(`PASSWORD:   ${password  ? '✅ 已設定' : '❌ 未設定'}`);
+
+    if (!clientId || !clientSec || !username || !password) {
+      return res.json({ success: false, report: report.join('\n'), message: '環境變數未設定完整' });
+    }
+
+    // 2. 檢查場地 lock_id
+    const [studios] = await pool.query('SELECT id, name, ttlock_lock_id FROM studios');
+    studios.forEach(s => {
+      report.push(`場地 "${s.name}": lock_id = ${s.ttlock_lock_id || '❌ 未設定'}`);
+    });
+
+    // 3. 測試取得 Token
+    report.push('--- 測試 TTLock API Token ---');
+    const { createPasscode } = TTLockSvc;
+    // 直接測試取 token（不建立密碼）
+    const crypto = require('crypto');
+    const md5 = str => crypto.createHash('md5').update(str).digest('hex');
+    const params = new URLSearchParams({
+      client_id: clientId, client_secret: clientSec,
+      grant_type: 'password', username, password: md5(password),
+    });
+    const tokenResp = await fetch('https://euapi.ttlock.com/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+    const tokenData = await tokenResp.json();
+    if (tokenData.access_token) {
+      report.push(`✅ Token 取得成功（${tokenData.access_token.slice(0,10)}...）`);
+    } else {
+      report.push(`❌ Token 取得失敗: ${JSON.stringify(tokenData)}`);
+    }
+
+    res.json({ success: true, report: report.join('\n') });
+  } catch (e) {
+    report.push(`❌ 例外錯誤: ${e.message}`);
+    res.json({ success: false, report: report.join('\n'), message: e.message });
+  }
 });
 
 // 執行 DB Migration

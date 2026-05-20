@@ -908,6 +908,17 @@
         <button class="btn-add" style="margin-top:16px;">💾 儲存金流設定</button>
       </div>
 
+      <!-- TTLock 診斷 -->
+      <div class="settings-section">
+        <h3>🔐 TTLock 連線診斷</h3>
+        <p style="font-size:.88rem;color:#666;margin-bottom:16px;">檢查 TTLock 環境變數、場地 Lock ID 設定、以及 API 連線是否正常。</p>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-add" style="background:#6c757d;" onclick="testTTLock()">🔍 診斷 TTLock</button>
+          <span id="ttlock-diag-msg" style="font-size:.85rem;display:none;"></span>
+        </div>
+        <pre id="ttlock-diag-log" style="display:none;margin-top:14px;background:#1a1a2e;color:#a8ff78;padding:14px;border-radius:8px;font-size:.78rem;line-height:1.7;overflow-x:auto;white-space:pre-wrap;"></pre>
+      </div>
+
       <!-- 資料庫 Migration -->
       <div class="settings-section">
         <h3>🗄 資料庫維護</h3>
@@ -1697,6 +1708,29 @@
     el.style.color = ok ? '#28a745' : '#dc3545';
     el.style.display = 'inline';
     setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+
+  // ─── TTLock 診斷 ─────────────────────────────────
+  async function testTTLock() {
+    const msg = document.getElementById('ttlock-diag-msg');
+    const log = document.getElementById('ttlock-diag-log');
+    msg.textContent = '⏳ 診斷中...';
+    msg.style.color = '#888';
+    msg.style.display = 'inline';
+    log.style.display = 'none';
+    try {
+      const r = await fetch(`${API}/admin/settings/test-ttlock`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const d = await r.json();
+      msg.textContent = d.success ? '✅ 診斷完成' : '❌ 發現問題';
+      msg.style.color  = d.success ? '#28a745' : '#dc3545';
+      if (d.report) { log.textContent = d.report; log.style.display = 'block'; }
+    } catch(e) {
+      msg.textContent = '❌ 錯誤：' + e.message;
+      msg.style.color = '#dc3545';
+    }
   }
 
   // ─── 執行 DB Migration ───────────────────────────
