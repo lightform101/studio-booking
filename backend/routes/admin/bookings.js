@@ -8,6 +8,7 @@ const NotifySvc    = require('../../services/notifyService');
 const NewebPaySvc  = require('../../services/newebpayService');
 const TTLockSvc    = require('../../services/ttlockService');
 const EmailService = require('../../services/emailService');
+const InvoiceSvc   = require('../../services/invoiceService');
 const { pool }     = require('../../config/database');
 const dayjs        = require('dayjs');
 
@@ -239,6 +240,42 @@ router.post('/:id/resend-notification', async (req, res, next) => {
     await NotifySvc.send(event, booking);
     res.json({ success: true, message: '通知已重新發送' });
   } catch (err) { next(err); }
+});
+
+// ─── 手動補開電子發票 ────────────────────────────────
+// POST /api/admin/bookings/:id/issue-invoice
+router.post('/:id/issue-invoice', async (req, res, next) => {
+  try {
+    const [[booking]] = await pool.query(
+      `SELECT b.*, s.name AS studio_name
+       FROM bookings b
+       JOIN studios s ON b.studio_id = s.id
+       WHERE b.id = ?`,
+      [req.params.id]
+    );
+    if (!booking) return res.status(404).json({ success: false, message: '找不到此預約' });
+    if (booking.invoice_status === 'issued') {
+      return res.json({
+        success: true,
+        message: `發票已存在：${booking.invoice_no}`,
+        invoice_no: booking.invoice_no,
+        invoice_random: booking.invoice_random,
+      });
+    }
+    if (!booking.need_invoice) {
+      return res.status(400).json({ success: false, message: '此預約未勾選需要發票' });
+    }
+
+    const result = await InvoiceSvc.issue(booking);
+    res.json({
+      success:        true,
+      message:        '發票開立成功',
+      invoice_no:     result.invoice_no,
+      invoice_random: result.random_number,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 module.exports = router;

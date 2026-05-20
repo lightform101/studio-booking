@@ -522,14 +522,14 @@
       </div>
       <div class="invoice-fields" id="invoice-fields">
         <div class="invoice-type-tabs">
-          <div class="inv-tab active" onclick="switchInvTab(this,'personal')">個人（手機條碼）</div>
-          <div class="inv-tab" onclick="switchInvTab(this,'company')">公司（統一編號）</div>
-          <div class="inv-tab" onclick="switchInvTab(this,'donate')">捐贈發票</div>
+          <div class="inv-tab active" data-inv-type="personal" onclick="switchInvTab(this,'personal')">個人（手機條碼）</div>
+          <div class="inv-tab" data-inv-type="company" onclick="switchInvTab(this,'company')">公司（統一編號）</div>
+          <div class="inv-tab" data-inv-type="donate" onclick="switchInvTab(this,'donate')">捐贈發票</div>
         </div>
         <div id="inv-personal">
           <div class="form-group">
             <div class="form-label">手機條碼載具</div>
-            <input type="text" class="form-input" placeholder="/XXXXXXX（8碼）" />
+            <input id="inv-carrier" type="text" class="form-input" placeholder="/XXXXXXX（8碼）" />
             <div class="form-hint">填入您的手機條碼，發票將存入您的電子發票載具</div>
           </div>
         </div>
@@ -537,18 +537,18 @@
           <div class="form-row">
             <div class="form-group">
               <div class="form-label">統一編號 <span class="required">*</span></div>
-              <input type="text" class="form-input" placeholder="00000000（8碼）" maxlength="8" />
+              <input id="inv-tax-id" type="text" class="form-input" placeholder="00000000（8碼）" maxlength="8" />
             </div>
             <div class="form-group">
               <div class="form-label">公司名稱 <span class="required">*</span></div>
-              <input type="text" class="form-input" placeholder="請輸入公司名稱" />
+              <input id="inv-company-name" type="text" class="form-input" placeholder="請輸入公司名稱" />
             </div>
           </div>
         </div>
         <div id="inv-donate" style="display:none">
           <div class="form-group">
             <div class="form-label">捐贈碼</div>
-            <input type="text" class="form-input" placeholder="請輸入捐贈碼（如 25885）" />
+            <input id="inv-donate-code" type="text" class="form-input" placeholder="請輸入捐贈碼（如 25885）" />
           </div>
         </div>
       </div>
@@ -1193,6 +1193,25 @@
     const subPay = document.querySelector('input[name="pay-sub"]:checked')?.value || 'credit';
     const pm     = document.getElementById('pm-linepay')?.classList.contains('selected') ? 'linepay' : subPay;
 
+    // ─── 發票欄位收集與驗證 ───────────────────────────
+    const needInvoice = document.getElementById('invoice-toggle')?.classList.contains('active') ? 1 : 0;
+    const activeInvTab = document.querySelector('.inv-tab.active');
+    const invType     = activeInvTab?.getAttribute('data-inv-type') || 'personal';
+    const invCarrier  = document.getElementById('inv-carrier')?.value.trim() || '';
+    const invTaxId    = document.getElementById('inv-tax-id')?.value.trim() || '';
+    const invCompany  = document.getElementById('inv-company-name')?.value.trim() || '';
+    const invDonate   = document.getElementById('inv-donate-code')?.value.trim() || '';
+
+    if (needInvoice) {
+      if (invType === 'personal' && invCarrier && !/^\/[A-Z0-9+\-.]{7}$/.test(invCarrier)) {
+        alert('手機條碼格式錯誤，應為 /XXXXXXX（/ 加 7 碼英數）'); return;
+      }
+      if (invType === 'company') {
+        if (!/^\d{8}$/.test(invTaxId)) { alert('統一編號須為 8 碼數字'); return; }
+        if (!invCompany) { alert('請填寫公司名稱'); return; }
+      }
+    }
+
     const submitBtn = document.querySelector('.btn-submit');
     submitBtn.disabled    = true;
     submitBtn.textContent = '⏳ 送出中...';
@@ -1220,8 +1239,13 @@
           purpose, note,
           shooting_type,
           payment_method: pm,
-          need_invoice: document.getElementById('invoice-toggle')?.classList.contains('active') ? 1 : 0,
-          promo_code:   state.promo?.promo_code || null,
+          need_invoice:     needInvoice,
+          invoice_type:     needInvoice ? invType : null,
+          invoice_carrier:  needInvoice && invType === 'personal' ? invCarrier : null,
+          invoice_tax_id:   needInvoice && invType === 'company'  ? invTaxId  : null,
+          invoice_company:  needInvoice && invType === 'company'  ? invCompany : null,
+          invoice_donate:   needInvoice && invType === 'donate'   ? invDonate  : null,
+          promo_code:       state.promo?.promo_code || null,
           discount_amount: discountAmt || null,
           promo_id:     state.promo?.id || null,
         })

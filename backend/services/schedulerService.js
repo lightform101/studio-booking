@@ -5,6 +5,7 @@
 const cron         = require('node-cron');
 const BookingModel = require('../models/BookingModel');
 const NotifySvc    = require('./notifyService');
+const InvoiceSvc   = require('./invoiceService');
 const { pool }     = require('../config/database');
 const dayjs        = require('dayjs');
 
@@ -40,6 +41,12 @@ const SchedulerService = {
       try { await this.sendPaymentReminders(); }
       catch (e) { console.error('[Scheduler] sendPaymentReminders 錯誤:', e.message); }
     });
+
+    // ─── 每小時整點：開立已結束預約的電子發票 ────────
+    cron.schedule('10 * * * *', async () => {
+      try { await this.issueInvoicesForEndedBookings(); }
+      catch (e) { console.error('[Scheduler] issueInvoices 錯誤:', e.message); }
+    });
   },
 
   // 發送 24 小時前提醒（明天有預約的客戶）
@@ -64,6 +71,35 @@ const SchedulerService = {
         if (!existing) await NotifySvc.send('reminder_24h', booking);
       } catch (e) {
         console.error(`[Scheduler] 提醒失敗 ${booking.booking_no}:`, e.message);
+      }
+    }
+  },
+
+  // ─── 自動開立發票（預約結束後） ───────────────────
+  async issueInvoicesForEndedBookings() {
+    const now = dayjs().format('YYYY-MM-DD HH:mm:ss');
+
+    // 找出「已確認 + 需要發票 + 尚未開立 + 結束時間已過」的預約
+    const [bookings] = await pool.query(
+      `SELECT b.*, s.name AS studio_name
+       FROM bookings b
+       JOIN studios s ON b.studio_id = s.id
+       WHERE b.status = 'confirmed'
+         AND b.need_invoice = 1
+         AND (b.invoice_status IS NULL OR b.invoice_status IN ('pending','failed','not_needed') AND b.invoice_status != 'not_needed')
+         AND b.invoice_no IS NULL
+         AND CONCAT(b.booking_date, ' ', b.end_time) <= ?`,
+      [now]
+    );
+
+    if (bookings.length === 0) return;
+    console.log(`[Scheduler] 自動開票：找到 ${bookings.length} 筆已結束預約`);
+
+    for (const booking of bookings) {
+      try {
+        await InvoiceSvc.issue(booking);
+      } catch (e) {
+        console.error(`[Scheduler] 開票失敗 ${booking.booking_no}:`, e.message);
       }
     }
   },

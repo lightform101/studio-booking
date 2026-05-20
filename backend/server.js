@@ -125,7 +125,8 @@ async function runMigrationsOnStart() {
   });
   const IGNORABLE = new Set(['ER_DUP_FIELDNAME','ER_TABLE_EXISTS_ERROR','ER_DUP_ENTRY']);
   const files = ['001_schema.sql','002_seed.sql','003_studio_images.sql',
-                 '004_appearance.sql','005_studio_rates.sql','006_promotions.sql'];
+                 '004_appearance.sql','005_studio_rates.sql','006_promotions.sql',
+                 '007_ttlock.sql','008_invoice.sql'];
   for (const file of files) {
     const fp = path.join(__dirname, 'migrations', file);
     if (!fs.existsSync(fp)) continue;

@@ -1446,6 +1446,12 @@
           <textarea class="form-input" id="bk-e-admin-note" rows="2" style="resize:vertical;" placeholder="僅後台可見..."></textarea>
         </div>
       </div>
+      <!-- 電子發票資訊 -->
+      <div id="bk-invoice-section" style="margin-top:14px;padding:14px 16px;background:#f8f9fa;border:1px solid #e0e4ea;border-radius:8px;display:none;">
+        <div style="font-weight:700;font-size:.88rem;margin-bottom:10px;">🧾 電子發票</div>
+        <div id="bk-invoice-info" style="font-size:.84rem;line-height:1.8;color:#444;"></div>
+        <div id="bk-invoice-actions" style="margin-top:10px;"></div>
+      </div>
       <div id="bk-modal-err" style="display:none;margin-top:10px;background:#fff3f3;border:1px solid #ffcccc;border-radius:8px;padding:10px 14px;color:#c0392b;font-size:.85rem;"></div>
     </div>
     <div class="modal-footer">
@@ -2113,7 +2119,66 @@
       const ttlockBtn = document.getElementById('bk-ttlock-btn');
       ttlockBtn.style.display = b.status === 'confirmed' ? '' : 'none';
       ttlockBtn.dataset.bookingId = b.id;
+
+      // ─── 電子發票區塊 ───────────────────────────
+      const invSection = document.getElementById('bk-invoice-section');
+      const invInfo    = document.getElementById('bk-invoice-info');
+      const invActions = document.getElementById('bk-invoice-actions');
+      if (b.need_invoice) {
+        invSection.style.display = '';
+        const INV_TYPE = { personal: '個人（手機載具）', company: '公司（統編）', donate: '捐贈發票' };
+        const INV_STATUS = {
+          not_needed: '', pending: '⏳ 開立中',
+          issued: '✅ 已開立', failed: '❌ 開立失敗',
+        };
+        let infoHtml = `<b>類型：</b>${INV_TYPE[b.invoice_type] || b.invoice_type || '—'}<br>`;
+        if (b.invoice_type === 'personal' && b.invoice_carrier)
+          infoHtml += `<b>載具：</b>${b.invoice_carrier}<br>`;
+        if (b.invoice_type === 'company')
+          infoHtml += `<b>統編：</b>${b.invoice_tax_id || '—'}　<b>公司：</b>${b.invoice_company || '—'}<br>`;
+        if (b.invoice_type === 'donate')
+          infoHtml += `<b>捐贈碼：</b>${b.invoice_donate || '—'}<br>`;
+        if (b.invoice_no)
+          infoHtml += `<b>發票號碼：</b><span style="color:#27ae60;font-weight:700;">${b.invoice_no}</span>　<b>隨機碼：</b>${b.invoice_random || '—'}<br>`;
+        infoHtml += `<b>狀態：</b>${INV_STATUS[b.invoice_status] || b.invoice_status || '—'}`;
+        invInfo.innerHTML = infoHtml;
+
+        // 補開按鈕（未開立時顯示）
+        if (b.invoice_status !== 'issued') {
+          invActions.innerHTML = `
+            <button id="bk-invoice-btn"
+              style="padding:6px 14px;border-radius:6px;border:1px solid #2980b9;background:#eaf4fd;color:#2980b9;cursor:pointer;font-size:.84rem;"
+              onclick="issueInvoice(${b.id})">🧾 手動補開發票</button>`;
+        } else {
+          invActions.innerHTML = '';
+        }
+      } else {
+        invSection.style.display = 'none';
+      }
     } catch(e) { alert('載入失敗'); closeModal(); }
+  }
+
+  // ─── 手動補開電子發票 ─────────────────────────────
+  async function issueInvoice(bookingId) {
+    const btn = document.getElementById('bk-invoice-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ 開立中...'; }
+    try {
+      const r = await fetch(`${API}/admin/bookings/${bookingId}/issue-invoice`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const d = await r.json();
+      if (d.success) {
+        alert(`✅ 發票開立成功！\n發票號碼：${d.invoice_no}\n隨機碼：${d.invoice_random}`);
+        openEditModal(bookingId); // 重新載入以更新顯示
+      } else {
+        alert(`❌ 失敗：${d.message}`);
+        if (btn) { btn.disabled = false; btn.textContent = '🧾 手動補開發票'; }
+      }
+    } catch(e) {
+      alert('發票開立失敗：' + e.message);
+      if (btn) { btn.disabled = false; btn.textContent = '🧾 手動補開發票'; }
+    }
   }
 
   // 手動觸發 TTLock 密碼建立

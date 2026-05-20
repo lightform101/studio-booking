@@ -1,127 +1,235 @@
 /**
- * 電子發票服務（綠界 ECPay）
- * API 文件: https://developers.ecpay.com.tw/?p=2509
+ * 電子發票服務 — 光貿 Amego 加值中心
+ * API Endpoint: POST https://invoice-api.amego.tw/json/f0401
+ * 簽章: sign = MD5( data_json + time_str + APP_KEY )
+ *
+ * 環境變數:
+ *   AMEGO_APP_KEY   — 向光貿客服申請後填入
+ *   NODE_ENV        — 非 production 時自動進入 mock 模式
  */
-const axios    = require('axios');
 const crypto   = require('crypto');
+const https    = require('https');
 const qs       = require('querystring');
-const dayjs    = require('dayjs');
 const { pool } = require('../config/database');
 
-const SANDBOX_URL    = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/Issue';
-const PRODUCTION_URL = 'https://einvoice.ecpay.com.tw/B2CInvoice/Issue';
+const AMEGO_HOST = 'invoice-api.amego.tw';
+const AMEGO_PATH = '/json/f0401';
 
-function getMerchantId()  { return process.env.ECPAY_MERCHANT_ID; }
-function getHashKey()     { return process.env.ECPAY_HASH_KEY; }
-function getHashIV()      { return process.env.ECPAY_HASH_IV; }
-function isProduction()   { return process.env.ECPAY_ENV === 'production'; }
-function getApiUrl()      { return isProduction() ? PRODUCTION_URL : SANDBOX_URL; }
+// 形彩有限公司統一編號
+const SELLER_TAX_ID = process.env.AMEGO_TAX_ID || '96842655';
 
-// URL encode 後 SHA256 簽章
-function generateCheckMac(params) {
-  const sorted = Object.keys(params).sort().reduce((acc, k) => {
-    acc[k] = params[k]; return acc;
-  }, {});
-  let str = `HashKey=${getHashKey()}&${qs.stringify(sorted)}&HashIV=${getHashIV()}`;
-  str = encodeURIComponent(str).toLowerCase().replace(/%20/g, '+');
-  return crypto.createHash('sha256').update(str).digest('hex').toUpperCase();
+function getAppKey()  { return process.env.AMEGO_APP_KEY || ''; }
+function isMockMode() { return !getAppKey(); }
+function md5(str)     { return crypto.createHash('md5').update(str, 'utf8').digest('hex'); }
+
+// ─── 呼叫光貿 API ─────────────────────────────────────
+async function callAmego(invoiceData) {
+  const timeStr = String(Math.floor(Date.now() / 1000));
+  const dataStr = JSON.stringify(invoiceData);
+  const sign    = md5(dataStr + timeStr + getAppKey());
+
+  const body    = qs.stringify({ invoice: SELLER_TAX_ID, data: dataStr, time: timeStr, sign });
+  const bodyBuf = Buffer.from(body, 'utf8');
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: AMEGO_HOST,
+      path:     AMEGO_PATH,
+      method:   'POST',
+      headers: {
+        'Content-Type':   'application/x-www-form-urlencoded',
+        'Content-Length': bodyBuf.length,
+        'User-Agent':     'Mozilla/5.0',
+        'Connection':     'close',
+      },
+      timeout: 15000,
+    }, res => {
+      let raw = '';
+      res.on('data', d => raw += d);
+      res.on('end', () => {
+        try { resolve(JSON.parse(raw)); }
+        catch (_) { reject(new Error(`光貿非 JSON 回應: ${raw.slice(0, 300)}`)); }
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('光貿 API timeout')); });
+    req.write(bodyBuf);
+    req.end();
+  });
 }
 
+// ─── 組裝發票資料 ─────────────────────────────────────
+function buildInvoiceData(booking) {
+  const total      = Math.round(Number(booking.total_amount));
+  const salesAmt   = Math.round(total / 1.05);   // 未稅金額
+  const taxAmt     = total - salesAmt;             // 稅額
+
+  const data = {
+    OrderId:            booking.booking_no,
+    BuyerName:          booking.contact_name,
+    BuyerEmail:         booking.contact_email,
+    SalesAmount:        salesAmt,
+    FreeTaxSalesAmount: 0,
+    ZeroTaxSalesAmount: 0,
+    TaxType:            1,      // 1=應稅
+    TaxRate:            5,
+    TaxAmount:          taxAmt,
+    TotalAmount:        total,
+    ProductItem: [{
+      Description: `${booking.studio_name || '場地'} 場地使用（${booking.booking_no}）`,
+      Quantity:    1,
+      UnitPrice:   salesAmt,
+      Amount:      salesAmt,
+      TaxType:     1,
+    }],
+  };
+
+  // 個人載具（手機條碼）
+  if (booking.invoice_type === 'personal' && booking.invoice_carrier) {
+    data.CarrierType = 'H';                         // H = 手機條碼
+    data.CarrierId1  = booking.invoice_carrier;
+    data.CarrierId2  = booking.invoice_carrier;
+  }
+
+  // 公司統編（B2B）
+  if (booking.invoice_type === 'company') {
+    data.BuyerIdentifier = booking.invoice_tax_id || '';
+    data.BuyerName       = booking.invoice_company || booking.contact_name;
+  }
+
+  // 捐贈發票
+  if (booking.invoice_type === 'donate' && booking.invoice_donate) {
+    data.NPOBAN = booking.invoice_donate;
+  }
+
+  return data;
+}
+
+// ─── Mock（開發用：APP_KEY 尚未設定時）──────────────
+async function issueMock(booking) {
+  const letters  = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const prefix   = letters[Math.floor(Math.random() * letters.length)]
+                 + letters[Math.floor(Math.random() * letters.length)];
+  const mockNo   = `${prefix}-${String(Math.floor(Math.random() * 90000000 + 10000000))}`;
+  const mockRand = String(Math.floor(Math.random() * 9000 + 1000));
+
+  await pool.query(
+    `UPDATE bookings
+     SET invoice_no=?, invoice_random=?, invoice_at=NOW(), invoice_status='issued'
+     WHERE id=?`,
+    [mockNo, mockRand, booking.id]
+  );
+  console.log(`[Invoice Mock] 模擬發票: ${mockNo}  隨機碼: ${mockRand}  (${booking.booking_no})`);
+  return { invoice_no: mockNo, random_number: mockRand };
+}
+
+// ─── 主要開票邏輯 ─────────────────────────────────────
 const InvoiceService = {
 
-  // 開立電子發票
+  /**
+   * 開立電子發票
+   * @param {Object} booking — 需含 id, booking_no, need_invoice, invoice_type,
+   *                           invoice_carrier, invoice_tax_id, invoice_company,
+   *                           invoice_donate, contact_name, contact_email,
+   *                           total_amount, studio_name
+   */
   async issue(booking) {
-    // 非發票模式、或未付款，跳過
-    if (!booking.need_invoice) return null;
-
-    const autoIssue = await getSetting('invoice_auto_issue');
-    if (autoIssue === '0') return null;
-
-    // 開發環境 mock
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[Invoice Mock] 模擬開立發票: ${booking.booking_no}`);
-      const mockInvoiceNo = `AA-${Math.floor(Math.random()*90000000+10000000)}`;
-      const mockRandom    = String(Math.floor(Math.random()*9000+1000));
+    // 不需要發票
+    if (!booking.need_invoice) {
       await pool.query(
-        'UPDATE bookings SET invoice_no=?, invoice_random=?, invoice_at=NOW() WHERE booking_no=?',
-        [mockInvoiceNo, mockRandom, booking.booking_no]
+        `UPDATE bookings SET invoice_status='not_needed' WHERE id=?`, [booking.id]
       );
-      return { invoice_no: mockInvoiceNo, random_number: mockRandom };
+      return null;
     }
 
-    // 判斷載具類型
-    let carruerType = '0', carruerNum = '';
-    if (booking.invoice_type === 'personal' && booking.invoice_carrier) {
-      carruerType = '1'; carruerNum = booking.invoice_carrier;
-    } else if (booking.invoice_type === 'personal') {
-      carruerType = '';  // 雲端發票
+    // 已開立過，略過
+    if (booking.invoice_no) {
+      console.log(`[Invoice] 已有發票 ${booking.invoice_no}，略過 (${booking.booking_no})`);
+      return { invoice_no: booking.invoice_no, random_number: booking.invoice_random };
     }
 
-    const params = {
-      MerchantID:      getMerchantId(),
-      RelateNumber:    booking.booking_no,
-      CustomerEmail:   booking.contact_email,
-      CustomerPhone:   booking.contact_phone,
-      CustomerName:    booking.contact_name,
-      CarruerType:     carruerType,
-      CarruerNum:      carruerNum,
-      Donation:        booking.invoice_type === 'donate' ? '1' : '0',
-      LoveCode:        booking.invoice_donate || '',
-      Print:           booking.invoice_type === 'company' ? '1' : '0',
-      TaxType:         '1',  // 應稅
-      SalesAmount:     Math.round(booking.total_amount),
-      InvoiceRemark:   `Studio Space 場地預約 ${booking.booking_no}`,
-      ItemName:        `${booking.studio_name} 場地使用`,
-      ItemCount:       '1',
-      ItemWord:        '式',
-      ItemPrice:       Math.round(booking.total_amount),
-      ItemTaxType:     '1',
-      ItemAmount:      Math.round(booking.total_amount),
-      InvType:         '07',   // 一般稅額
-      vat:             '1',
-      TimeStamp:       Math.floor(Date.now() / 1000)
-    };
-
-    // 企業發票加上統編
-    if (booking.invoice_type === 'company') {
-      params.CustomerIdentifier = booking.invoice_tax_id;
+    // Mock 模式（APP_KEY 尚未設定）
+    if (isMockMode()) {
+      return issueMock(booking);
     }
 
-    params.CheckMacValue = generateCheckMac(params);
-
-    const response = await axios.post(getApiUrl(), qs.stringify(params), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    });
-    const result = qs.parse(response.data);
-
-    if (result.RtnCode !== '1') {
-      throw new Error(`發票開立失敗: ${result.RtnMsg}`);
-    }
-
-    // 更新資料庫
+    // 標記為開票中（pending）
     await pool.query(
-      'UPDATE bookings SET invoice_no=?, invoice_random=?, invoice_at=NOW() WHERE booking_no=?',
-      [result.InvoiceNo, result.RandomNumber, booking.booking_no]
+      `UPDATE bookings SET invoice_status='pending' WHERE id=?`, [booking.id]
     );
 
-    // 自動寄送發票通知
-    const autoEmail = await getSetting('invoice_auto_email');
-    if (autoEmail !== '0') {
-      const updatedBooking = { ...booking, invoice_no: result.InvoiceNo };
-      const NotifySvc = require('./notifyService');
-      await NotifySvc.send('invoice_issued', updatedBooking);
+    try {
+      const invoiceData = buildInvoiceData(booking);
+      console.log('[Invoice] 呼叫光貿 API，訂單:', booking.booking_no);
+
+      const result = await callAmego(invoiceData);
+      console.log('[Invoice] 光貿回應:', JSON.stringify(result));
+
+      // 解析回應（光貿可能回傳多種格式）
+      const isOk = result.code === 0 || result.status === 'OK' || result.result === 'success';
+      if (!isOk) {
+        throw new Error(`開立失敗 (code ${result.code ?? result.status}): ${result.message ?? JSON.stringify(result)}`);
+      }
+
+      const invoiceNo  = result.InvoiceNo  ?? result.invoice_no  ?? result.data?.InvoiceNo  ?? '';
+      const randomNum  = result.RandomNumber ?? result.random_number ?? result.data?.RandomNumber ?? '';
+
+      await pool.query(
+        `UPDATE bookings
+         SET invoice_no=?, invoice_random=?, invoice_at=NOW(), invoice_status='issued'
+         WHERE id=?`,
+        [invoiceNo, randomNum, booking.id]
+      );
+
+      // 寄送發票 Email 通知
+      try {
+        const NotifySvc = require('./notifyService');
+        await NotifySvc.send('invoice_issued', { ...booking, invoice_no: invoiceNo, invoice_random: randomNum });
+      } catch (e) {
+        console.warn('[Invoice] 發票通知 Email 失敗:', e.message);
+      }
+
+      console.log(`[Invoice] 開立成功: ${invoiceNo}  隨機碼: ${randomNum}  (${booking.booking_no})`);
+      return { invoice_no: invoiceNo, random_number: randomNum };
+
+    } catch (err) {
+      console.error('[Invoice] 開立失敗:', err.message);
+      await pool.query(
+        `UPDATE bookings SET invoice_status='failed' WHERE id=?`, [booking.id]
+      );
+      throw err;
     }
+  },
 
-    console.log(`[Invoice] 開立成功: ${result.InvoiceNo} (${booking.booking_no})`);
-    return { invoice_no: result.InvoiceNo, random_number: result.RandomNumber };
-  }
+  /**
+   * 依預約編號手動補開發票（管理員用）
+   */
+  async issueByBookingNo(bookingNo) {
+    const [[booking]] = await pool.query(
+      `SELECT b.*, s.name AS studio_name
+       FROM bookings b
+       JOIN studios s ON b.studio_id = s.id
+       WHERE b.booking_no = ?`,
+      [bookingNo]
+    );
+    if (!booking) throw new Error('找不到預約：' + bookingNo);
+    if (booking.invoice_status === 'issued') {
+      throw new Error('發票已開立：' + booking.invoice_no);
+    }
+    return this.issue(booking);
+  },
+
+  /**
+   * 取得設定值
+   */
+  async getSetting(key) {
+    try {
+      const [[row]] = await pool.query(
+        'SELECT key_value FROM settings WHERE key_name=?', [key]
+      );
+      return row?.key_value ?? '1';
+    } catch { return '1'; }
+  },
 };
-
-async function getSetting(key) {
-  try {
-    const [[row]] = await pool.query('SELECT key_value FROM settings WHERE key_name=?', [key]);
-    return row?.key_value ?? '1';
-  } catch { return '1'; }
-}
 
 module.exports = InvoiceService;
