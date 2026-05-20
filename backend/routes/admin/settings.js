@@ -263,33 +263,58 @@ router.post('/test-ttlock', async (req, res) => {
             endDate:   String(endTest),
             date:      String(Date.now()),
           });
-          const commonHeaders = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'User-Agent': 'TTLockApp/1.0',
-          };
-          // 嘗試 EU 節點
-          const pwdEndpoints = [
-            'https://euapi.ttlock.com/v3/keyboardPwd/add',
-            'https://api.ttlock.com/v3/keyboardPwd/add',
+          // 用原生 https 模組，強制帶 Content-Length（避免 Tomcat 7 拒絕 chunked encoding）
+          const https = require('https');
+          const pwdBuf = Buffer.from(pwdBody, 'utf8');
+
+          const httpsPost = (hostname, path, body) => new Promise((resolve, reject) => {
+            const opts = {
+              hostname, path, method: 'POST',
+              headers: {
+                'Content-Type':   'application/x-www-form-urlencoded',
+                'Content-Length': body.length,
+                'User-Agent':     'Mozilla/5.0',
+                'Accept':         '*/*',
+                'Connection':     'close',
+              },
+              timeout: 10000,
+            };
+            const req = https.request(opts, res => {
+              let raw = '';
+              res.on('data', d => raw += d);
+              res.on('end', () => resolve({ status: res.statusCode, body: raw }));
+            });
+            req.on('error', reject);
+            req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+            req.write(body);
+            req.end();
+          });
+
+          const endpoints = [
+            { host: 'euapi.ttlock.com', path: '/v3/keyboardPwd/add' },
+            { host: 'api.ttlock.com',   path: '/v3/keyboardPwd/add' },
           ];
           let pwdSuccess = false;
-          for (const ep of pwdEndpoints) {
+          for (const ep of endpoints) {
             try {
-              report.push(`嘗試: ${ep}`);
-              const pwdResp = await axios.post(ep, pwdBody, { headers: commonHeaders, timeout: 10000 });
-              const pwdData = pwdResp.data;
-              report.push(`回應: ${JSON.stringify(pwdData)}`);
-              if (pwdData.errcode === 0 || pwdData.keyboardPwd != null) {
-                report.push(`✅ 密碼建立成功! 密碼=${pwdData.keyboardPwd} id=${pwdData.keyboardPwdId}`);
-                pwdSuccess = true;
-              } else {
-                report.push(`❌ errcode=${pwdData.errcode}: ${pwdData.errmsg}`);
+              report.push(`嘗試 native https: ${ep.host}${ep.path}`);
+              const r = await httpsPost(ep.host, ep.path, pwdBuf);
+              report.push(`狀態碼: ${r.status}`);
+              report.push(`回應內容: ${r.body.slice(0, 300)}`);
+              if (r.status === 200) {
+                try {
+                  const d = JSON.parse(r.body);
+                  if (d.errcode === 0 || d.keyboardPwd != null) {
+                    report.push(`✅ 密碼建立成功! 密碼=${d.keyboardPwd} id=${d.keyboardPwdId}`);
+                    pwdSuccess = true;
+                  } else {
+                    report.push(`❌ errcode=${d.errcode}: ${d.errmsg}`);
+                  }
+                } catch(_) { report.push('（回應非 JSON）'); }
+                break;
               }
-              break;
             } catch(ep_e) {
-              const st = ep_e.response?.status;
-              const body = ep_e.response?.data;
-              report.push(`❌ ${ep} 失敗 (${st}): ${typeof body === 'string' ? body.slice(0,150) : JSON.stringify(body)}`);
+              report.push(`❌ ${ep.host} 失敗: ${ep_e.message}`);
             }
           }
           if (!pwdSuccess) report.push('❌ 所有節點均無法建立密碼');
