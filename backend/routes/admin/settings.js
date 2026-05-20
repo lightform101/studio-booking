@@ -96,13 +96,7 @@ router.post('/run-migration', async (req, res, next) => {
     '004_appearance.sql','005_studio_rates.sql','006_promotions.sql','007_ttlock.sql',
   ];
   const logs = [];
-  let conn;
   try {
-    conn = await mysql.createConnection({
-      host: process.env.DB_HOST, port: parseInt(process.env.DB_PORT) || 3306,
-      user: process.env.DB_USER, password: process.env.DB_PASS,
-      database: process.env.DB_NAME, multipleStatements: false,
-    });
     for (const file of migrationFiles) {
       const filePath = path.join(__dirname, '../../migrations', file);
       if (!fs.existsSync(filePath)) { logs.push(`⏭ 跳過（找不到）: ${file}`); continue; }
@@ -110,7 +104,7 @@ router.post('/run-migration', async (req, res, next) => {
         .split(';').map(s => s.trim()).filter(s => s && !s.startsWith('--'));
       let ok = 0, skipped = 0;
       for (const sql of statements) {
-        try { await conn.query(sql); ok++; }
+        try { await pool.query(sql); ok++; }
         catch (err) {
           if (IGNORABLE.has(err.code)) { skipped++; }
           else { logs.push(`❌ 錯誤 (${file}): ${err.message}`); throw err; }
@@ -121,8 +115,6 @@ router.post('/run-migration', async (req, res, next) => {
     res.json({ success: true, message: 'Migration 完成', log: logs.join('\n') });
   } catch (err) {
     res.json({ success: false, message: err.message, log: logs.join('\n') });
-  } finally {
-    if (conn) await conn.end();
   }
 });
 
