@@ -164,7 +164,7 @@ router.post('/test-ttlock', async (req, res) => {
     }
     if (!tokenSuccess) { report.push('❌ 兩個節點均失敗'); }
     else {
-      // 4. 查詢帳號下的鎖清單（GET + query params）
+      // 4. 查詢帳號下的鎖清單（多種格式嘗試）
       try {
         report.push('--- 查詢鎖清單 ---');
         const tokenResp2 = await axios.post(
@@ -172,30 +172,90 @@ router.post('/test-ttlock', async (req, res) => {
           qs.stringify({ client_id: clientId, client_secret: clientSec, grant_type: 'password', username, password: md5(password) }),
           { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
         );
-        const token = tokenResp2.data.access_token;
+        const token2 = tokenResp2.data.access_token;
         const now = Date.now();
-        // TTLock v3 鎖清單用 GET + query string
-        const lockResp = await axios.get(
-          'https://euapi.ttlock.com/v3/lock/list',
-          {
-            params: { clientId, accessToken: token, pageNum: 1, pageSize: 20, date: now },
-            timeout: 8000
+
+        // 方式A: GET with query string (手動拼接，避免 axios 編碼問題)
+        const urlA = `https://euapi.ttlock.com/v3/lock/list?clientId=${clientId}&accessToken=${token2}&pageNum=1&pageSize=20&date=${now}`;
+        report.push(`嘗試A GET: ${urlA.slice(0, 80)}...`);
+        let lockData = null;
+        try {
+          const rA = await axios.get(urlA, { timeout: 8000 });
+          lockData = rA.data;
+          report.push(`A 回應: ${JSON.stringify(lockData).slice(0, 300)}`);
+        } catch(eA) {
+          report.push(`A 失敗 (${eA.response?.status}): 改試方式B`);
+          // 方式B: POST form-urlencoded（舊格式）
+          try {
+            const rB = await axios.post(
+              'https://euapi.ttlock.com/v3/lock/list',
+              `clientId=${clientId}&accessToken=${token2}&pageNum=1&pageSize=20&date=${now}`,
+              { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
+            );
+            lockData = rB.data;
+            report.push(`B 回應: ${JSON.stringify(lockData).slice(0, 300)}`);
+          } catch(eB) {
+            report.push(`B 失敗 (${eB.response?.status}): 兩種格式均無法查詢鎖清單`);
           }
+        }
+
+        if (lockData) {
+          if (Array.isArray(lockData.list) && lockData.list.length > 0) {
+            lockData.list.forEach(l => {
+              report.push(`🔑 ${l.lockName} → lockId=${l.lockId} MAC=${l.lockMac}`);
+            });
+          } else if (lockData.errcode && lockData.errcode !== 0) {
+            report.push(`❌ API 錯誤 ${lockData.errcode}: ${lockData.errmsg}`);
+          } else {
+            report.push(`ℹ️ 無鎖具或欄位不同: ${JSON.stringify(lockData).slice(0,200)}`);
+          }
+        }
+      } catch(e) {
+        report.push(`❌ 查詢鎖清單例外: ${e.message}`);
+      }
+
+      // 5. 直接測試密碼建立（用場地已設定的 Lock ID）
+      try {
+        report.push('--- 測試建立臨時密碼 ---');
+        const [[testStudio]] = await pool.query(
+          'SELECT id, name, ttlock_lock_id FROM studios WHERE ttlock_lock_id IS NOT NULL LIMIT 1'
         );
-        const lockData = lockResp.data;
-        report.push(`raw: ${JSON.stringify(lockData).slice(0, 500)}`);
-        if (Array.isArray(lockData.list) && lockData.list.length > 0) {
-          lockData.list.forEach(l => {
-            report.push(`🔑 ${l.lockName} → lockId=${l.lockId} MAC=${l.lockMac}`);
-          });
-        } else if (lockData.errcode) {
-          report.push(`❌ API 錯誤 ${lockData.errcode}: ${lockData.errmsg}`);
+        if (!testStudio) {
+          report.push('⏭ 沒有場地設定了 Lock ID，跳過密碼測試');
         } else {
-          report.push(`ℹ️ 帳號下無鎖具（${JSON.stringify(lockData).slice(0,200)}）`);
+          report.push(`場地: ${testStudio.name} (lockId=${testStudio.ttlock_lock_id})`);
+          const tokenResp3 = await axios.post(
+            'https://euapi.ttlock.com/oauth2/token',
+            qs.stringify({ client_id: clientId, client_secret: clientSec, grant_type: 'password', username, password: md5(password) }),
+            { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 8000 }
+          );
+          const token3 = tokenResp3.data.access_token;
+          const startTest = Date.now() + 60_000;       // 1分鐘後開始
+          const endTest   = Date.now() + 2 * 60_000;  // 2分鐘後結束
+          const pwdResp = await axios.post(
+            'https://euapi.ttlock.com/v3/keyboardPwd/add',
+            qs.stringify({
+              clientId, accessToken: token3,
+              lockId: String(testStudio.ttlock_lock_id),
+              keyboardPwdType: '3',
+              keyboardPwdName: '診斷測試密碼',
+              startDate: String(startTest),
+              endDate:   String(endTest),
+              date:      String(Date.now()),
+            }),
+            { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 }
+          );
+          const pwdData = pwdResp.data;
+          report.push(`keyboardPwd/add 回應: ${JSON.stringify(pwdData)}`);
+          if (pwdData.errcode === 0 || pwdData.keyboardPwd) {
+            report.push(`✅ 密碼建立成功! 密碼=${pwdData.keyboardPwd} id=${pwdData.keyboardPwdId}`);
+          } else {
+            report.push(`❌ 建立失敗 errcode=${pwdData.errcode}: ${pwdData.errmsg}`);
+          }
         }
       } catch(e) {
         const errBody = e.response?.data;
-        report.push(`❌ 查詢鎖清單失敗 (${e.response?.status}): ${typeof errBody === 'string' ? errBody.slice(0,200) : JSON.stringify(errBody)}`);
+        report.push(`❌ 密碼測試失敗 (${e.response?.status || e.message}): ${typeof errBody === 'string' ? errBody.slice(0,200) : JSON.stringify(errBody)}`);
       }
     }
 
