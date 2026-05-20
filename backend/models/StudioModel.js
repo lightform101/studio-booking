@@ -104,17 +104,27 @@ const StudioModel = {
     const { name, name_en, description, hourly_rate, photo_rate, video_rate,
             min_hours, max_hours, capacity, size_sqm, is_active, features,
             ttlock_lock_id } = data;
+    // 主要欄位更新
     await pool.query(
       `UPDATE studios SET name=?, name_en=?, description=?, hourly_rate=?,
        photo_rate=?, video_rate=?,
-       min_hours=?, max_hours=?, capacity=?, size_sqm=?, is_active=?,
-       ttlock_lock_id=?
+       min_hours=?, max_hours=?, capacity=?, size_sqm=?, is_active=?
        WHERE id=?`,
       [name, name_en, description, hourly_rate,
        photo_rate || null, video_rate || null,
-       min_hours, max_hours, capacity, size_sqm, is_active,
-       ttlock_lock_id || null, id]
+       min_hours, max_hours, capacity, size_sqm, is_active, id]
     );
+    // TTLock Lock ID（欄位可能尚未建立，獨立處理避免影響主儲存）
+    if (ttlock_lock_id !== undefined) {
+      try {
+        await pool.query(
+          `UPDATE studios SET ttlock_lock_id=? WHERE id=?`,
+          [ttlock_lock_id || null, id]
+        );
+      } catch(e) {
+        console.warn('[Studio] ttlock_lock_id 欄位尚未建立，請執行 Migration:', e.message);
+      }
+    }
     if (features && Array.isArray(features)) {
       await pool.query('DELETE FROM studio_features WHERE studio_id=?', [id]);
       if (features.length > 0) {
