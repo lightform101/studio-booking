@@ -308,10 +308,20 @@ router.post('/test-ttlock', async (req, res) => {
               if (r.status === 200) {
                 try {
                   const d = JSON.parse(r.body);
-                  if (d.errcode === 0 || d.keyboardPwd != null) {
+                  if (d.keyboardPwd != null) {
                     report.push(`✅ 密碼建立成功! 密碼=${d.keyboardPwd} id=${d.keyboardPwdId}`);
                     pwdSuccess = true;
-                  } else {
+                    // 自動刪除測試密碼，避免殘留在鎖上
+                    try {
+                      await TTLockSvc.deletePasscode({
+                        lockId: testStudio.ttlock_lock_id,
+                        keyboardPwdId: d.keyboardPwdId,
+                      });
+                      report.push(`🗑 測試密碼已自動刪除 (id=${d.keyboardPwdId})`);
+                    } catch(de) {
+                      report.push(`⚠️ 測試密碼刪除失敗（請手動在 App 刪除）: ${de.message}`);
+                    }
+                  } else if (d.errcode) {
                     report.push(`❌ errcode=${d.errcode}: ${d.errmsg}`);
                   }
                 } catch(_) { report.push('（回應非 JSON）'); }
