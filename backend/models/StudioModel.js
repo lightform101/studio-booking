@@ -102,15 +102,18 @@ const StudioModel = {
   // 更新場地
   async update(id, data) {
     const { name, name_en, description, hourly_rate, photo_rate, video_rate,
-            min_hours, max_hours, capacity, size_sqm, is_active, features } = data;
+            min_hours, max_hours, capacity, size_sqm, is_active, features,
+            ttlock_lock_id } = data;
     await pool.query(
       `UPDATE studios SET name=?, name_en=?, description=?, hourly_rate=?,
        photo_rate=?, video_rate=?,
-       min_hours=?, max_hours=?, capacity=?, size_sqm=?, is_active=?
+       min_hours=?, max_hours=?, capacity=?, size_sqm=?, is_active=?,
+       ttlock_lock_id=?
        WHERE id=?`,
       [name, name_en, description, hourly_rate,
        photo_rate || null, video_rate || null,
-       min_hours, max_hours, capacity, size_sqm, is_active, id]
+       min_hours, max_hours, capacity, size_sqm, is_active,
+       ttlock_lock_id || null, id]
     );
     if (features && Array.isArray(features)) {
       await pool.query('DELETE FROM studio_features WHERE studio_id=?', [id]);

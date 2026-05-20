@@ -2326,6 +2326,10 @@
               <div class="form-label">設備標籤 <span style="font-size:.75rem;color:#888;">（用逗號分隔，例：化妝間,無線網路）</span></div>
               <input class="form-input" id="si_feat_${sid}" value="${featStr}" placeholder="化妝間, 無線網路, 停車場, 專業燈光" />
             </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <div class="form-label">🔐 TTLock 鎖 ID <span style="font-size:.75rem;color:#888;">（在 TTLock App → 鎖資訊 → MAC/ID 斜線後的數字）</span></div>
+              <input class="form-input" type="number" id="si_lock_${sid}" value="${studio.ttlock_lock_id || ''}" placeholder="例：31272832" />
+            </div>
           </div>
         </div>
       </div>
@@ -2367,6 +2371,8 @@
     const featStr    = document.getElementById(`si_feat_${sid}`)?.value?.trim();
     const features   = featStr ? featStr.split(',').map(f => f.trim()).filter(Boolean) : [];
     const is_active  = document.getElementById(`activeToggle_${sid}`)?.classList.contains('on') ? 1 : 0;
+    const lockIdVal  = document.getElementById(`si_lock_${sid}`)?.value?.trim();
+    const ttlock_lock_id = lockIdVal ? parseInt(lockIdVal) : null;
 
     if (!name) return alert('請填入場地名稱');
     try {
@@ -2375,7 +2381,8 @@
         headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, name_en, description: desc,
           hourly_rate, photo_rate, video_rate,
-          min_hours: min_h, max_hours: max_h, capacity: cap, size_sqm: sqm, is_active, features })
+          min_hours: min_h, max_hours: max_h, capacity: cap, size_sqm: sqm, is_active, features,
+          ttlock_lock_id })
       });
       const d = await r.json();
       if (d.success) {

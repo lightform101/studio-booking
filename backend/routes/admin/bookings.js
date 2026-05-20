@@ -6,6 +6,8 @@ const auth         = require('../../middleware/auth');
 const BookingModel = require('../../models/BookingModel');
 const NotifySvc    = require('../../services/notifyService');
 const NewebPaySvc  = require('../../services/newebpayService');
+const TTLockSvc    = require('../../services/ttlockService');
+const EmailService = require('../../services/emailService');
 const { pool }     = require('../../config/database');
 const dayjs        = require('dayjs');
 
@@ -117,6 +119,49 @@ router.put('/:id', async (req, res, next) => {
       );
     }
     const updated = await BookingModel.update(req.params.id, body);
+
+    // ── TTLock：狀態首次改為 confirmed 時建立臨時密碼 ──
+    if (body.status === 'confirmed' && booking.status !== 'confirmed') {
+      try {
+        // 取得該場地的 lock_id
+        const [[studio]] = await pool.query(
+          'SELECT ttlock_lock_id, name FROM studios WHERE id = ?', [updated.studio_id]
+        );
+        const lockId = studio?.ttlock_lock_id;
+
+        if (lockId) {
+          const dateStr   = dayjs(updated.booking_date).format('YYYY-MM-DD');
+          // 開始前 15 分鐘、結束後 15 分鐘
+          const startDate = dayjs(`${dateStr} ${String(updated.start_time).slice(0,5)}`).subtract(15,'minute').valueOf();
+          const endDate   = dayjs(`${dateStr} ${String(updated.end_time).slice(0,5)}`).add(15,'minute').valueOf();
+
+          const { passcode, passkeyId } = await TTLockSvc.createPasscode({
+            lockId,
+            name: `${updated.booking_no} ${updated.contact_name}`,
+            startDate,
+            endDate,
+          });
+
+          // 存入訂單
+          await pool.query(
+            'UPDATE bookings SET ttlock_passcode=?, ttlock_passcode_id=? WHERE id=?',
+            [passcode, passkeyId, updated.id]
+          );
+          updated.ttlock_passcode    = passcode;
+          updated.ttlock_passcode_id = passkeyId;
+
+          // 寄送進門密碼 Email
+          await EmailService.sendAccessCode({ ...updated, studio_name: studio.name }, passcode);
+          console.log(`[Booking] TTLock 密碼已建立並寄出 → 訂單 ${updated.booking_no}`);
+        } else {
+          console.warn(`[Booking] 場地 ${updated.studio_id} 尚未設定 ttlock_lock_id，略過`);
+        }
+      } catch (e) {
+        // TTLock 失敗不影響主流程，僅記錄
+        console.error('[Booking] TTLock 建立密碼失敗:', e.message);
+      }
+    }
+
     res.json({ success: true, data: updated, message: '預約已更新' });
   } catch (err) { next(err); }
 });
@@ -163,6 +208,23 @@ router.post('/:id/cancel', async (req, res, next) => {
       cancelled_by: 'admin', refund_amount, refund_trade_no
     });
     await NotifySvc.send('booking_cancelled', updated);
+
+    // ── TTLock：取消時刪除臨時密碼 ──
+    if (booking.ttlock_passcode_id && booking.studio_id) {
+      try {
+        const [[studio]] = await pool.query(
+          'SELECT ttlock_lock_id FROM studios WHERE id = ?', [booking.studio_id]
+        );
+        if (studio?.ttlock_lock_id) {
+          await TTLockSvc.deletePasscode({
+            lockId:        studio.ttlock_lock_id,
+            keyboardPwdId: booking.ttlock_passcode_id,
+          });
+        }
+      } catch (e) {
+        console.error('[Booking] TTLock 刪除密碼失敗:', e.message);
+      }
+    }
 
     res.json({ success: true, message: '預約已取消', data: { refund_amount } });
   } catch (err) { next(err); }

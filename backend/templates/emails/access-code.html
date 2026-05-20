@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>進門密碼通知</title>
+<style>
+  body{margin:0;padding:0;background:#f4f6f9;font-family:'Noto Sans TC',Arial,sans-serif;}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);}
+  .header{background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:32px;text-align:center;}
+  .header .logo{font-size:2rem;margin-bottom:8px;}
+  .header h1{color:#fff;font-size:1.3rem;margin:0;font-weight:700;}
+  .header p{color:rgba(255,255,255,.7);font-size:.85rem;margin:6px 0 0;}
+  .body{padding:28px 32px;}
+  .greeting{font-size:1rem;color:#333;margin-bottom:20px;}
+  .passcode-box{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:14px;padding:28px;text-align:center;margin:24px 0;}
+  .passcode-label{color:rgba(255,255,255,.6);font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;}
+  .passcode-digits{color:#fff;font-size:2.8rem;font-weight:900;letter-spacing:.3em;font-family:'Courier New',monospace;}
+  .passcode-hint{color:rgba(255,255,255,.5);font-size:.75rem;margin-top:10px;}
+  .detail-box{background:#f8f9fb;border-radius:10px;padding:20px;margin-bottom:20px;}
+  .detail-box h3{font-size:.85rem;color:#6c757d;text-transform:uppercase;letter-spacing:.08em;margin:0 0 14px;}
+  .detail-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:.88rem;}
+  .detail-row:last-child{border-bottom:none;}
+  .detail-row span:first-child{color:#6c757d;}
+  .detail-row span:last-child{font-weight:600;color:#222;}
+  .notice{background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:14px;font-size:.82rem;color:#856404;margin-bottom:20px;line-height:1.7;}
+  .steps{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px;margin-bottom:20px;}
+  .steps h4{color:#15803d;font-size:.85rem;margin:0 0 10px;}
+  .steps ol{margin:0;padding-left:18px;font-size:.85rem;color:#333;line-height:1.9;}
+  .footer{background:#f0f2f5;padding:20px 32px;text-align:center;font-size:.78rem;color:#888;border-top:1px solid #e0e0e0;}
+  .footer a{color:#e94560;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">🔐</div>
+    <h1>您的進門密碼已準備好</h1>
+    <p>預約編號：{{booking_no}}</p>
+  </div>
+  <div class="body">
+    <p class="greeting">您好，{{contact_name}}！<br>您在 <strong>{{studio_name}}</strong> 的場地預約已確認，以下是您的臨時進門密碼：</p>
+
+    <!-- 密碼卡片 -->
+    <div class="passcode-box">
+      <div class="passcode-label">🔑 臨時進門密碼</div>
+      <div class="passcode-digits">{{passcode}}</div>
+      <div class="passcode-hint">請於使用時段內輸入此密碼</div>
+    </div>
+
+    <!-- 預約資訊 -->
+    <div class="detail-box">
+      <h3>📋 預約資訊</h3>
+      <div class="detail-row"><span>場地</span><span>{{studio_name}}</span></div>
+      <div class="detail-row"><span>日期</span><span>{{booking_date}}</span></div>
+      <div class="detail-row"><span>使用時段</span><span>{{start_time}} – {{end_time}}</span></div>
+      <div class="detail-row"><span>密碼有效期</span><span>{{valid_from}} – {{valid_until}}</span></div>
+    </div>
+
+    <!-- 使用步驟 -->
+    <div class="steps">
+      <h4>✅ 如何使用密碼進入場地</h4>
+      <ol>
+        <li>到達場地門口</li>
+        <li>按電子鎖上的 <strong>「*」或觸碰螢幕</strong> 喚醒鍵盤</li>
+        <li>輸入上方密碼：<strong>{{passcode}}</strong></li>
+        <li>按 <strong>「#」確認</strong>，門鎖即會開啟</li>
+      </ol>
+    </div>
+
+    <!-- 注意事項 -->
+    <div class="notice">
+      ⚠️ <strong>注意事項</strong><br>
+      • 此密碼僅在您的預約時段（{{start_time}} – {{end_time}}）有效<br>
+      • 超過時段後密碼將自動失效，請準時使用<br>
+      • 請勿將密碼分享給無關人員<br>
+      • 如有問題請聯絡我們：{{site_email}}
+    </div>
+
+    <p style="font-size:.88rem;color:#555;">期待您的到來，祝拍攝順利！🎬</p>
+  </div>
+  <div class="footer">
+    <p>© {{year}} LightForm Studio · <a href="{{base_url}}">{{base_url}}</a></p>
+    <p>如有任何問題，請聯絡 <a href="mailto:{{site_email}}">{{site_email}}</a></p>
+  </div>
+</div>
+</body>
+</html>
