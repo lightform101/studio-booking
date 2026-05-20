@@ -19,15 +19,24 @@ const pool = mysql.createPool({
   namedPlaceholders:  true
 });
 
-// 測試連線
-async function testConnection() {
-  try {
-    const conn = await pool.getConnection();
-    console.log('✅ 資料庫連線成功');
-    conn.release();
-  } catch (err) {
-    console.error('❌ 資料庫連線失敗:', err.message);
-    process.exit(1);
+// 測試連線（自動重試，最多 5 次，每次間隔 3 秒）
+async function testConnection(retries = 5, delay = 3000) {
+  for (let i = 1; i <= retries; i++) {
+    try {
+      const conn = await pool.getConnection();
+      console.log('✅ 資料庫連線成功');
+      conn.release();
+      return;
+    } catch (err) {
+      console.error(`❌ 資料庫連線失敗 (第 ${i}/${retries} 次): ${err.message}`);
+      if (i < retries) {
+        console.log(`⏳ ${delay / 1000} 秒後重試...`);
+        await new Promise(r => setTimeout(r, delay));
+      } else {
+        console.error('❌ 無法連線至資料庫，伺服器啟動失敗');
+        process.exit(1);
+      }
+    }
   }
 }
 
