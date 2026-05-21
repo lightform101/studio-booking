@@ -484,10 +484,9 @@ router.post('/test-invoice', async (req, res) => {
     const salesAmt   = total;   // 含稅總額 = sum(ProductItem.Amount)
     const taxAmt     = 0;       // 不打統編 → TaxAmount = 0
     const invoiceData = {
-      OrderId:         testBooking.booking_no,
-      BuyerName:       testBooking.contact_name,
-      BuyerEmail:      testBooking.contact_email,
-      BuyerEmailAddress:    testBooking.contact_email,  // 正確欄位名稱
+      OrderId:              testBooking.booking_no,
+      BuyerName:            testBooking.contact_name,
+      BuyerEmailAddress:    testBooking.contact_email,
       BuyerIdentifier:      '0000000000',
       SalesAmount:          salesAmt,   // 105（含稅，= sum of ProductItem.Amount）
       FreeTaxSalesAmount:   0,
@@ -500,7 +499,6 @@ router.post('/test-invoice', async (req, res) => {
     };
     const timeStr = String(Math.floor(Date.now() / 1000));
     const dataStr = JSON.stringify(invoiceData);
-    log.push(`送出 JSON: ${dataStr}`);
     const sign    = crypto.createHash('md5').update(dataStr + timeStr + appKey, 'utf8').digest('hex');
     const body    = qs.stringify({ invoice: SELLER_TAX_ID, data: dataStr, time: timeStr, sign });
     const bodyBuf = Buffer.from(body, 'utf8');
