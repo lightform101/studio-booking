@@ -483,10 +483,11 @@ router.post('/test-invoice', async (req, res) => {
       BuyerEmail:      testBooking.contact_email,
       BuyerIdentifier: '0000000000',
       SalesAmount:          salesAmt,  // 100（未稅）
-      FreeTaxSalesAmount:   0,         // 必填
-      ZeroTaxSalesAmount:   0,         // 必填
+      FreeTaxSalesAmount:   0,
+      ZeroTaxSalesAmount:   0,
       TaxType:              1,
-      TotalAmount:          total,     // 105（含稅）
+      TaxRate:              0.05,      // 必填
+      TotalAmount:          total,
       ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: total, Amount: total, TaxType: 1, TaxRate: 0.05 }],
     };
     const timeStr = String(Math.floor(Date.now() / 1000));
