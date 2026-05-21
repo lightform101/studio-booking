@@ -82,6 +82,7 @@ function buildInvoiceData(booking) {
       UnitPrice:   salesAmt,
       Amount:      salesAmt,
       TaxType:     1,
+      TaxRate:     5,
     }],
   };
 
