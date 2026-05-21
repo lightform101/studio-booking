@@ -481,7 +481,7 @@ router.post('/test-invoice', async (req, res) => {
       SalesAmount: salesAmt, FreeTaxSalesAmount: 0, ZeroTaxSalesAmount: 0,
       TaxType: 1, TaxRate: 5, TaxAmount: taxAmt, TotalAmount: total,
       ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: salesAmt, Amount: salesAmt, TaxType: 1 }],
-      // B2C 個人發票：不傳 BuyerIdentifier（光貿不接受空字串，直接省略此欄位）
+      BuyerIdentifier: '0000000000',  // B2C 個人發票固定填 10 個零
     };
     const timeStr = String(Math.floor(Date.now() / 1000));
     const dataStr = JSON.stringify(invoiceData);

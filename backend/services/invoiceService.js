@@ -68,7 +68,7 @@ function buildInvoiceData(booking) {
     OrderId:            booking.booking_no,
     BuyerName:          booking.contact_name,
     BuyerEmail:         booking.contact_email,
-    // BuyerIdentifier：B2C 不傳此欄位（光貿不接受空字串），B2B 再補上
+    BuyerIdentifier:    '0000000000', // B2C 個人發票固定 10 個零，B2B 再覆蓋
     SalesAmount:        salesAmt,
     FreeTaxSalesAmount: 0,
     ZeroTaxSalesAmount: 0,
