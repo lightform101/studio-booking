@@ -79,8 +79,8 @@ function buildInvoiceData(booking) {
     ProductItem: [{
       Description: `${booking.studio_name || '場地'} 場地使用（${booking.booking_no}）`,
       Quantity:    1,
-      UnitPrice:   salesAmt,
-      Amount:      salesAmt,
+      UnitPrice:   total,    // 含稅單價（光貿欄位為「單價含稅」）
+      Amount:      total,    // 含稅金額（光貿欄位為「金額含稅」）
       TaxType:     1,
       TaxRate:     0.05,
     }],

@@ -488,7 +488,8 @@ router.post('/test-invoice', async (req, res) => {
       TaxRate:              0.05,
       TaxAmount:            taxAmt,
       TotalAmount:          total,
-      ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: salesAmt, Amount: salesAmt, TaxType: 1, TaxRate: 0.05 }],
+      // ProductItem 的 UnitPrice/Amount 填含稅金額（光貿 UI 欄位是「單價含稅」「金額含稅」）
+      ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: total, Amount: total, TaxType: 1, TaxRate: 0.05 }],
     };
     const timeStr = String(Math.floor(Date.now() / 1000));
     const dataStr = JSON.stringify(invoiceData);
