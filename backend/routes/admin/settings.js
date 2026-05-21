@@ -473,24 +473,29 @@ router.post('/test-invoice', async (req, res) => {
     const https  = require('https');
     const qs     = require('querystring');
     const SELLER_TAX_ID = process.env.AMEGO_TAX_ID || '96842655';
-    // 光貿 API 規則：ProductItem.Amount = 未稅金額，SalesAmount = sum(ProductItem.Amount)
-    // TaxAmount = SalesAmount * 0.05（四捨五入）；TotalAmount = SalesAmount + TaxAmount
-    const total    = 105;
-    const salesAmt = Math.round(total / 1.05);  // 100（未稅）
-    const taxAmt   = total - salesAmt;           // 5
+    // 光貿 API「含稅商品金額計算邏輯」（DetailVat=1，預設即含稅）：
+    //   SalesAmount = Round(所有 ProductItem TaxType=1 的 Amount 加總)   ← 含稅總額
+    //   不打統編（B2C）：TaxAmount = 0，TotalAmount = SalesAmount
+    //   打統編  （B2B）：TaxAmount = SalesAmount - Round(SalesAmount/1.05)
+    //                    SalesAmount = SalesAmount - TaxAmount
+    //                    TotalAmount = SalesAmount + TaxAmount
+    const total      = 105;
+    // B2C：不打統編，不分拆稅額
+    const salesAmt   = total;   // 含稅總額 = sum(ProductItem.Amount)
+    const taxAmt     = 0;       // 不打統編 → TaxAmount = 0
     const invoiceData = {
       OrderId:         testBooking.booking_no,
       BuyerName:       testBooking.contact_name,
       BuyerEmail:      testBooking.contact_email,
       BuyerIdentifier: '0000000000',
-      SalesAmount:          salesAmt,   // 100（未稅，= sum of ProductItem.Amount）
+      SalesAmount:          salesAmt,   // 105（含稅，= sum of ProductItem.Amount）
       FreeTaxSalesAmount:   0,
       ZeroTaxSalesAmount:   0,
       TaxType:              1,
       TaxRate:              0.05,
-      TaxAmount:            taxAmt,     // 5（= SalesAmount * 0.05）
-      TotalAmount:          total,      // 105（= SalesAmount + TaxAmount）
-      ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: salesAmt, Amount: salesAmt, TaxType: 1, TaxRate: 0.05 }],
+      TaxAmount:            taxAmt,     // 0（B2C 不打統編）
+      TotalAmount:          total,      // 105（= SalesAmount + 0）
+      ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: total, Amount: total, TaxType: 1, TaxRate: 0.05 }],
     };
     const timeStr = String(Math.floor(Date.now() / 1000));
     const dataStr = JSON.stringify(invoiceData);

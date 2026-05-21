@@ -60,14 +60,22 @@ async function callAmego(invoiceData) {
 
 // ─── 組裝發票資料 ─────────────────────────────────────
 function buildInvoiceData(booking) {
-  const total     = Math.round(Number(booking.total_amount));
-  const salesAmt  = Math.round(total / 1.05);  // 未稅金額（應稅銷售額）
-  const taxAmt    = total - salesAmt;           // 營業稅額（= TotalAmount - SalesAmount）
+  const total = Math.round(Number(booking.total_amount));
 
-  // 光貿 API 規則：
-  //   ProductItem.Amount  = 未稅金額（SalesAmount = sum of all ProductItem.Amount）
-  //   TaxAmount           = SalesAmount × 0.05
-  //   TotalAmount         = SalesAmount + TaxAmount
+  // 光貿「含稅商品金額計算邏輯」（DetailVat 預設=1 即含稅模式）：
+  //   SalesAmount = Round(所有 ProductItem TaxType=1 的 Amount 加總)  ← 含稅總額
+  //   不打統編（B2C）：TaxAmount = 0，TotalAmount = SalesAmount
+  //   打統編  （B2B）：TaxAmount = SalesAmount - Round(SalesAmount/1.05)
+  //                    SalesAmount = SalesAmount - TaxAmount（變成未稅）
+  //                    TotalAmount = SalesAmount + TaxAmount
+  const isB2B     = booking.invoice_type === 'company' && booking.invoice_tax_id;
+  let salesAmt    = total;          // step1: 含稅總額 = sum(ProductItem.Amount)
+  let taxAmt      = 0;
+  if (isB2B) {
+    taxAmt   = salesAmt - Math.round(salesAmt / 1.05); // 含稅 - 未稅 = 稅額
+    salesAmt = salesAmt - taxAmt;                       // 最終 SalesAmount = 未稅
+  }
+
   const data = {
     OrderId:              booking.booking_no,
     BuyerName:            booking.contact_name,
@@ -83,8 +91,8 @@ function buildInvoiceData(booking) {
     ProductItem: [{
       Description: `${booking.studio_name || '場地'} 場地使用（${booking.booking_no}）`,
       Quantity:    1,
-      UnitPrice:   salesAmt,  // 未稅單價
-      Amount:      salesAmt,  // 未稅金額（光貿以此加總驗證 SalesAmount）
+      UnitPrice:   total,   // 含稅單價
+      Amount:      total,   // 含稅金額（光貿以此加總驗證 SalesAmount）
       TaxType:     1,
       TaxRate:     0.05,
     }],
