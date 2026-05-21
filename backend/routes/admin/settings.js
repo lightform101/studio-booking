@@ -486,6 +486,7 @@ router.post('/test-invoice', async (req, res) => {
     };
     const timeStr = String(Math.floor(Date.now() / 1000));
     const dataStr = JSON.stringify(invoiceData);
+    log.push(`送出 JSON: ${dataStr}`);  // debug：顯示實際送出的內容
     const sign    = crypto.createHash('md5').update(dataStr + timeStr + appKey, 'utf8').digest('hex');
     const body    = qs.stringify({ invoice: SELLER_TAX_ID, data: dataStr, time: timeStr, sign });
     const bodyBuf = Buffer.from(body, 'utf8');
