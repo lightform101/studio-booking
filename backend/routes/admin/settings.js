@@ -473,7 +473,8 @@ router.post('/test-invoice', async (req, res) => {
     const https  = require('https');
     const qs     = require('querystring');
     const SELLER_TAX_ID = process.env.AMEGO_TAX_ID || '96842655';
-    const total = 100, salesAmt = 95, taxAmt = 5;
+    // 使用 NT$105（含稅）= 稅前 100 + 稅 5，整除無誤差
+    const total = 105, salesAmt = 100, taxAmt = 5;
     const invoiceData = {
       OrderId: testBooking.booking_no,
       BuyerName: testBooking.contact_name,

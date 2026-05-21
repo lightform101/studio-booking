@@ -61,8 +61,8 @@ async function callAmego(invoiceData) {
 // ─── 組裝發票資料 ─────────────────────────────────────
 function buildInvoiceData(booking) {
   const total      = Math.round(Number(booking.total_amount));
-  const salesAmt   = Math.round(total / 1.05);   // 未稅金額
-  const taxAmt     = total - salesAmt;             // 稅額
+  const taxAmt     = Math.floor(total * 5 / 105);  // 稅額（光貿用 floor）
+  const salesAmt   = total - taxAmt;               // 未稅金額
 
   const data = {
     OrderId:            booking.booking_no,
