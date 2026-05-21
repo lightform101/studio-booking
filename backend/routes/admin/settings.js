@@ -473,27 +473,28 @@ router.post('/test-invoice', async (req, res) => {
     const https  = require('https');
     const qs     = require('querystring');
     const SELLER_TAX_ID = process.env.AMEGO_TAX_ID || '96842655';
-    // 使用 PDF 發票的真實數字格式驗證：14095 / 705 / 14800，單價含小數
-    // SalesAmount 必填（未稅），ProductItem.Amount 填含稅，TaxAmount 讓光貿自算
+    // 光貿 API 規則：ProductItem.Amount = 未稅金額，SalesAmount = sum(ProductItem.Amount)
+    // TaxAmount = SalesAmount * 0.05（四捨五入）；TotalAmount = SalesAmount + TaxAmount
     const total    = 105;
-    const salesAmt = Math.round(total / 1.05);  // 100
+    const salesAmt = Math.round(total / 1.05);  // 100（未稅）
+    const taxAmt   = total - salesAmt;           // 5
     const invoiceData = {
       OrderId:         testBooking.booking_no,
       BuyerName:       testBooking.contact_name,
       BuyerEmail:      testBooking.contact_email,
       BuyerIdentifier: '0000000000',
-      SalesAmount:          salesAmt,  // 100（未稅）
+      SalesAmount:          salesAmt,   // 100（未稅，= sum of ProductItem.Amount）
       FreeTaxSalesAmount:   0,
       ZeroTaxSalesAmount:   0,
       TaxType:              1,
       TaxRate:              0.05,
-      TaxAmount:            total - salesAmt,  // 5（必填，= 含稅 - 未稅）
-      TotalAmount:          total,
-      ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: total, Amount: total, TaxType: 1, TaxRate: 0.05 }],
+      TaxAmount:            taxAmt,     // 5（= SalesAmount * 0.05）
+      TotalAmount:          total,      // 105（= SalesAmount + TaxAmount）
+      ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: salesAmt, Amount: salesAmt, TaxType: 1, TaxRate: 0.05 }],
     };
     const timeStr = String(Math.floor(Date.now() / 1000));
     const dataStr = JSON.stringify(invoiceData);
-    log.push(`送出 JSON: ${dataStr}`);  // debug：顯示實際送出的內容
+    log.push(`送出 JSON: ${dataStr}`);
     const sign    = crypto.createHash('md5').update(dataStr + timeStr + appKey, 'utf8').digest('hex');
     const body    = qs.stringify({ invoice: SELLER_TAX_ID, data: dataStr, time: timeStr, sign });
     const bodyBuf = Buffer.from(body, 'utf8');
