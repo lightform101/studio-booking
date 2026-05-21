@@ -10,23 +10,24 @@
     "seed": "node migrations/seed.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "mysql2": "^3.6.0",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.4",
-    "node-cron": "^3.0.2",
     "axios": "^1.5.0",
-    "dotenv": "^16.3.1",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "helmet": "^7.0.0",
+    "crypto-js": "^4.1.1",
+    "dayjs": "^1.11.9",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
     "express-rate-limit": "^7.0.0",
     "express-validator": "^7.0.1",
-    "crypto-js": "^4.1.1",
+    "googleapis": "^172.0.0",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
-    "dayjs": "^1.11.9",
-    "uuid": "^9.0.0",
-    "sharp": "^0.33.4"
+    "mysql2": "^3.6.0",
+    "node-cron": "^3.0.2",
+    "nodemailer": "^6.9.4",
+    "sharp": "^0.33.4",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

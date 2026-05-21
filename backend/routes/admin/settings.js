@@ -403,7 +403,7 @@ router.post('/run-migration', async (req, res, next) => {
   const IGNORABLE = new Set(['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY']);
   const migrationFiles = [
     '001_schema.sql','002_seed.sql','003_studio_images.sql',
-    '004_appearance.sql','005_studio_rates.sql','006_promotions.sql','007_ttlock.sql','008_invoice.sql',
+    '004_appearance.sql','005_studio_rates.sql','006_promotions.sql','007_ttlock.sql','008_invoice.sql','009_google_calendar.sql',
   ];
   const logs = [];
   try {

@@ -6,6 +6,7 @@ const cron         = require('node-cron');
 const BookingModel = require('../models/BookingModel');
 const NotifySvc    = require('./notifyService');
 const InvoiceSvc   = require('./invoiceService');
+const GoogleCalSvc = require('./googleCalendarService');
 const { pool }     = require('../config/database');
 const dayjs        = require('dayjs');
 
@@ -18,7 +19,11 @@ const SchedulerService = {
     cron.schedule('*/5 * * * *', async () => {
       try {
         const count = await BookingModel.cancelExpired();
-        if (count > 0) console.log(`[Scheduler] 已取消 ${count} 筆超時訂單`);
+        if (count > 0) {
+          console.log(`[Scheduler] 已取消 ${count} 筆超時訂單`);
+          // 刪除這些訂單的 Google 行事曆事件（剛被取消的 10 分鐘內）
+          await GoogleCalSvc.deleteExpiredEvents();
+        }
       } catch (e) { console.error('[Scheduler] cancelExpired 錯誤:', e.message); }
     });
 

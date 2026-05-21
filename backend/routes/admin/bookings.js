@@ -9,6 +9,7 @@ const NewebPaySvc  = require('../../services/newebpayService');
 const TTLockSvc    = require('../../services/ttlockService');
 const EmailService = require('../../services/emailService');
 const InvoiceSvc   = require('../../services/invoiceService');
+const GoogleCalSvc = require('../../services/googleCalendarService');
 const { pool }     = require('../../config/database');
 const dayjs        = require('dayjs');
 
@@ -163,6 +164,19 @@ router.put('/:id', async (req, res, next) => {
       }
     }
 
+    // ── Google Calendar：已確認的預約同步行事曆 ──
+    if (updated.status === 'confirmed') {
+      try {
+        if (booking.status !== 'confirmed') {
+          // 首次確認 → 建立事件
+          await GoogleCalSvc.createEvent({ ...updated, studio_name: updated.studio_name || booking.studio_name });
+        } else {
+          // 已是確認狀態，有修改時間/內容 → 更新事件
+          await GoogleCalSvc.updateEvent({ ...updated, studio_name: updated.studio_name || booking.studio_name });
+        }
+      } catch (e) { console.error('[GoogleCal] 同步失敗:', e.message); }
+    }
+
     res.json({ success: true, data: updated, message: '預約已更新' });
   } catch (err) { next(err); }
 });
@@ -209,6 +223,10 @@ router.post('/:id/cancel', async (req, res, next) => {
       cancelled_by: 'admin', refund_amount, refund_trade_no
     });
     await NotifySvc.send('booking_cancelled', updated);
+
+    // ── Google Calendar：刪除行事曆事件 ──
+    try { await GoogleCalSvc.deleteEvent(booking); }
+    catch (e) { console.error('[GoogleCal] 刪除事件失敗:', e.message); }
 
     // ── TTLock：取消時刪除臨時密碼 ──
     if (booking.ttlock_passcode_id && booking.studio_id) {

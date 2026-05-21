@@ -32,6 +32,7 @@ async function runMigrations() {
     '006_promotions.sql',
     '007_ttlock.sql',
     '008_invoice.sql',
+    '009_google_calendar.sql',
   ];
 
   try {

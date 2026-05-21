@@ -10,6 +10,7 @@ const BookingModel  = require('../models/BookingModel');
 const NewebPaySvc   = require('../services/newebpayService');
 const InvoiceSvc    = require('../services/invoiceService');
 const NotifySvc     = require('../services/notifyService');
+const GoogleCalSvc  = require('../services/googleCalendarService');
 const { pool }      = require('../config/database');
 
 // ─── 藍新金流：產生自動提交表單頁（付款中介頁）────────
@@ -102,6 +103,10 @@ router.post('/newebpay/notify', async (req, res, next) => {
       catch (e) { console.error('[Invoice] 開立失敗:', e.message); }
     }
 
+    // 同步 Google 行事曆
+    try { await GoogleCalSvc.createEvent(updated); }
+    catch (e) { console.error('[GoogleCal] 建立事件失敗:', e.message); }
+
     // 發送確認通知
     await NotifySvc.send('booking_confirmed', updated);
 
@@ -151,6 +156,10 @@ router.get('/linepay/confirm', async (req, res, next) => {
       try { await InvoiceSvc.issue(updated); }
       catch (e) { console.error('[Invoice] 開立失敗:', e.message); }
     }
+
+    // 同步 Google 行事曆
+    try { await GoogleCalSvc.createEvent(updated); }
+    catch (e) { console.error('[GoogleCal] 建立事件失敗:', e.message); }
 
     await NotifySvc.send('booking_confirmed', updated);
     res.redirect(`/confirmation.html?booking_no=${orderId}`);
