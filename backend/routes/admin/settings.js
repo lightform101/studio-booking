@@ -474,8 +474,8 @@ router.post('/test-invoice', async (req, res) => {
     const qs     = require('querystring');
     const SELLER_TAX_ID = process.env.AMEGO_TAX_ID || '96842655';
     // 使用 PDF 發票的真實數字格式驗證：14095 / 705 / 14800，單價含小數
-    const total = 14800, salesAmt = 14095, taxAmt = 705;
-    const unitPrice = parseFloat((total / 1.05).toFixed(2)); // 14095.24
+    // 稅率用小數 0.05（光貿後台顯示格式），不是整數 5
+    const total = 105, salesAmt = 100, taxAmt = 5;
     const invoiceData = {
       OrderId:              testBooking.booking_no,
       BuyerName:            testBooking.contact_name,
@@ -485,10 +485,10 @@ router.post('/test-invoice', async (req, res) => {
       FreeTaxSalesAmount:   0,
       ZeroTaxSalesAmount:   0,
       TaxType:              1,
-      TaxRate:              5,
+      TaxRate:              0.05,
       TaxAmount:            taxAmt,
       TotalAmount:          total,
-      ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: unitPrice, Amount: unitPrice, TaxType: 1, TaxRate: 5 }],
+      ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: salesAmt, Amount: salesAmt, TaxType: 1, TaxRate: 0.05 }],
     };
     const timeStr = String(Math.floor(Date.now() / 1000));
     const dataStr = JSON.stringify(invoiceData);

@@ -73,7 +73,7 @@ function buildInvoiceData(booking) {
     FreeTaxSalesAmount: 0,
     ZeroTaxSalesAmount: 0,
     TaxType:            1,      // 1=應稅
-    TaxRate:            5,
+    TaxRate:            0.05,   // 光貿用小數格式（非整數 5）
     TaxAmount:          taxAmt,
     TotalAmount:        total,
     ProductItem: [{
@@ -82,7 +82,7 @@ function buildInvoiceData(booking) {
       UnitPrice:   salesAmt,
       Amount:      salesAmt,
       TaxType:     1,
-      TaxRate:     5,
+      TaxRate:     0.05,
     }],
   };
 
