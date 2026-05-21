@@ -474,22 +474,28 @@ router.post('/test-invoice', async (req, res) => {
     const qs     = require('querystring');
     const SELLER_TAX_ID = process.env.AMEGO_TAX_ID || '96842655';
     // 使用 PDF 發票的真實數字格式驗證：14095 / 705 / 14800，單價含小數
-    // 光貿框架：SalesAmount = 含稅總額，TaxAmount = round(SalesAmount * 0.05/1.05)，TotalAmount = SalesAmount
+    // 光貿正確格式：
+    //   SalesAmount = 未稅金額 = round(total/1.05)
+    //   TaxAmount   = ceil(SalesAmount * 0.05)
+    //   TotalAmount = 含稅總額
+    //   ProductItem.Amount = SalesAmount（未稅）
+    //   TaxRate = 0.05（小數，非整數5）
     const total = 105;
-    const taxAmt = Math.round(total * 5 / 105);  // round(105*0.05/1.05) = 5
+    const salesAmt = Math.round(total / 1.05);        // = 100
+    const taxAmt   = Math.ceil(salesAmt * 0.05);      // = ceil(5.0) = 5
     const invoiceData = {
       OrderId:              testBooking.booking_no,
       BuyerName:            testBooking.contact_name,
       BuyerEmail:           testBooking.contact_email,
       BuyerIdentifier:      '0000000000',
-      SalesAmount:          total,    // 含稅總額（光貿從此抽稅，顯示未稅銷售額）
+      SalesAmount:          salesAmt,    // 未稅 100
       FreeTaxSalesAmount:   0,
       ZeroTaxSalesAmount:   0,
       TaxType:              1,
       TaxRate:              0.05,
-      TaxAmount:            taxAmt,
-      TotalAmount:          total,
-      ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: total, Amount: total, TaxType: 1, TaxRate: 0.05 }],
+      TaxAmount:            taxAmt,      // 5
+      TotalAmount:          total,       // 含稅 105
+      ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: salesAmt, Amount: salesAmt, TaxType: 1, TaxRate: 0.05 }],
     };
     const timeStr = String(Math.floor(Date.now() / 1000));
     const dataStr = JSON.stringify(invoiceData);

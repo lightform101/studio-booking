@@ -61,26 +61,26 @@ async function callAmego(invoiceData) {
 // ─── 組裝發票資料 ─────────────────────────────────────
 function buildInvoiceData(booking) {
   const total      = Math.round(Number(booking.total_amount));
-  // 光貿框架：SalesAmount = 含稅總額，TaxAmount = round(total * 5/105)，TotalAmount = total
-  const taxAmt     = Math.round(total * 5 / 105);
+  const salesAmt   = Math.round(total / 1.05);      // 未稅金額
+  const taxAmt     = Math.ceil(salesAmt * 0.05);    // 稅額（光貿用 ceil）
 
   const data = {
     OrderId:            booking.booking_no,
     BuyerName:          booking.contact_name,
     BuyerEmail:         booking.contact_email,
     BuyerIdentifier:    '0000000000', // B2C 固定 10 個零，B2B 再覆蓋
-    SalesAmount:        total,        // 含稅總額（光貿自行抽稅顯示未稅銷售額）
+    SalesAmount:        salesAmt,     // 未稅金額
     FreeTaxSalesAmount: 0,
     ZeroTaxSalesAmount: 0,
     TaxType:            1,
-    TaxRate:            0.05,
-    TaxAmount:          taxAmt,
-    TotalAmount:        total,
+    TaxRate:            0.05,         // 小數格式
+    TaxAmount:          taxAmt,       // ceil(salesAmt * 0.05)
+    TotalAmount:        total,        // 含稅總額
     ProductItem: [{
       Description: `${booking.studio_name || '場地'} 場地使用（${booking.booking_no}）`,
       Quantity:    1,
-      UnitPrice:   total,   // 含稅單價
-      Amount:      total,   // 含稅金額
+      UnitPrice:   salesAmt,  // 未稅單價
+      Amount:      salesAmt,  // 未稅金額
       TaxType:     1,
       TaxRate:     0.05,
     }],
