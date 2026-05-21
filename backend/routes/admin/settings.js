@@ -474,21 +474,21 @@ router.post('/test-invoice', async (req, res) => {
     const qs     = require('querystring');
     const SELLER_TAX_ID = process.env.AMEGO_TAX_ID || '96842655';
     // 使用 PDF 發票的真實數字格式驗證：14095 / 705 / 14800，單價含小數
-    // 稅率用小數 0.05（光貿後台顯示格式），不是整數 5
-    const total = 105, salesAmt = 100, taxAmt = 5;
+    // 光貿框架：SalesAmount = 含稅總額，TaxAmount = round(SalesAmount * 0.05/1.05)，TotalAmount = SalesAmount
+    const total = 105;
+    const taxAmt = Math.round(total * 5 / 105);  // round(105*0.05/1.05) = 5
     const invoiceData = {
       OrderId:              testBooking.booking_no,
       BuyerName:            testBooking.contact_name,
       BuyerEmail:           testBooking.contact_email,
       BuyerIdentifier:      '0000000000',
-      SalesAmount:          salesAmt,
+      SalesAmount:          total,    // 含稅總額（光貿從此抽稅，顯示未稅銷售額）
       FreeTaxSalesAmount:   0,
       ZeroTaxSalesAmount:   0,
       TaxType:              1,
       TaxRate:              0.05,
       TaxAmount:            taxAmt,
       TotalAmount:          total,
-      // ProductItem 的 UnitPrice/Amount 填含稅金額（光貿 UI 欄位是「單價含稅」「金額含稅」）
       ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: total, Amount: total, TaxType: 1, TaxRate: 0.05 }],
     };
     const timeStr = String(Math.floor(Date.now() / 1000));
