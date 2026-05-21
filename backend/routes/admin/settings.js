@@ -468,7 +468,49 @@ router.post('/test-invoice', async (req, res) => {
     log.push('');
     log.push('呼叫光貿 API...');
 
-    const result = await InvoiceSvc.issue(testBooking);
+    // 直接呼叫光貿 API（繞過 DB 更新，純 API 連線測試）
+    const crypto = require('crypto');
+    const https  = require('https');
+    const qs     = require('querystring');
+    const SELLER_TAX_ID = process.env.AMEGO_TAX_ID || '96842655';
+    const total = 100, salesAmt = 95, taxAmt = 5;
+    const invoiceData = {
+      OrderId: testBooking.booking_no,
+      BuyerName: testBooking.contact_name,
+      BuyerEmail: testBooking.contact_email,
+      SalesAmount: salesAmt, FreeTaxSalesAmount: 0, ZeroTaxSalesAmount: 0,
+      TaxType: 1, TaxRate: 5, TaxAmount: taxAmt, TotalAmount: total,
+      ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: salesAmt, Amount: salesAmt, TaxType: 1 }],
+    };
+    const timeStr = String(Math.floor(Date.now() / 1000));
+    const dataStr = JSON.stringify(invoiceData);
+    const sign    = crypto.createHash('md5').update(dataStr + timeStr + appKey, 'utf8').digest('hex');
+    const body    = qs.stringify({ invoice: SELLER_TAX_ID, data: dataStr, time: timeStr, sign });
+    const bodyBuf = Buffer.from(body, 'utf8');
+
+    const apiResult = await new Promise((resolve, reject) => {
+      const req = https.request({
+        hostname: 'invoice-api.amego.tw', path: '/json/f0401', method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': bodyBuf.length, 'Connection': 'close' },
+        timeout: 15000,
+      }, res => {
+        let raw = '';
+        res.on('data', d => raw += d);
+        res.on('end', () => { try { resolve(JSON.parse(raw)); } catch(_) { reject(new Error('非 JSON: ' + raw.slice(0,200))); } });
+      });
+      req.on('error', reject);
+      req.on('timeout', () => { req.destroy(); reject(new Error('API timeout')); });
+      req.write(bodyBuf); req.end();
+    });
+
+    log.push(`光貿原始回應: ${JSON.stringify(apiResult)}`);
+
+    const isOk = apiResult.code === 0 || apiResult.status === 'OK' || apiResult.result === 'success';
+    if (!isOk) throw new Error(`光貿回應: code=${apiResult.code} msg=${apiResult.message ?? JSON.stringify(apiResult)}`);
+
+    const invoiceNo = apiResult.InvoiceNo ?? apiResult.invoice_no ?? apiResult.data?.InvoiceNo ?? '(未回傳)';
+    const randomNum = apiResult.RandomNumber ?? apiResult.random_number ?? apiResult.data?.RandomNumber ?? '';
+    const result = { invoice_no: invoiceNo, random_number: randomNum };
 
     log.push(`✅ 開立成功！`);
     log.push(`發票號碼: ${result.invoice_no}`);
