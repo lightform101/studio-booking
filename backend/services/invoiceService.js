@@ -79,7 +79,7 @@ function buildInvoiceData(booking) {
   const data = {
     OrderId:              booking.booking_no,
     BuyerName:            booking.contact_name,
-    BuyerEmail:           booking.contact_email,
+    BuyerEmailAddress:    booking.contact_email,   // 正確欄位名稱
     BuyerIdentifier:      '0000000000', // B2C 固定 10 個零，B2B 再覆蓋
     SalesAmount:          salesAmt,
     FreeTaxSalesAmount:   0,
@@ -100,7 +100,7 @@ function buildInvoiceData(booking) {
 
   // 個人載具（手機條碼）
   if (booking.invoice_type === 'personal' && booking.invoice_carrier) {
-    data.CarrierType = 'H';                         // H = 手機條碼
+    data.CarrierType = '3J0002';                    // 光貿規格：手機條碼 = 3J0002
     data.CarrierId1  = booking.invoice_carrier;
     data.CarrierId2  = booking.invoice_carrier;
   }
@@ -185,8 +185,9 @@ const InvoiceService = {
         throw new Error(`開立失敗 (code ${result.code ?? result.status}): ${result.message ?? JSON.stringify(result)}`);
       }
 
-      const invoiceNo  = result.InvoiceNo  ?? result.invoice_no  ?? result.data?.InvoiceNo  ?? '';
-      const randomNum  = result.RandomNumber ?? result.random_number ?? result.data?.RandomNumber ?? '';
+      // 光貿回傳欄位為小寫：invoice_number、random_number
+      const invoiceNo  = result.invoice_number ?? result.InvoiceNo ?? result.data?.invoice_number ?? '';
+      const randomNum  = result.random_number  ?? result.RandomNumber ?? result.data?.random_number ?? '';
 
       await pool.query(
         `UPDATE bookings

@@ -487,7 +487,8 @@ router.post('/test-invoice', async (req, res) => {
       OrderId:         testBooking.booking_no,
       BuyerName:       testBooking.contact_name,
       BuyerEmail:      testBooking.contact_email,
-      BuyerIdentifier: '0000000000',
+      BuyerEmailAddress:    testBooking.contact_email,  // 正確欄位名稱
+      BuyerIdentifier:      '0000000000',
       SalesAmount:          salesAmt,   // 105（含稅，= sum of ProductItem.Amount）
       FreeTaxSalesAmount:   0,
       ZeroTaxSalesAmount:   0,
@@ -524,8 +525,9 @@ router.post('/test-invoice', async (req, res) => {
     const isOk = apiResult.code === 0 || apiResult.status === 'OK' || apiResult.result === 'success';
     if (!isOk) throw new Error(`光貿回應: code=${apiResult.code} msg=${apiResult.message ?? JSON.stringify(apiResult)}`);
 
-    const invoiceNo = apiResult.InvoiceNo ?? apiResult.invoice_no ?? apiResult.data?.InvoiceNo ?? '(未回傳)';
-    const randomNum = apiResult.RandomNumber ?? apiResult.random_number ?? apiResult.data?.RandomNumber ?? '';
+    // 光貿回傳欄位為小寫：invoice_number、random_number
+    const invoiceNo = apiResult.invoice_number ?? apiResult.InvoiceNo ?? '(未回傳)';
+    const randomNum = apiResult.random_number  ?? apiResult.RandomNumber ?? '';
     const result = { invoice_no: invoiceNo, random_number: randomNum };
 
     log.push(`✅ 開立成功！`);
