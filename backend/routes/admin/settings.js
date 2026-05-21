@@ -473,16 +473,18 @@ router.post('/test-invoice', async (req, res) => {
     const https  = require('https');
     const qs     = require('querystring');
     const SELLER_TAX_ID = process.env.AMEGO_TAX_ID || '96842655';
-    // 使用 NT$105（含稅）= 稅前 100 + 稅 5，整除無誤差
+    // 精簡 payload：移除 FreeTaxSalesAmount/ZeroTaxSalesAmount/頂層 TaxRate，只保留必要欄位
     const total = 105, salesAmt = 100, taxAmt = 5;
     const invoiceData = {
-      OrderId: testBooking.booking_no,
-      BuyerName: testBooking.contact_name,
-      BuyerEmail: testBooking.contact_email,
-      SalesAmount: salesAmt, FreeTaxSalesAmount: 0, ZeroTaxSalesAmount: 0,
-      TaxType: 1, TaxRate: 5, TaxAmount: taxAmt, TotalAmount: total,
+      OrderId:         testBooking.booking_no,
+      BuyerName:       testBooking.contact_name,
+      BuyerEmail:      testBooking.contact_email,
+      BuyerIdentifier: '0000000000',
+      SalesAmount:     salesAmt,
+      TaxType:         1,
+      TaxAmount:       taxAmt,
+      TotalAmount:     total,
       ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: salesAmt, Amount: salesAmt, TaxType: 1, TaxRate: 5 }],
-      BuyerIdentifier: '0000000000',  // B2C 個人發票固定填 10 個零
     };
     const timeStr = String(Math.floor(Date.now() / 1000));
     const dataStr = JSON.stringify(invoiceData);
