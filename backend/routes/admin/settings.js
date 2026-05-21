@@ -428,4 +428,57 @@ router.post('/run-migration', async (req, res, next) => {
   }
 });
 
+// ─── 測試光貿電子發票 ────────────────────────────────
+// POST /api/admin/settings/test-invoice
+router.post('/test-invoice', async (req, res) => {
+  const log = [];
+  try {
+    const appKey = process.env.AMEGO_APP_KEY;
+    const taxId  = process.env.AMEGO_TAX_ID || '96842655';
+
+    log.push(`APP_KEY: ${appKey ? '✅ 已設定（' + appKey.slice(0,4) + '****）' : '❌ 未設定'}`);
+    log.push(`統一編號: ${taxId}`);
+
+    if (!appKey) {
+      return res.json({ success: false, report: log.join('\n'), message: 'AMEGO_APP_KEY 未設定' });
+    }
+
+    // 用測試資料呼叫光貿 API
+    const InvoiceSvc = require('../../services/invoiceService');
+    const testBooking = {
+      id:            0,
+      booking_no:    `TEST-${Date.now()}`,
+      need_invoice:  1,
+      invoice_type:  'personal',
+      invoice_carrier: '',       // 無載具，開雲端發票
+      invoice_tax_id:  null,
+      invoice_company: null,
+      invoice_donate:  null,
+      invoice_no:    null,
+      contact_name:  '測試用戶',
+      contact_email: req.body.email || 'test@lightformstudio.com.tw',
+      total_amount:  100,        // NT$100 測試金額
+      studio_name:   '測試場地',
+    };
+
+    log.push('');
+    log.push(`測試訂單: ${testBooking.booking_no}`);
+    log.push(`買方 Email: ${testBooking.contact_email}`);
+    log.push(`金額: NT$${testBooking.total_amount}`);
+    log.push('');
+    log.push('呼叫光貿 API...');
+
+    const result = await InvoiceSvc.issue(testBooking);
+
+    log.push(`✅ 開立成功！`);
+    log.push(`發票號碼: ${result.invoice_no}`);
+    log.push(`隨機碼:   ${result.random_number}`);
+
+    res.json({ success: true, report: log.join('\n'), invoice_no: result.invoice_no });
+  } catch (err) {
+    log.push(`❌ 失敗: ${err.message}`);
+    res.json({ success: false, report: log.join('\n'), message: err.message });
+  }
+});
+
 module.exports = router;
