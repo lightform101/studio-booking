@@ -486,7 +486,8 @@ router.post('/test-invoice', async (req, res) => {
       FreeTaxSalesAmount:   0,
       ZeroTaxSalesAmount:   0,
       TaxType:              1,
-      TaxRate:              0.05,      // 必填
+      TaxRate:              0.05,
+      TaxAmount:            total - salesAmt,  // 5（必填，= 含稅 - 未稅）
       TotalAmount:          total,
       ProductItem: [{ Description: '測試場地使用', Quantity: 1, UnitPrice: total, Amount: total, TaxType: 1, TaxRate: 0.05 }],
     };
