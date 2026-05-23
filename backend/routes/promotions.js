@@ -3,17 +3,8 @@
  * GET  /api/promotions        取得目前有效的優惠清單（前台用）
  * POST /api/promotions/apply  驗證優惠碼並計算折扣
  */
-const router    = require('express').Router();
-const rateLimit = require('express-rate-limit');
-const { pool }  = require('../config/database');
-
-const promoApplyLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 分鐘
-  max: 5,
-  message: { success: false, message: '優惠碼驗證過於頻繁，請稍後再試' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const router   = require('express').Router();
+const { pool } = require('../config/database');
 
 // 取得目前有效優惠清單（前台展示）
 router.get('/', async (req, res, next) => {
@@ -34,7 +25,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // 驗證優惠碼 + 計算折扣（預約頁用）
-router.post('/apply', promoApplyLimiter, async (req, res, next) => {
+router.post('/apply', async (req, res, next) => {
   try {
     const { promo_code, studio_id, booking_date, start_hour, hours } = req.body;
     if (!promo_code) return res.status(400).json({ success: false, message: '請輸入優惠碼' });
@@ -57,22 +48,6 @@ router.post('/apply', promoApplyLimiter, async (req, res, next) => {
     // 最少時數
     if (hours && hours < promo.min_hours) {
       return res.status(400).json({ success: false, message: `此優惠需預約至少 ${promo.min_hours} 小時` });
-    }
-    // schedule 類型：驗證星期 + 時段
-    if (promo.discount_type === 'schedule' && booking_date && start_hour !== undefined) {
-      const bookingDay = new Date(booking_date).getDay();
-      const startH     = parseInt(start_hour);
-      let applies = true;
-      if (promo.applicable_days) {
-        const days = JSON.parse(promo.applicable_days);
-        if (!days.includes(bookingDay)) applies = false;
-      }
-      if (applies && promo.start_hour !== null && promo.end_hour !== null) {
-        if (startH < promo.start_hour || startH >= promo.end_hour) applies = false;
-      }
-      if (!applies) {
-        return res.status(400).json({ success: false, message: '此優惠不適用於所選時段或星期' });
-      }
     }
 
     res.json({ success: true, data: promo, message: `優惠碼「${promo.name}」已套用` });

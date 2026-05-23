@@ -100,8 +100,8 @@ router.post('/:id/images', upload.array('images', 10), async (req, res, next) =>
           .jpeg({ quality: 82, progressive: true })
           .toFile(outPath);
       } catch (sharpErr) {
-        fs.unlink(file.path, () => {});
-        return res.status(400).json({ success: false, message: '圖片處理失敗，請確認檔案格式是否正確' });
+        // 壓縮失敗時直接複製原檔
+        fs.copyFileSync(file.path, outPath);
       } finally {
         // 刪除暫存原檔
         fs.unlink(file.path, () => {});
@@ -128,25 +128,18 @@ router.post('/:id/images', upload.array('images', 10), async (req, res, next) =>
 
 // ─── 設為主圖 ──────────────────────────────────────────────────────────────────
 router.put('/images/:imageId/main', async (req, res, next) => {
-  const conn = await pool.getConnection();
   try {
-    await conn.beginTransaction();
-    const [[img]] = await conn.query('SELECT * FROM studio_images WHERE id=?', [req.params.imageId]);
-    if (!img) {
-      await conn.rollback();
-      return res.status(404).json({ success: false, message: '找不到此照片' });
-    }
-    // 先取消同場地舊主圖，再設定新主圖（同一 transaction 確保不會有空白期）
-    await conn.query('UPDATE studio_images SET is_main=FALSE WHERE studio_id=?', [img.studio_id]);
-    await conn.query('UPDATE studio_images SET is_main=TRUE WHERE id=?', [req.params.imageId]);
-    await conn.commit();
+    // 取得該照片的 studio_id
+    const [[img]] = await pool.query('SELECT * FROM studio_images WHERE id=?', [req.params.imageId]);
+    if (!img) return res.status(404).json({ success: false, message: '找不到此照片' });
+
+    // 先取消同場地舊主圖
+    await pool.query('UPDATE studio_images SET is_main=FALSE WHERE studio_id=?', [img.studio_id]);
+    // 設定新主圖
+    await pool.query('UPDATE studio_images SET is_main=TRUE WHERE id=?', [req.params.imageId]);
+
     res.json({ success: true, message: '已設為主圖' });
-  } catch (err) {
-    await conn.rollback();
-    next(err);
-  } finally {
-    conn.release();
-  }
+  } catch (err) { next(err); }
 });
 
 // ─── 更新圖片說明 ──────────────────────────────────────────────────────────────
