@@ -44,10 +44,10 @@ app.use(helmet({
     directives: {
       defaultSrc:      ["'self'"],
       scriptSrc:       ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc:        ["'self'", "'unsafe-inline'"],
+      styleSrc:        ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc:          ["'self'", "data:", "blob:", "*"],
-      connectSrc:      ["'self'"],
-      fontSrc:         ["'self'", "data:"],
+      connectSrc:      ["'self'", "https://lightformstudio.com.tw"],
+      fontSrc:         ["'self'", "data:", "https://fonts.gstatic.com"],
       objectSrc:       ["'none'"],
       frameAncestors:  ["'none'"],
       // 允許藍新金流表單提交（沙盒 + 正式站）
@@ -57,7 +57,9 @@ app.use(helmet({
 }));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? (process.env.BASE_URL ? [process.env.BASE_URL] : false)
+    ? (process.env.BASE_URL
+        ? [process.env.BASE_URL, 'https://lightformstudio.com.tw']
+        : ['https://lightformstudio.com.tw'])
     : '*',
   credentials: true
 }));
