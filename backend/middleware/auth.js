@@ -34,6 +34,20 @@ module.exports = async function authMiddleware(req, res, next) {
     req.admin = { ...decoded, role: admin.role }; // role 以 DB 為準
     next();
   } catch (err) {
+    // token_version / role 欄位尚未建立（migration 尚未執行）→ 降級驗證
+    if (err.code === 'ER_BAD_FIELD_ERROR') {
+      try {
+        const [[admin]] = await pool.query(
+          'SELECT is_active FROM admins WHERE id=?', [decoded.id]
+        );
+        if (!admin || !admin.is_active)
+          return res.status(401).json({ success: false, message: '帳號已停用，請聯絡管理員' });
+        req.admin = { ...decoded, role: 'superadmin' }; // migration 前暫時給最高權限
+        return next();
+      } catch (e) {
+        return res.status(500).json({ success: false, message: '認證系統錯誤' });
+      }
+    }
     return res.status(500).json({ success: false, message: '認證系統錯誤' });
   }
 };

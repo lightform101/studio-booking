@@ -33,6 +33,10 @@ async function runMigrations() {
     '007_ttlock.sql',
     '008_invoice.sql',
     '009_google_calendar.sql',
+    '010_booking_no_format.sql',
+    '011_admins_role_token_version.sql',
+    '012_bookings_promo.sql',
+    '013_admin_audit_logs.sql',
   ];
 
   try {
