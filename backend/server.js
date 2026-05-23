@@ -2,6 +2,15 @@
  * Studio Space 預約系統 - 主伺服器
  */
 require('dotenv').config();
+
+// ─── Fail-fast：必要環境變數檢查 ───────────────────
+const REQUIRED_ENV = ['JWT_SECRET'];
+const missingEnv = REQUIRED_ENV.filter(k => !process.env[k]);
+if (missingEnv.length) {
+  console.error(`[啟動失敗] 缺少必要環境變數：${missingEnv.join(', ')}`);
+  process.exit(1);
+}
+
 const express     = require('express');
 const cors        = require('cors');
 const helmet      = require('helmet');
@@ -30,10 +39,25 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 
 // ─── Security Middleware ────────────────────────────
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:      ["'self'"],
+      scriptSrc:       ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc:        ["'self'", "'unsafe-inline'"],
+      imgSrc:          ["'self'", "data:", "blob:", "*"],
+      connectSrc:      ["'self'"],
+      fontSrc:         ["'self'", "data:"],
+      objectSrc:       ["'none'"],
+      frameAncestors:  ["'none'"],
+      // 允許藍新金流表單提交（沙盒 + 正式站）
+      formAction:      ["'self'", "https://core.newebpay.com", "https://ccore.newebpay.com"],
+    }
+  }
+}));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? [process.env.BASE_URL]
+    ? (process.env.BASE_URL ? [process.env.BASE_URL] : false)
     : '*',
   credentials: true
 }));
@@ -53,8 +77,8 @@ const bookingLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 
 // ─── Body Parser ────────────────────────────────────
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '512kb' }));
+app.use(express.urlencoded({ extended: true, limit: '512kb' }));
 
 // ─── Static Files（前台網頁 + 上傳圖片）───────────────
 app.use(express.static(path.join(__dirname, '../')));
@@ -124,14 +148,16 @@ async function runMigrationsOnStart() {
     multipleStatements: false
   });
   const IGNORABLE = new Set(['ER_DUP_FIELDNAME','ER_TABLE_EXISTS_ERROR','ER_DUP_ENTRY']);
-  const files = ['001_schema.sql','002_seed.sql','003_studio_images.sql',
-                 '004_appearance.sql','005_studio_rates.sql','006_promotions.sql',
-                 '007_ttlock.sql','008_invoice.sql'];
+  const migrDir = path.join(__dirname, 'migrations');
+  const files = fs.readdirSync(migrDir)
+    .filter(f => /^\d+.*\.sql$/i.test(f))
+    .sort();
   for (const file of files) {
-    const fp = path.join(__dirname, 'migrations', file);
-    if (!fs.existsSync(fp)) continue;
-    const stmts = fs.readFileSync(fp,'utf8').split(';')
-      .map(s => s.trim()).filter(s => s && !s.startsWith('--'));
+    const fp = path.join(migrDir, file);
+    const stmts = fs.readFileSync(fp, 'utf8')
+      .split(';')
+      .map(s => s.split('\n').filter(l => !l.trim().startsWith('--')).join('\n').trim())
+      .filter(s => s);
     for (const sql of stmts) {
       try { await conn.query(sql); }
       catch(e) { if (!IGNORABLE.has(e.code)) console.warn(`[Migration] ${file}: ${e.message}`); }
@@ -159,10 +185,27 @@ async function start() {
     }
   } catch(e) { /* 同步失敗不影響啟動 */ }
   scheduler.init();
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🚀 Studio Space API 啟動於 http://localhost:${PORT}`);
     console.log(`📅 環境: ${process.env.NODE_ENV || 'development'}`);
   });
+
+  // ─── Graceful Shutdown ─────────────────────────────
+  const shutdown = (signal) => {
+    console.log(`[${signal}] 收到關閉信號，等待現有請求完成...`);
+    server.close(async () => {
+      try {
+        const { pool } = require('./config/database');
+        await pool.end();
+        console.log('[Shutdown] DB 連線已關閉');
+      } catch (e) { /* 靜默 */ }
+      process.exit(0);
+    });
+    // 超過 10 秒強制退出
+    setTimeout(() => { console.error('[Shutdown] 逾時強制退出'); process.exit(1); }, 10_000);
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT',  () => shutdown('SIGINT'));
 }
 
 start().catch(err => {

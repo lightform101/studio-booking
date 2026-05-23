@@ -3,6 +3,7 @@
  */
 const router       = require('express').Router();
 const auth         = require('../../middleware/auth');
+const auditLog     = require('../../middleware/auditLog');
 const BookingModel = require('../../models/BookingModel');
 const NotifySvc    = require('../../services/notifyService');
 const NewebPaySvc  = require('../../services/newebpayService');
@@ -10,6 +11,7 @@ const TTLockSvc    = require('../../services/ttlockService');
 const EmailService = require('../../services/emailService');
 const InvoiceSvc   = require('../../services/invoiceService');
 const GoogleCalSvc = require('../../services/googleCalendarService');
+const { validateSlot } = require('../../services/bookingValidation');
 const { pool }     = require('../../config/database');
 const dayjs        = require('dayjs');
 
@@ -68,16 +70,29 @@ router.post('/', async (req, res, next) => {
     const unitPrice = studio.hourly_rate;
     const amount   = total_amount != null && total_amount !== '' ? +total_amount : unitPrice * hours;
 
-    const booking = await BookingModel.create({
-      studio_id: +studio_id, contact_name, contact_phone,
-      contact_email: contact_email || null,
-      booking_date, start_time, end_time,
-      duration_hours: hours,
-      unit_price: unitPrice,
-      total_amount: amount,
-      purpose: purpose || null,
-      note: note || null,
-    });
+    // 驗證營業時間、封鎖日期、min/max_hours
+    const check = await validateSlot({ studio_id: +studio_id, booking_date, start_time, end_time, duration_hours: hours });
+    if (!check.valid)
+      return res.status(422).json({ success: false, message: check.message });
+
+    // 含 transaction + FOR UPDATE 防衝突
+    let booking;
+    try {
+      booking = await BookingModel.createWithLock({
+        studio_id: +studio_id, contact_name, contact_phone,
+        contact_email: contact_email || null,
+        booking_date, start_time, end_time,
+        duration_hours: hours,
+        unit_price: unitPrice,
+        total_amount: amount,
+        purpose: purpose || null,
+        note: note || null,
+      });
+    } catch (e) {
+      if (e.code === 'CONFLICT')
+        return res.status(409).json({ success: false, message: e.message });
+      throw e;
+    }
 
     // 若已指定付款方式，直接設為已確認；否則沿用前端傳來的 status
     const VALID_STATUS = ['pending_payment','confirmed','completed','cancelled'];
@@ -95,6 +110,7 @@ router.post('/', async (req, res, next) => {
     if (admin_note) await pool.query(`UPDATE bookings SET admin_note=? WHERE id=?`, [admin_note, booking.id]);
 
     const created = await BookingModel.findById(booking.id);
+    await auditLog(req, 'create', 'booking', created.booking_no, `新增預約 ${created.contact_name} ${created.booking_date}`);
     res.status(201).json({ success: true, data: created, message: `預約 ${created.booking_no} 已建立` });
   } catch (err) { next(err); }
 });
@@ -113,6 +129,39 @@ router.put('/:id', async (req, res, next) => {
       body.payment_method = VALID_PM.includes(body.payment_method) ? body.payment_method : null;
     if ('status' in body && !VALID_ST.includes(body.status)) delete body.status;
 
+    // 若時段或場地有異動，重新驗證並檢查衝突
+    const timeFields = ['studio_id','booking_date','start_time','end_time','duration_hours'];
+    const timeChanged = timeFields.some(f => body[f] !== undefined && String(body[f]) !== String(booking[f]));
+    if (timeChanged) {
+      const newStudioId     = body.studio_id     ?? booking.studio_id;
+      const newBookingDate  = body.booking_date  ?? booking.booking_date;
+      const newStartTime    = body.start_time    ?? booking.start_time;
+      const newEndTime      = body.end_time      ?? booking.end_time;
+      const newDuration     = body.duration_hours ?? booking.duration_hours;
+
+      const check = await validateSlot({
+        studio_id: +newStudioId, booking_date: newBookingDate,
+        start_time: newStartTime, end_time: newEndTime,
+        duration_hours: +newDuration
+      });
+      if (!check.valid)
+        return res.status(422).json({ success: false, message: check.message });
+
+      // 衝突檢查（排除自身）
+      const startH = parseInt(String(newStartTime).split(':')[0]);
+      const endH   = parseInt(String(newEndTime).split(':')[0]);
+      const [conflicts] = await pool.query(
+        `SELECT id FROM bookings
+         WHERE studio_id=? AND booking_date=? AND id != ?
+         AND status IN ('pending_payment','confirmed')
+         AND NOT (end_time <= ? OR start_time >= ?)`,
+        [newStudioId, newBookingDate, req.params.id,
+         `${String(endH).padStart(2,'0')}:00`, `${String(startH).padStart(2,'0')}:00`]
+      );
+      if (conflicts.length)
+        return res.status(409).json({ success: false, message: '所選時段已有其他預約，請調整時間' });
+    }
+
     // 若狀態改為 confirmed 且有付款方式，一併更新 payment_at
     if (body.status === 'confirmed' && body.payment_method && booking.status !== 'confirmed') {
       await pool.query(
@@ -122,45 +171,33 @@ router.put('/:id', async (req, res, next) => {
     }
     const updated = await BookingModel.update(req.params.id, body);
 
-    // ── TTLock：狀態首次改為 confirmed 時建立臨時密碼 ──
-    if (body.status === 'confirmed' && booking.status !== 'confirmed') {
+    // ── TTLock 密碼管理 ──
+    const wasConfirmed   = booking.status === 'confirmed';
+    const nowConfirmed   = updated.status === 'confirmed';
+    const slotChanged    = ['booking_date','start_time','end_time','studio_id']
+      .some(f => body[f] !== undefined && String(body[f]) !== String(booking[f]));
+
+    if (nowConfirmed && !wasConfirmed) {
+      // 狀態首次改為 confirmed → 建立密碼
       try {
-        // 取得該場地的 lock_id
-        const [[studio]] = await pool.query(
-          'SELECT ttlock_lock_id, name FROM studios WHERE id = ?', [updated.studio_id]
-        );
-        const lockId = studio?.ttlock_lock_id;
-
-        if (lockId) {
-          const dateStr   = dayjs(updated.booking_date).format('YYYY-MM-DD');
-          // 開始前 15 分鐘、結束後 15 分鐘
-          const startDate = dayjs(`${dateStr} ${String(updated.start_time).slice(0,5)}`).subtract(15,'minute').valueOf();
-          const endDate   = dayjs(`${dateStr} ${String(updated.end_time).slice(0,5)}`).add(15,'minute').valueOf();
-
-          const { passcode, passkeyId } = await TTLockSvc.createPasscode({
-            lockId,
-            name: `${updated.booking_no} ${updated.contact_name}`,
-            startDate,
-            endDate,
-          });
-
-          // 存入訂單
-          await pool.query(
-            'UPDATE bookings SET ttlock_passcode=?, ttlock_passcode_id=? WHERE id=?',
-            [passcode, passkeyId, updated.id]
-          );
-          updated.ttlock_passcode    = passcode;
-          updated.ttlock_passcode_id = passkeyId;
-
-          // 寄送進門密碼 Email
-          await EmailService.sendAccessCode({ ...updated, studio_name: studio.name }, passcode);
-          console.log(`[Booking] TTLock 密碼已建立並寄出 → 訂單 ${updated.booking_no}`);
-        } else {
-          console.warn(`[Booking] 場地 ${updated.studio_id} 尚未設定 ttlock_lock_id，略過`);
-        }
+        await TTLockSvc.createTTLockForBooking(updated);
       } catch (e) {
-        // TTLock 失敗不影響主流程，僅記錄
         console.error('[Booking] TTLock 建立密碼失敗:', e.message);
+      }
+    } else if (nowConfirmed && wasConfirmed && slotChanged) {
+      // 已 confirmed 但時段/場地變更 → 刪除舊密碼再建立新密碼
+      try {
+        await TTLockSvc.deleteTTLockForBooking(booking);
+        console.log(`[Booking] TTLock 舊密碼已刪除 → 訂單 ${booking.booking_no}`);
+      } catch (e) {
+        console.error('[Booking] TTLock 刪除舊密碼失敗:', e.message);
+      }
+      try {
+        // 重新查詢以取得最新時段資訊
+        const refreshed = await BookingModel.findById(updated.id);
+        await TTLockSvc.createTTLockForBooking(refreshed);
+      } catch (e) {
+        console.error('[Booking] TTLock 重建密碼失敗:', e.message);
       }
     }
 
@@ -177,6 +214,7 @@ router.put('/:id', async (req, res, next) => {
       } catch (e) { console.error('[GoogleCal] 同步失敗:', e.message); }
     }
 
+    await auditLog(req, 'update', 'booking', updated.booking_no, `狀態: ${booking.status}→${updated.status}`);
     res.json({ success: true, data: updated, message: '預約已更新' });
   } catch (err) { next(err); }
 });
@@ -229,23 +267,23 @@ router.post('/:id/cancel', async (req, res, next) => {
     catch (e) { console.error('[GoogleCal] 刪除事件失敗:', e.message); }
 
     // ── TTLock：取消時刪除臨時密碼 ──
-    if (booking.ttlock_passcode_id && booking.studio_id) {
+    let ttlockWarning = null;
+    if (booking.ttlock_passcode_id) {
       try {
-        const [[studio]] = await pool.query(
-          'SELECT ttlock_lock_id FROM studios WHERE id = ?', [booking.studio_id]
-        );
-        if (studio?.ttlock_lock_id) {
-          await TTLockSvc.deletePasscode({
-            lockId:        studio.ttlock_lock_id,
-            keyboardPwdId: booking.ttlock_passcode_id,
-          });
-        }
+        await TTLockSvc.deleteTTLockForBooking(booking);
       } catch (e) {
         console.error('[Booking] TTLock 刪除密碼失敗:', e.message);
+        ttlockWarning = '門鎖密碼刪除失敗，請至 TTLock 後台手動確認並刪除';
       }
     }
 
-    res.json({ success: true, message: '預約已取消', data: { refund_amount } });
+    await auditLog(req, 'cancel', 'booking', booking.booking_no, `退款: ${refund_amount} 原因: ${cancel_reason || '後台取消'}`);
+    res.json({
+      success: true,
+      message: '預約已取消',
+      data: { refund_amount },
+      ...(ttlockWarning && { ttlock_warning: ttlockWarning }),
+    });
   } catch (err) { next(err); }
 });
 
