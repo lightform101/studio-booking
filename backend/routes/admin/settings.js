@@ -1,9 +1,11 @@
 /**
  * 後台：系統設定 Routes
  */
-const router    = require('express').Router();
-const auth      = require('../../middleware/auth');
-const { pool }  = require('../../config/database');
+const router            = require('express').Router();
+const auth              = require('../../middleware/auth');
+const requireSuperAdmin = require('../../middleware/requireSuperAdmin');
+const auditLog          = require('../../middleware/auditLog');
+const { pool }         = require('../../config/database');
 const EmailSvc  = require('../../services/emailService');
 const SmsSvc    = require('../../services/smsService');
 const TTLockSvc = require('../../services/ttlockService');
@@ -23,12 +25,37 @@ router.get('/', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// 允許寫入的設定 key 白名單
+const ALLOWED_SETTING_KEYS = new Set([
+  // SMTP
+  'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from_email','smtp_from_name',
+  // 佈景主題
+  'theme_primary','theme_accent','theme_gold','theme_bg','theme_card_bg','theme_text',
+  'theme_font','theme_font_size','theme_border_radius',
+  // 外觀圖片（由 /appearance/image/:type 上傳時寫入，此處也允許清除）
+  'hero_bg_image','banner_image','page_bg_image',
+  // 網站資訊
+  'site_name','site_tagline','hero_title','hero_subtitle',
+  'nav_show_phone','hero_bg_overlay','banner_link','banner_show','page_bg_style',
+  // 聯絡資訊
+  'contact_phone','contact_email','contact_address','contact_hours','contact_line','contact_ig',
+  // 頁面內容
+  'page_flow','page_notes','page_faq',
+  // 系統設定
+  'booking_lock_minutes','min_advance_hours',
+]);
+
 // 批次更新設定
 router.put('/', async (req, res, next) => {
   try {
     const { settings } = req.body;
     if (!settings || typeof settings !== 'object')
       return res.status(400).json({ success: false, message: '請提供 settings 物件' });
+
+    const rejected = Object.keys(settings).filter(k => !ALLOWED_SETTING_KEYS.has(k));
+    if (rejected.length) {
+      return res.status(400).json({ success: false, message: `不允許寫入的設定項目：${rejected.join(', ')}` });
+    }
 
     for (const [key, value] of Object.entries(settings)) {
       await pool.query(
@@ -56,6 +83,8 @@ router.put('/', async (req, res, next) => {
     // 重置 transporter，讓新設定生效
     if (smtpChanged) EmailSvc.resetTransporter?.();
 
+    const changedKeys = Object.keys(settings).filter(k => k !== 'smtp_pass').join(', ');
+    await auditLog(req, 'update', 'settings', null, `更新設定：${changedKeys}`);
     res.json({ success: true, message: '設定已更新' });
   } catch (err) { next(err); }
 });
@@ -89,8 +118,8 @@ router.post('/test-sms', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// TTLock 連線診斷
-router.post('/test-ttlock', async (req, res) => {
+// TTLock 連線診斷（需 superadmin）
+router.post('/test-ttlock', requireSuperAdmin, async (req, res) => {
   const report = [];
   try {
     // 1. 檢查環境變數
@@ -100,7 +129,7 @@ router.post('/test-ttlock', async (req, res) => {
     const password  = process.env.TTLOCK_PASSWORD;
     report.push(`CLIENT_ID:  ${clientId  ? '✅ 已設定' : '❌ 未設定'}`);
     report.push(`CLIENT_SEC: ${clientSec ? '✅ 已設定' : '❌ 未設定'}`);
-    report.push(`USERNAME:   ${username  ? '✅ ' + username : '❌ 未設定'}`);
+    report.push(`USERNAME:   ${username  ? '✅ 已設定' : '❌ 未設定'}`);
     report.push(`PASSWORD:   ${password  ? '✅ 已設定' : '❌ 未設定'}`);
 
     if (!clientId || !clientSec || !username || !password) {
@@ -174,8 +203,7 @@ router.post('/test-ttlock', async (req, res) => {
         );
         const token2 = tokenResp2.data.access_token;
         const now = Date.now();
-        // 顯示 token 格式（助於診斷編碼問題）
-        report.push(`Token 長度: ${token2.length}, 前10碼: ${token2.slice(0,10)}, 是否含特殊字元: ${/[^a-zA-Z0-9\-_]/.test(token2) ? '是' : '否'}`);
+        report.push(`Token 取得成功（長度 ${token2.length}）`);
         // 明確 URL encode
         const encToken = encodeURIComponent(token2);
         const encClient = encodeURIComponent(clientId);
@@ -346,8 +374,8 @@ router.post('/test-ttlock', async (req, res) => {
   }
 });
 
-// 手動觸發 TTLock 密碼建立（診斷用）
-router.post('/trigger-ttlock/:bookingId', async (req, res) => {
+// 手動觸發 TTLock 密碼建立（需 superadmin）
+router.post('/trigger-ttlock/:bookingId', requireSuperAdmin, async (req, res) => {
   const report = [];
   try {
     const bookingId = req.params.bookingId;
@@ -361,57 +389,49 @@ router.post('/trigger-ttlock/:bookingId', async (req, res) => {
     report.push(`訂單: ${booking.booking_no}`);
     report.push(`狀態: ${booking.status}`);
     report.push(`場地: ${booking.studio_name}`);
-    report.push(`Lock ID: ${booking.ttlock_lock_id || '❌ 未設定'}`);
     report.push(`日期: ${booking.booking_date} ${booking.start_time}~${booking.end_time}`);
+
+    // 狀態保護：只允許對已確認的預約建立密碼
+    if (booking.status !== 'confirmed') {
+      return res.json({ success: false, report: report.join('\n'), message: `只有已確認的預約才能建立門鎖密碼（目前狀態：${booking.status}）` });
+    }
+
+    // 冪等保護：已有密碼時不重複建立
+    if (booking.ttlock_passcode_id) {
+      return res.json({ success: false, report: report.join('\n'), message: '此預約已有門鎖密碼，請先至 TTLock 後台刪除再重新觸發' });
+    }
 
     if (!booking.ttlock_lock_id) {
       return res.json({ success: false, report: report.join('\n'), message: '場地未設定 Lock ID' });
     }
 
-    const dayjs = require('dayjs');
-    const dateStr   = dayjs(booking.booking_date).format('YYYY-MM-DD');
-    const startDate = dayjs(`${dateStr} ${String(booking.start_time).slice(0,5)}`).subtract(15,'minute').valueOf();
-    const endDate   = dayjs(`${dateStr} ${String(booking.end_time).slice(0,5)}`).add(15,'minute').valueOf();
-    report.push(`有效期: ${new Date(startDate).toLocaleString()} ~ ${new Date(endDate).toLocaleString()}`);
-
     report.push('--- 呼叫 TTLock API ---');
-    const { passcode, passkeyId } = await TTLockSvc.createPasscode({
-      lockId: booking.ttlock_lock_id,
-      name:   `${booking.booking_no} ${booking.contact_name}`,
-      startDate, endDate,
-    });
-    report.push(`✅ 密碼建立成功: ${passcode} (id: ${passkeyId})`);
+    await TTLockSvc.createTTLockForBooking(booking);
+    report.push(`✅ 密碼已建立並寄出 → ${booking.contact_email}`);
 
-    await pool.query(
-      'UPDATE bookings SET ttlock_passcode=?, ttlock_passcode_id=? WHERE id=?',
-      [passcode, passkeyId, booking.id]
-    );
-
-    report.push('--- 寄送 Email ---');
-    await EmailSvc.sendAccessCode({ ...booking }, passcode);
-    report.push(`✅ Email 已寄出 → ${booking.contact_email}`);
-
-    res.json({ success: true, report: report.join('\n') });
+    res.json({ success: true, report: report.join('\n'), message: '門鎖密碼已建立並寄出' });
   } catch(e) {
     report.push(`❌ 錯誤: ${e.message}`);
     res.json({ success: false, report: report.join('\n'), message: e.message });
   }
 });
 
-// 執行 DB Migration
-router.post('/run-migration', async (req, res, next) => {
+// 執行 DB Migration（需 superadmin）
+router.post('/run-migration', requireSuperAdmin, async (req, res, next) => {
   const IGNORABLE = new Set(['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY']);
-  const migrationFiles = [
-    '001_schema.sql','002_seed.sql','003_studio_images.sql',
-    '004_appearance.sql','005_studio_rates.sql','006_promotions.sql','007_ttlock.sql','008_invoice.sql','009_google_calendar.sql',
-  ];
+  const migrDir = path.join(__dirname, '../../migrations');
+  const migrationFiles = fs.readdirSync(migrDir)
+    .filter(f => /^\d+.*\.sql$/i.test(f))
+    .sort();
   const logs = [];
   try {
     for (const file of migrationFiles) {
-      const filePath = path.join(__dirname, '../../migrations', file);
+      const filePath = path.join(migrDir, file);
       if (!fs.existsSync(filePath)) { logs.push(`⏭ 跳過（找不到）: ${file}`); continue; }
       const statements = fs.readFileSync(filePath, 'utf8')
-        .split(';').map(s => s.trim()).filter(s => s && !s.startsWith('--'));
+        .split(';')
+        .map(s => s.split('\n').filter(l => !l.trim().startsWith('--')).join('\n').trim())
+        .filter(s => s);
       let ok = 0, skipped = 0;
       for (const sql of statements) {
         try { await pool.query(sql); ok++; }
@@ -466,6 +486,7 @@ router.post('/test-invoice', async (req, res) => {
     log.push(`買方 Email: ${testBooking.contact_email}`);
     log.push(`金額: NT$${testBooking.total_amount}`);
     log.push('');
+    log.push('⚠️  警告：本測試將呼叫真實光貿 API，可能產生正式測試發票，請事後至光貿後台確認並作廢。');
     log.push('呼叫光貿 API...');
 
     // 直接呼叫光貿 API（繞過 DB 更新，純 API 連線測試）
@@ -532,7 +553,7 @@ router.post('/test-invoice', async (req, res) => {
     log.push(`發票號碼: ${result.invoice_no}`);
     log.push(`隨機碼:   ${result.random_number}`);
 
-    res.json({ success: true, report: log.join('\n'), invoice_no: result.invoice_no });
+    res.json({ success: true, report: log.join('\n'), invoice_no: result.invoice_no, warning: '此為真實 API 呼叫，請至光貿後台確認是否需作廢測試發票' });
   } catch (err) {
     log.push(`❌ 失敗: ${err.message}`);
     res.json({ success: false, report: log.join('\n'), message: err.message });

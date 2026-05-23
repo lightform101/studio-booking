@@ -1,12 +1,14 @@
 /**
  * 後台：收入報表 Routes
  */
-const router       = require('express').Router();
-const auth         = require('../../middleware/auth');
-const BookingModel = require('../../models/BookingModel');
-const { pool }     = require('../../config/database');
+const router            = require('express').Router();
+const auth              = require('../../middleware/auth');
+const requireSuperAdmin = require('../../middleware/requireSuperAdmin');
+const BookingModel      = require('../../models/BookingModel');
+const { pool }          = require('../../config/database');
 
 router.use(auth);
+router.use(requireSuperAdmin);
 
 // 月度收入趨勢
 router.get('/monthly', async (req, res, next) => {

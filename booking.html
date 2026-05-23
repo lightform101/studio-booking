@@ -665,6 +665,11 @@
 </div>
 
 <script>
+  function escapeHTML(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
   // ─── 套用外觀設定 ────────────────────────────
   (async () => {
     try {
@@ -774,10 +779,10 @@
           <input type="radio" name="studio" value="${s.id}"${isSelected ? ' checked' : ''} />
           <div class="selected-check">✓</div>
           <div class="studio-opt-header">
-            <div class="studio-opt-name">${s.name}</div>
-            <span class="studio-opt-badge${i > 0 ? ' b' : ''}">${s.name_en || ''}</span>
+            <div class="studio-opt-name">${escapeHTML(s.name)}</div>
+            <span class="studio-opt-badge${i > 0 ? ' b' : ''}">${escapeHTML(s.name_en || '')}</span>
           </div>
-          <div class="studio-opt-desc">${desc || s.description || ''}</div>
+          <div class="studio-opt-desc">${escapeHTML(desc || s.description || '')}</div>
           <div class="studio-opt-price">$${displayRate.toLocaleString()} / 小時</div>
         </label>`;
     }).join('');
