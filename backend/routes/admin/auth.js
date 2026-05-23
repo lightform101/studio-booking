@@ -7,9 +7,7 @@ const router  = require('express').Router();
 const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { pool } = require('../../config/database');
-const auth              = require('../../middleware/auth');
-const requireSuperAdmin = require('../../middleware/requireSuperAdmin');
-const auditLog          = require('../../middleware/auditLog');
+const auth    = require('../../middleware/auth');
 const rateLimit = require('express-rate-limit');
 
 // 登入失敗限制
@@ -35,14 +33,14 @@ router.post('/login', loginLimiter, async (req, res, next) => {
     await pool.query('UPDATE admins SET last_login=NOW() WHERE id=?', [admin.id]);
 
     const token = jwt.sign(
-      { id: admin.id, email: admin.email, name: admin.name, tv: admin.token_version },
+      { id: admin.id, email: admin.email, name: admin.name },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
     res.json({
       success: true, message: '登入成功',
-      data: { token, name: admin.name, email: admin.email, role: admin.role }
+      data: { token, name: admin.name, email: admin.email }
     });
   } catch (err) { next(err); }
 });
@@ -62,15 +60,12 @@ router.post('/change-password', auth, async (req, res, next) => {
     if (!await bcrypt.compare(old_password, admin.password)) {
       return res.status(400).json({ success: false, message: '舊密碼不正確' });
     }
-    if (new_password.length < 10 || !/[A-Za-z]/.test(new_password) || !/[0-9]/.test(new_password)) {
-      return res.status(400).json({ success: false, message: '新密碼至少 10 個字元，且需包含英文字母與數字' });
+    if (new_password.length < 8) {
+      return res.status(400).json({ success: false, message: '新密碼至少需要 8 個字元' });
     }
     const hashed = await bcrypt.hash(new_password, 10);
-    await pool.query(
-      'UPDATE admins SET password=?, token_version=token_version+1 WHERE id=?',
-      [hashed, req.admin.id]
-    );
-    res.json({ success: true, message: '密碼已更新，請重新登入' });
+    await pool.query('UPDATE admins SET password=? WHERE id=?', [hashed, req.admin.id]);
+    res.json({ success: true, message: '密碼已更新' });
   } catch (err) { next(err); }
 });
 
@@ -78,20 +73,20 @@ router.post('/change-password', auth, async (req, res, next) => {
 router.get('/admins', auth, async (req, res, next) => {
   try {
     const [rows] = await pool.query(
-      'SELECT id, name, email, role, is_active, last_login, created_at FROM admins ORDER BY id ASC'
+      'SELECT id, name, email, is_active, last_login, created_at FROM admins ORDER BY id ASC'
     );
     res.json({ success: true, data: rows });
   } catch (err) { next(err); }
 });
 
-// 新增管理員（需 superadmin）
-router.post('/admins', auth, requireSuperAdmin, async (req, res, next) => {
+// 新增管理員（需登入）
+router.post('/admins', auth, async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password)
       return res.status(400).json({ success: false, message: '請填寫姓名、Email 和密碼' });
-    if (password.length < 10 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password))
-      return res.status(400).json({ success: false, message: '密碼至少 10 個字元，且需包含英文字母與數字' });
+    if (password.length < 8)
+      return res.status(400).json({ success: false, message: '密碼至少需要 8 個字元' });
     const [[exist]] = await pool.query('SELECT id FROM admins WHERE email=?', [email]);
     if (exist)
       return res.status(409).json({ success: false, message: '此 Email 已被使用' });
@@ -99,27 +94,18 @@ router.post('/admins', auth, requireSuperAdmin, async (req, res, next) => {
     const [result] = await pool.query(
       'INSERT INTO admins (name, email, password) VALUES (?,?,?)', [name, email, hashed]
     );
-    await auditLog(req, 'create', 'admin', result.insertId, `新增管理員 ${email}`);
     res.json({ success: true, message: '管理員已建立', data: { id: result.insertId } });
   } catch (err) { next(err); }
 });
 
-// 停用 / 啟用管理員（需 superadmin，不能修改自己）
-router.put('/admins/:id', auth, requireSuperAdmin, async (req, res, next) => {
+// 停用 / 啟用管理員（需登入，不能停用自己）
+router.put('/admins/:id', auth, async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
     if (id === req.admin.id)
       return res.status(400).json({ success: false, message: '不能修改自己的狀態' });
     const { is_active } = req.body;
-    // 停用時遞增 token_version，讓該帳號現有 token 立即失效
-    if (!is_active) {
-      await pool.query(
-        'UPDATE admins SET is_active=0, token_version=token_version+1 WHERE id=?', [id]
-      );
-    } else {
-      await pool.query('UPDATE admins SET is_active=1 WHERE id=?', [id]);
-    }
-    await auditLog(req, is_active ? 'enable' : 'disable', 'admin', id, `管理員 ${id} ${is_active ? '啟用' : '停用'}`);
+    await pool.query('UPDATE admins SET is_active=? WHERE id=?', [is_active ? 1 : 0, id]);
     res.json({ success: true, message: is_active ? '已啟用' : '已停用' });
   } catch (err) { next(err); }
 });

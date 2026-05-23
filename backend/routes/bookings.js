@@ -9,7 +9,6 @@ const BookingModel  = require('../models/BookingModel');
 const StudioModel   = require('../models/StudioModel');
 const NewebPaySvc   = require('../services/newebpayService');
 const NotifySvc     = require('../services/notifyService');
-const { validateSlot } = require('../services/bookingValidation');
 const { bookingRules, validate } = require('../middleware/validation');
 const dayjs         = require('dayjs');
 
@@ -28,81 +27,33 @@ router.post('/', bookingRules, validate, async (req, res, next) => {
     const studio = await StudioModel.findById(studio_id);
     if (!studio) return res.status(404).json({ success: false, message: '找不到此場地' });
 
-    // 計算結束時間（支援半小時等非整數時長）
-    const end_time = dayjs(`2000-01-01 ${start_time}`)
-      .add(Math.round(parseFloat(duration_hours) * 60), 'minute')
-      .format('HH:mm');
+    // 計算結束時間
+    const startH   = parseInt(start_time.split(':')[0]);
+    const endH     = startH + parseFloat(duration_hours);
+    const end_time = `${String(endH).padStart(2,'0')}:00`;
 
     // 依用途決定費率（影片拍攝等特殊用途可有不同費率）
     const purposeRate = PURPOSE_RATES[purpose] || 0;
     const unit_price  = Math.max(studio.hourly_rate, purposeRate);
-    let total_amount = Math.round(unit_price * parseFloat(duration_hours));
+    const total_amount = unit_price * parseFloat(duration_hours);
 
-    // 驗證營業時間、封鎖日期、min/max_hours
-    const check = await validateSlot({ studio_id, booking_date, start_time, end_time, duration_hours: parseFloat(duration_hours) });
-    if (!check.valid) return res.status(422).json({ success: false, message: check.message });
-
-    // 驗證並套用優惠碼
-    let promo_id = null;
-    let discount_amount = 0;
-    const { promo_code } = req.body;
-    if (promo_code) {
-      const { pool } = require('../config/database');
-      const today = new Date().toISOString().slice(0, 10);
-      const [[promo]] = await pool.query(
-        `SELECT * FROM promotions
-         WHERE promo_code = ? AND is_active = 1
-           AND (valid_from IS NULL OR valid_from <= ?)
-           AND (valid_to   IS NULL OR valid_to   >= ?)`,
-        [promo_code.trim().toUpperCase(), today, today]
-      );
-      if (!promo) {
-        return res.status(400).json({ success: false, message: '優惠碼無效或已過期' });
-      }
-      if (promo.studio_id && promo.studio_id !== parseInt(studio_id)) {
-        return res.status(400).json({ success: false, message: '此優惠碼不適用於所選場地' });
-      }
-      if (promo.min_hours && parseFloat(duration_hours) < promo.min_hours) {
-        return res.status(400).json({ success: false, message: `此優惠需預約至少 ${promo.min_hours} 小時` });
-      }
-      promo_id = promo.id;
-      if (promo.discount_type === 'percent') {
-        discount_amount = Math.round(total_amount * promo.discount_value / 100);
-      } else if (promo.discount_type === 'fixed') {
-        discount_amount = Math.min(promo.discount_value, total_amount);
-      } else if (promo.discount_type === 'schedule') {
-        // schedule 類型：依星期 + 時段決定是否適用，折扣值為百分比
-        const bookingDay       = new Date(booking_date).getDay(); // 0=週日
-        const bookingStartHour = parseInt(start_time.split(':')[0]);
-        let applies = true;
-        if (promo.applicable_days) {
-          const days = JSON.parse(promo.applicable_days);
-          if (!days.includes(bookingDay)) applies = false;
-        }
-        if (applies && promo.start_hour !== null && promo.end_hour !== null) {
-          if (bookingStartHour < promo.start_hour || bookingStartHour >= promo.end_hour)
-            applies = false;
-        }
-        if (!applies) {
-          return res.status(400).json({ success: false, message: '此優惠不適用於所選時段或星期' });
-        }
-        discount_amount = Math.round(total_amount * promo.discount_value / 100);
-      }
-      total_amount = total_amount - discount_amount;
-    }
-
-    // 建立預約（含 transaction + SELECT FOR UPDATE 防並發衝突）
-    let booking;
-    try {
-      booking = await BookingModel.createWithLock({
-        ...req.body, end_time, unit_price, total_amount, promo_id, discount_amount
+    // 檢查時段衝突
+    const occupied = await BookingModel.findOccupiedSlots(studio_id, booking_date);
+    const conflict = occupied.some(o => {
+      const oS = parseInt(o.start_time);
+      const oE = parseInt(o.end_time);
+      return !(endH <= oS || startH >= oE);
+    });
+    if (conflict) {
+      return res.status(409).json({
+        success: false, message: '所選時段已被預約，請選擇其他時段'
       });
-    } catch (e) {
-      if (e.code === 'CONFLICT') {
-        return res.status(409).json({ success: false, message: e.message });
-      }
-      throw e;
     }
+
+    // 建立預約
+    const booking = await BookingModel.create({
+      ...req.body, end_time, unit_price, total_amount
+    });
 
     // 產生付款連結（外部服務失敗不影響預約建立）
     let paymentUrl = null;
@@ -142,37 +93,14 @@ router.post('/', bookingRules, validate, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// 前台查詢允許回傳的欄位白名單（排除 admin_note、ttlock、payment_ref 等內部欄位）
-const BOOKING_PUBLIC_FIELDS = new Set([
-  'id','booking_no','studio_id','studio_name','studio_name_en',
-  'contact_name','contact_phone','contact_email',
-  'booking_date','start_time','end_time','duration_hours',
-  'unit_price','total_amount','discount_amount','promo_id',
-  'purpose','note','status',
-  'payment_method','payment_expire',
-  'need_invoice','invoice_type','invoice_carrier','invoice_donate',
-  'refund_amount','cancel_reason',
-  'created_at',
-]);
-
 // ─── 查詢預約 ────────────────────────────────────────
 router.get('/:no', async (req, res, next) => {
   try {
     const booking = await BookingModel.findByNo(req.params.no);
     if (!booking) return res.status(404).json({ success: false, message: '找不到此預約' });
-
-    // 身份驗證：需提供電話末 4 碼（與取消一致）
-    const phone  = String(req.query.phone || '').replace(/\D/g, '');
-    const stored = String(booking.contact_phone || '').replace(/\D/g, '');
-    if (!phone || phone.slice(-4) !== stored.slice(-4)) {
-      return res.status(403).json({ success: false, message: '電話號碼末 4 碼不符' });
-    }
-
-    // 只回傳白名單欄位
-    const data = Object.fromEntries(
-      Object.entries(booking).filter(([k]) => BOOKING_PUBLIC_FIELDS.has(k))
-    );
-    res.json({ success: true, data });
+    // 隱藏敏感欄位
+    delete booking.payment_trade_no;
+    res.json({ success: true, data: booking });
   } catch (err) { next(err); }
 });
 
@@ -183,13 +111,6 @@ router.post('/:no/cancel', async (req, res, next) => {
     if (!booking) return res.status(404).json({ success: false, message: '找不到此預約' });
     if (!['pending_payment','confirmed'].includes(booking.status)) {
       return res.status(400).json({ success: false, message: '此預約無法取消' });
-    }
-
-    // 身份驗證：確認末 4 碼電話號碼，防止訂單號外洩時他人取消
-    const phone = String(req.body.contact_phone || '').replace(/\D/g, '');
-    const stored = String(booking.contact_phone || '').replace(/\D/g, '');
-    if (!phone || phone.slice(-4) !== stored.slice(-4)) {
-      return res.status(403).json({ success: false, message: '電話號碼末 4 碼不符，無法取消' });
     }
 
     // 計算退款

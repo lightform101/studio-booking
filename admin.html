@@ -1476,11 +1476,6 @@
 </div>
 
 <script>
-  function escapeHTML(s) {
-    if (s == null) return '';
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
-
   // ═══════════════════════════════════════════════
   // Token 驗證：未登入自動跳轉登入頁
   // ═══════════════════════════════════════════════
@@ -1808,12 +1803,12 @@
         };
         tbody.innerHTML = recentBookings.map(b => `
           <tr>
-            <td><code style="font-size:.78rem;">${escapeHTML(b.booking_no)}</code></td>
-            <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(b.studio_name||'—')}</td>
-            <td>${escapeHTML(b.contact_name||'—')}</td>
-            <td>${escapeHTML(b.booking_date||'')} ${escapeHTML((b.start_time||'').slice(0,5))}–${escapeHTML((b.end_time||'').slice(0,5))}</td>
+            <td><code style="font-size:.78rem;">${b.booking_no}</code></td>
+            <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.studio_name||'—'}</td>
+            <td>${b.contact_name||'—'}</td>
+            <td>${b.booking_date||''} ${(b.start_time||'').slice(0,5)}–${(b.end_time||'').slice(0,5)}</td>
             <td>NT$ ${Number(b.total_amount||0).toLocaleString()}</td>
-            <td>${statusMap[b.status] || escapeHTML(b.status)}</td>
+            <td>${statusMap[b.status] || b.status}</td>
             <td><button class="btn btn-sm btn-primary-sm" onclick="openModal(${b.id})">詳情</button></td>
           </tr>
         `).join('');
@@ -1832,7 +1827,7 @@
           const pct = Number(r.available_hours) > 0 ? Math.round(Number(r.booked_hours) / Number(r.available_hours) * 100) : 0;
           const c = colors[i % colors.length];
           return `<div class="occ-row">
-            <div class="occ-label" style="font-size:.8rem;">${escapeHTML(r.studio_name)}</div>
+            <div class="occ-label" style="font-size:.8rem;">${r.studio_name}</div>
             <div class="occ-bar-bg"><div class="occ-bar-fill" style="width:${pct}%;background:${c};"></div></div>
             <div class="occ-pct" style="color:${c};">${pct}%</div>
           </div>`;
@@ -1856,8 +1851,8 @@
           return `<div class="notif-item">
             <div class="notif-avatar" style="background:${bgMap[b.status]||'#f0f0f0'};">${iconMap[b.status]||'📋'}</div>
             <div>
-              <div>${escapeHTML(b.contact_name)} · ${escapeHTML(b.studio_name||'')}</div>
-              <div class="notif-time">${escapeHTML(b.booking_no)} · ${dateStr}</div>
+              <div>${b.contact_name} · ${b.studio_name||''}</div>
+              <div class="notif-time">${b.booking_no} · ${dateStr}</div>
             </div>
           </div>`;
         }).join('');
@@ -1923,7 +1918,7 @@
         `<div class="stat-card ${cardColors[i % cardColors.length]}">
           <div class="stat-top"><div class="stat-icon">📸</div></div>
           <div class="stat-num">NT$ ${Number(d.revenue).toLocaleString()}</div>
-          <div class="stat-label">${escapeHTML(studioMap[sid] || '場地' + sid)} 收入</div>
+          <div class="stat-label">${studioMap[sid] || '場地' + sid} 收入</div>
         </div>`
       ).join('');
 
@@ -1953,7 +1948,7 @@
         occEl.innerHTML = occupancy.map((r, i) => {
           const pct = Math.min(100, Math.round(Number(r.booked_hours || 0) / Math.max(totalHours, 1) * 100));
           return `<div class="occ-row">
-            <div class="occ-label">${escapeHTML(studioMap[r.studio_id] || '場地' + r.studio_id)}</div>
+            <div class="occ-label">${studioMap[r.studio_id] || '場地' + r.studio_id}</div>
             <div class="occ-bar-bg"><div class="occ-bar-fill" style="width:${pct}%;background:${chartColors[i % chartColors.length]};"></div></div>
             <div class="occ-pct">${r.booked_hours || 0} 小時</div>
           </div>`;
@@ -2006,10 +2001,10 @@
       // 篩選下拉
       const sel = document.getElementById('bk-filter-studio');
       sel.innerHTML = '<option value="">全部場地</option>' +
-        _studioList.map(s => `<option value="${s.id}">${escapeHTML(s.name)}</option>`).join('');
+        _studioList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
       // 新增 / 編輯 Modal 下拉
       const esel = document.getElementById('bk-e-studio');
-      if (esel) esel.innerHTML = _studioList.map(s => `<option value="${s.id}">${escapeHTML(s.name)}</option>`).join('');
+      if (esel) esel.innerHTML = _studioList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
     } catch(e) { console.warn('載入場地失敗', e); }
   }
 
@@ -2053,19 +2048,19 @@
         const rowNum = (page - 1) * 20 + i + 1;
         return `<tr>
           <td>${rowNum}</td>
-          <td><code style="font-size:.8rem;">${escapeHTML(b.booking_no)}</code></td>
-          <td><b style="color:var(--accent)">${escapeHTML(b.studio_name || b.studio_id)}</b></td>
-          <td>${escapeHTML(b.contact_name)}</td>
-          <td>${escapeHTML(b.contact_phone)}</td>
-          <td>${escapeHTML(b.booking_date)}</td>
-          <td style="white-space:nowrap;">${escapeHTML(b.start_time?.slice(0,5))}–${escapeHTML(b.end_time?.slice(0,5))}</td>
+          <td><code style="font-size:.8rem;">${b.booking_no}</code></td>
+          <td><b style="color:var(--accent)">${b.studio_name || b.studio_id}</b></td>
+          <td>${b.contact_name}</td>
+          <td>${b.contact_phone}</td>
+          <td>${b.booking_date}</td>
+          <td style="white-space:nowrap;">${b.start_time?.slice(0,5)}–${b.end_time?.slice(0,5)}</td>
           <td>NT$${Number(b.total_amount).toLocaleString()}</td>
-          <td>${escapeHTML(b.payment_method) || '—'}</td>
+          <td>${b.payment_method || '—'}</td>
           <td><span class="badge ${st.cls}">${st.text}</span></td>
           <td style="white-space:nowrap;">
             <button class="btn btn-sm btn-primary-sm" onclick="openEditBookingModal(${b.id})" style="margin-right:4px;">✏️ 編輯</button>
             ${['pending_payment','confirmed'].includes(b.status)
-              ? `<button class="btn btn-sm btn-danger-sm" onclick="cancelBooking(${b.id},'${escapeHTML(b.booking_no)}')">取消</button>`
+              ? `<button class="btn btn-sm btn-danger-sm" onclick="cancelBooking(${b.id},'${b.booking_no}')">取消</button>`
               : ''}
           </td>
         </tr>`;
@@ -2349,14 +2344,14 @@
       // 全部 + 各場地按鈕
       const allStudios = [{ id: '', name: '全部' }, ...studios];
       toggle.innerHTML = allStudios.map((s, i) =>
-        `<button class="studio-btn${i === 0 ? ' active' : ''}" onclick="switchCalStudio('${s.id}', this)">${escapeHTML(s.name)}</button>`
+        `<button class="studio-btn${i === 0 ? ' active' : ''}" onclick="switchCalStudio('${s.id}', this)">${s.name}</button>`
       ).join('');
       // 更新圖例
       const legend = document.getElementById('cal-legend');
       if (legend) {
         const colors = ['var(--accent)', 'var(--gold)', 'var(--success)', '#0077b6', '#7c3aed'];
         legend.innerHTML = studios.map((s, i) =>
-          `<span style="font-size:.75rem;color:var(--gray);display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:${colors[i % colors.length]};opacity:.6;border-radius:2px;"></span>${escapeHTML(s.name)}</span>`
+          `<span style="font-size:.75rem;color:var(--gray);display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:${colors[i % colors.length]};opacity:.6;border-radius:2px;"></span>${s.name}</span>`
         ).join('') + `<span style="font-size:.75rem;color:var(--gray);display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:#e0e0e0;border-radius:2px;"></span>封鎖日</span>`;
       }
     } catch(e) { console.warn('載入日曆場地失敗', e); }
@@ -2429,7 +2424,7 @@
     const colors = ['studio-a','studio-b','studio-c','studio-d'];
     el.innerHTML = bookings.map((b, i) =>
       `<div class="booking-event ${colors[i % colors.length]}" style="cursor:pointer;" onclick="openEditBookingModal(${b.id})">
-        ${escapeHTML(b.studio_name || b.studio_id)} ｜ ${escapeHTML(String(b.start_time||'').slice(0,5))}–${escapeHTML(String(b.end_time||'').slice(0,5))} ｜ ${escapeHTML(b.contact_name)}
+        ${b.studio_name || b.studio_id} ｜ ${String(b.start_time||'').slice(0,5)}–${String(b.end_time||'').slice(0,5)} ｜ ${b.contact_name}
         <span style="font-size:.75rem;margin-left:8px;opacity:.7;">${b.status === 'confirmed' ? '✅' : b.status === 'pending_payment' ? '⏳' : '◆'}</span>
       </div>`
     ).join('');
@@ -2464,8 +2459,8 @@
         <div style="margin-bottom:36px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);">
             <div>
-              <span style="font-weight:700;font-size:1rem;">${escapeHTML(s.name)}</span>
-              ${s.name_en ? `<span style="font-size:.75rem;color:var(--gray);margin-left:8px;">${escapeHTML(s.name_en)}</span>` : ''}
+              <span style="font-weight:700;font-size:1rem;">${s.name}</span>
+              ${s.name_en ? `<span style="font-size:.75rem;color:var(--gray);margin-left:8px;">${s.name_en}</span>` : ''}
             </div>
             <a href="gallery.html?studio=${s.id}" target="_blank"
               style="font-size:.8rem;color:var(--accent);text-decoration:none;">↗ 查看相簿</a>
@@ -2521,7 +2516,7 @@
       bar.innerHTML = studios.map(s =>
         `<button id="studioTab_${s.id}" onclick="switchStudioTab(${s.id})"
           style="padding:8px 18px;border-radius:8px;border:2px solid transparent;cursor:pointer;font-size:.87rem;font-weight:600;transition:all .2s;background:#f0f2f5;color:var(--text);">
-          ${escapeHTML(s.name)}${!s.is_active ? ' <span style="font-size:.7rem;color:#aaa;">(停用)</span>' : ''}
+          ${s.name}${!s.is_active ? ' <span style="font-size:.7rem;color:#aaa;">(停用)</span>' : ''}
         </button>`
       ).join('');
 
@@ -2571,7 +2566,7 @@
     document.getElementById('studioPanel').innerHTML = `
       <div class="card" style="margin-bottom:20px;">
         <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-          <h3>📋 場地資訊 — ${escapeHTML(studio.name)}</h3>
+          <h3>📋 場地資訊 — ${studio.name}</h3>
           <div style="display:flex;gap:8px;align-items:center;">
             <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer;">
               <div class="toggle ${studio.is_active ? 'on' : ''}" id="activeToggle_${sid}" onclick="this.classList.toggle('on')"></div>
@@ -3494,8 +3489,8 @@
       tbody.innerHTML = data.map(a => `
         <tr>
           <td>${a.id}</td>
-          <td>${escapeHTML(a.name)}</td>
-          <td>${escapeHTML(a.email)}</td>
+          <td>${a.name}</td>
+          <td>${a.email}</td>
           <td>${a.last_login ? String(a.last_login).slice(0,16) : '—'}</td>
           <td>${String(a.created_at).slice(0,10)}</td>
           <td><span style="padding:2px 10px;border-radius:10px;font-size:.78rem;

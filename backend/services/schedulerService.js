@@ -91,7 +91,7 @@ const SchedulerService = {
        JOIN studios s ON b.studio_id = s.id
        WHERE b.status = 'confirmed'
          AND b.need_invoice = 1
-         AND (b.invoice_status IS NULL OR b.invoice_status IN ('pending','failed'))
+         AND (b.invoice_status IS NULL OR b.invoice_status IN ('pending','failed','not_needed') AND b.invoice_status != 'not_needed')
          AND b.invoice_no IS NULL
          AND CONCAT(b.booking_date, ' ', b.end_time) <= ?`,
       [now]

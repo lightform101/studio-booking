@@ -794,16 +794,6 @@
 </footer>
 
 <script>
-  function escapeHTML(s) {
-    if (s == null) return '';
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
-  function safeSrc(url) {
-    if (!url) return '';
-    const s = String(url);
-    return /^https?:\/\/|^\//.test(s) ? escapeHTML(s) : '';
-  }
-
   function toggleFaq(btn) {
     const a = btn.nextElementSibling;
     const isOpen = a.classList.contains('open');
@@ -1064,7 +1054,7 @@
   function buildStudioCard(s, idx) {
     const key     = String(s.id);
     const emoji   = EMOJIS[idx % EMOJIS.length];
-    const features = (s.features || []).map(f => `<span class="feature-tag">${escapeHTML(f)}</span>`).join('');
+    const features = (s.features || []).map(f => `<span class="feature-tag">${f}</span>`).join('');
     const specs   = [
       s.size_sqm   ? `<div class="spec-item"><span class="spec-icon">📐</span> 空間：${s.size_sqm} 坪</div>` : '',
       s.capacity   ? `<div class="spec-item"><span class="spec-icon">👥</span> 容納：最多 ${s.capacity} 人</div>` : '',
@@ -1080,11 +1070,11 @@
           <button class="carousel-btn prev" onclick="carouselMove('${key}',-1)">‹</button>
           <button class="carousel-btn next" onclick="carouselMove('${key}', 1)">›</button>
           <div class="carousel-dots" id="dots${key}"></div>
-          <span class="studio-badge${idx > 0 ? ' b' : ''}">${escapeHTML(s.name_en || s.name)}</span>
+          <span class="studio-badge${idx > 0 ? ' b' : ''}">${s.name_en || s.name}</span>
         </div>
         <div class="studio-info">
-          <div class="studio-name">${escapeHTML(s.name)}${s.name_en ? ' · ' + escapeHTML(s.name_en) : ''}</div>
-          <p class="studio-desc">${escapeHTML(s.description || '專業攝影棚空間，配備完善設備。')}</p>
+          <div class="studio-name">${s.name}${s.name_en ? ' · ' + s.name_en : ''}</div>
+          <p class="studio-desc">${s.description || '專業攝影棚空間，配備完善設備。'}</p>
           ${specs ? `<div class="studio-specs">${specs}</div>` : ''}
           <div class="studio-price">
             ${s.photo_rate ? `<div style="font-size:.85rem;color:var(--gray);margin-bottom:4px;">
@@ -1133,7 +1123,7 @@
       const footerStudios = document.getElementById('footer-studios-list');
       if (footerStudios) {
         footerStudios.innerHTML = studios.map(s =>
-          `<a href="booking.html?studio=${s.id}">${escapeHTML(s.name)}</a>`
+          `<a href="booking.html?studio=${s.id}">${s.name}</a>`
         ).join('');
       }
 
@@ -1144,16 +1134,16 @@
         heroContainer.innerHTML = studios.slice(0, 4).map((s, i) => {
           const mainImg = s.images && s.images.find(img => img.is_main) || (s.images && s.images[0]);
           const rate    = s.photo_rate || s.hourly_rate || 0;
-          const imgHtml = mainImg && safeSrc(mainImg.url)
-            ? `<img src="${safeSrc(mainImg.url)}" alt="${escapeHTML(s.name)}" loading="lazy" />`
+          const imgHtml = mainImg
+            ? `<img src="${mainImg.url}" alt="${s.name}" loading="lazy" />`
             : `<div class="card-placeholder">${PLACEHOLDERS[i % PLACEHOLDERS.length]}</div>`;
           return `
-            <a class="studio-photo-card" href="gallery.html?studio=${s.id}" title="查看 ${escapeHTML(s.name)} 相簿">
+            <a class="studio-photo-card" href="gallery.html?studio=${s.id}" title="查看 ${s.name} 相簿">
               ${imgHtml}
               <div class="card-overlay"></div>
-              ${s.name_en ? `<div class="card-badge">${escapeHTML(s.name_en)}</div>` : ''}
+              ${s.name_en ? `<div class="card-badge">${s.name_en}</div>` : ''}
               <div class="card-info">
-                <div class="card-name">${escapeHTML(s.name)}</div>
+                <div class="card-name">${s.name}</div>
                 <div class="card-price">$${Number(rate).toLocaleString()} / 小時起 · 點擊查看相簿</div>
               </div>
             </a>`;

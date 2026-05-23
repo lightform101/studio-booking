@@ -99,24 +99,22 @@ const StudioModel = {
     return true;
   },
 
-  // 更新場地（只 SET 有出現在 data 中的欄位，防止漏傳欄位寫入 null）
+  // 更新場地
   async update(id, data) {
-    const UPDATABLE = ['name','name_en','description','hourly_rate',
-                       'photo_rate','video_rate','min_hours','max_hours',
-                       'capacity','size_sqm','is_active'];
-    const sets = [];
-    const vals = [];
-    for (const col of UPDATABLE) {
-      if (col in data) {
-        sets.push(`${col}=?`);
-        vals.push(col === 'photo_rate' || col === 'video_rate' ? (data[col] || null) : data[col]);
-      }
-    }
-    if (sets.length) {
-      await pool.query(`UPDATE studios SET ${sets.join(',')} WHERE id=?`, [...vals, id]);
-    }
+    const { name, name_en, description, hourly_rate, photo_rate, video_rate,
+            min_hours, max_hours, capacity, size_sqm, is_active, features,
+            ttlock_lock_id } = data;
+    // 主要欄位更新
+    await pool.query(
+      `UPDATE studios SET name=?, name_en=?, description=?, hourly_rate=?,
+       photo_rate=?, video_rate=?,
+       min_hours=?, max_hours=?, capacity=?, size_sqm=?, is_active=?
+       WHERE id=?`,
+      [name, name_en, description, hourly_rate,
+       photo_rate || null, video_rate || null,
+       min_hours, max_hours, capacity, size_sqm, is_active, id]
+    );
     // TTLock Lock ID（欄位可能尚未建立，獨立處理避免影響主儲存）
-    const { ttlock_lock_id, features } = data;
     if (ttlock_lock_id !== undefined) {
       try {
         await pool.query(

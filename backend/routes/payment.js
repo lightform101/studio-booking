@@ -11,7 +11,6 @@ const NewebPaySvc   = require('../services/newebpayService');
 const InvoiceSvc    = require('../services/invoiceService');
 const NotifySvc     = require('../services/notifyService');
 const GoogleCalSvc  = require('../services/googleCalendarService');
-const TTLockSvc     = require('../services/ttlockService');
 const { pool }      = require('../config/database');
 
 // ─── 藍新金流：產生自動提交表單頁（付款中介頁）────────
@@ -91,13 +90,6 @@ router.post('/newebpay/notify', async (req, res, next) => {
     const booking = await BookingModel.findByNo(booking_no);
     if (!booking) return res.send('0|找不到訂單');
     if (booking.status === 'confirmed') return res.send('1|OK'); // 已處理
-    if (booking.status !== 'pending_payment') return res.send('0|訂單狀態異常');
-
-    // 金額驗證：防止篡改付款金額
-    if (parseInt(result.amount) !== parseInt(booking.total_amount)) {
-      console.error(`[NewebPay] 金額不符 booking=${booking_no} expected=${booking.total_amount} got=${result.amount}`);
-      return res.send('0|金額驗證失敗');
-    }
 
     const updated = await BookingModel.confirmPayment(booking_no, {
       payment_method:   mapPaymentType(payment_type),
@@ -114,10 +106,6 @@ router.post('/newebpay/notify', async (req, res, next) => {
     // 同步 Google 行事曆
     try { await GoogleCalSvc.createEvent(updated); }
     catch (e) { console.error('[GoogleCal] 建立事件失敗:', e.message); }
-
-    // 建立 TTLock 進門密碼
-    try { await TTLockSvc.createTTLockForBooking(updated); }
-    catch (e) { console.error('[TTLock] 建立進門碼失敗:', e.message); }
 
     // 發送確認通知
     await NotifySvc.send('booking_confirmed', updated);
@@ -157,19 +145,6 @@ router.get('/linepay/confirm', async (req, res, next) => {
 
     const booking = await BookingModel.findByNo(orderId);
     if (!booking) return res.redirect('/booking.html?error=找不到訂單');
-    if (booking.status === 'confirmed') return res.redirect(`/confirmation.html?booking_no=${orderId}`); // 冪等
-    if (booking.status !== 'pending_payment') return res.redirect('/booking.html?error=訂單狀態異常');
-    if (booking.payment_expire && new Date() > new Date(booking.payment_expire)) {
-      console.warn('[LINE Pay Confirm] 付款期限已過:', orderId);
-      return res.redirect('/booking.html?error=付款期限已過，請重新預約');
-    }
-
-    // 金額驗證：LINE Pay confirm 回應中取 totalAmount
-    const paidAmount = result?.info?.payInfo?.[0]?.amount ?? result?.info?.amount;
-    if (paidAmount !== undefined && parseInt(paidAmount) !== parseInt(booking.total_amount)) {
-      console.error(`[LINE Pay] 金額不符 booking=${orderId} expected=${booking.total_amount} got=${paidAmount}`);
-      return res.redirect('/booking.html?error=付款金額異常，請聯絡客服');
-    }
 
     const updated = await BookingModel.confirmPayment(orderId, {
       payment_method:   'linepay',
@@ -185,10 +160,6 @@ router.get('/linepay/confirm', async (req, res, next) => {
     // 同步 Google 行事曆
     try { await GoogleCalSvc.createEvent(updated); }
     catch (e) { console.error('[GoogleCal] 建立事件失敗:', e.message); }
-
-    // 建立 TTLock 進門密碼
-    try { await TTLockSvc.createTTLockForBooking(updated); }
-    catch (e) { console.error('[TTLock] 建立進門碼失敗:', e.message); }
 
     await NotifySvc.send('booking_confirmed', updated);
     res.redirect(`/confirmation.html?booking_no=${orderId}`);

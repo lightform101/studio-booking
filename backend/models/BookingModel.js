@@ -6,103 +6,33 @@ const dayjs    = require('dayjs');
 
 const BookingModel = {
 
-  // 讀取付款鎖定分鐘數（優先 DB settings > env > 預設 120）
-  async _getLockMinutes(conn) {
+  // 產生訂單號 SS-YYYYMMDDNNNN
+  async generateBookingNo() {
+    const today = dayjs().format('YYYYMMDD');
+    const prefix = `SS-${today}`;
+    const [[row]] = await pool.query(
+      'SELECT COUNT(*) AS cnt FROM bookings WHERE booking_no LIKE ?',
+      [`${prefix}%`]
+    );
+    const seq = String(row.cnt + 1).padStart(4, '0');
+    return `${prefix}${seq}`;
+  },
+
+  // 建立預約
+  async create(data) {
+    const booking_no = await this.generateBookingNo();
+    // 優先從 DB settings 讀取鎖定時間，其次 .env，預設 120 分鐘
     let lockMinutes = parseInt(process.env.BOOKING_LOCK_MINUTES || 120);
     try {
-      const [[row]] = await (conn || pool).query(
+      const [[row]] = await pool.query(
         "SELECT key_value FROM settings WHERE key_name='booking_lock_minutes'"
       );
       if (row?.key_value) lockMinutes = parseInt(row.key_value);
-    } catch(e) {}
-    return lockMinutes;
-  },
+    } catch(e) { /* DB 查詢失敗時沿用 env 值 */ }
+    const payment_expire = dayjs()
+      .add(lockMinutes, 'minute')
+      .format('YYYY-MM-DD HH:mm:ss');
 
-  // 前台建立預約：transaction + SELECT FOR UPDATE 防並發雙重預約
-  async createWithLock(data) {
-    const conn = await pool.getConnection();
-    await conn.beginTransaction();
-    try {
-      // 悲觀鎖：鎖定同場地同日所有佔用中的時段列
-      const [occupied] = await conn.query(
-        `SELECT start_time, end_time FROM bookings
-         WHERE studio_id = ? AND booking_date = ?
-         AND status IN ('pending_payment','confirmed')
-         FOR UPDATE`,
-        [data.studio_id, data.booking_date]
-      );
-
-      // 衝突判斷
-      const startH = parseInt(String(data.start_time).split(':')[0]);
-      const endH   = parseInt(String(data.end_time).split(':')[0]);
-      const conflict = occupied.some(o => {
-        const oS = parseInt(o.start_time);
-        const oE = parseInt(o.end_time);
-        return !(endH <= oS || startH >= oE);
-      });
-      if (conflict) {
-        const err = new Error('所選時段已被預約，請選擇其他時段');
-        err.code = 'CONFLICT';
-        throw err;
-      }
-
-      // 計算付款截止時間
-      const lockMinutes = await this._getLockMinutes(conn);
-      const payment_expire = dayjs().add(lockMinutes, 'minute').format('YYYY-MM-DD HH:mm:ss');
-
-      // INSERT：用暫時唯一訂單號佔位，INSERT 後再以 id 生成正式號
-      const tmpNo = `TMP-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      const [result] = await conn.query(
-        `INSERT INTO bookings
-         (booking_no, studio_id, contact_name, contact_phone, contact_email,
-          purpose, note, booking_date, start_time, end_time, duration_hours,
-          unit_price, total_amount, discount_amount, promo_id, payment_expire,
-          need_invoice, invoice_type, invoice_carrier,
-          invoice_tax_id, invoice_company, invoice_donate)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-        [
-          tmpNo,
-          data.studio_id, data.contact_name, data.contact_phone, data.contact_email,
-          data.purpose || null, data.note || null,
-          data.booking_date, data.start_time, data.end_time, data.duration_hours,
-          data.unit_price, data.total_amount,
-          data.discount_amount || 0, data.promo_id || null,
-          payment_expire,
-          data.need_invoice ? 1 : 0,
-          data.invoice_type || null, data.invoice_carrier || null,
-          data.invoice_tax_id || null, data.invoice_company || null,
-          data.invoice_donate || null
-        ]
-      );
-
-      // 用 AUTO_INCREMENT id 生成無碰撞訂單號 SS-YYYYMMDD-NNNNN
-      const today      = dayjs().format('YYYYMMDD');
-      const booking_no = `SS-${today}-${String(result.insertId).padStart(5, '0')}`;
-      await conn.query('UPDATE bookings SET booking_no=? WHERE id=?', [booking_no, result.insertId]);
-
-      await conn.commit();
-
-      // 回傳完整記錄（含 studio_name）
-      const [[booking]] = await conn.query(
-        `SELECT b.*, s.name AS studio_name, s.name_en AS studio_name_en
-         FROM bookings b JOIN studios s ON b.studio_id = s.id WHERE b.id = ?`,
-        [result.insertId]
-      );
-      return booking;
-    } catch (e) {
-      await conn.rollback();
-      throw e;
-    } finally {
-      conn.release();
-    }
-  },
-
-  // 後台建立預約（不做衝突鎖，供管理員手動新增用）
-  async create(data) {
-    const lockMinutes = await this._getLockMinutes();
-    const payment_expire = dayjs().add(lockMinutes, 'minute').format('YYYY-MM-DD HH:mm:ss');
-
-    const tmpNo = `TMP-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const [result] = await pool.query(
       `INSERT INTO bookings
        (booking_no, studio_id, contact_name, contact_phone, contact_email,
@@ -112,7 +42,7 @@ const BookingModel = {
         invoice_tax_id, invoice_company, invoice_donate)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
-        tmpNo,
+        booking_no,
         data.studio_id, data.contact_name, data.contact_phone, data.contact_email,
         data.purpose || null, data.note || null,
         data.booking_date, data.start_time, data.end_time, data.duration_hours,
@@ -123,10 +53,7 @@ const BookingModel = {
         data.invoice_donate || null
       ]
     );
-    const today      = dayjs().format('YYYYMMDD');
-    const booking_no = `SS-${today}-${String(result.insertId).padStart(5, '0')}`;
-    await pool.query('UPDATE bookings SET booking_no=? WHERE id=?', [booking_no, result.insertId]);
-    return this.findById(result.insertId);
+    return this.findByNo(booking_no);
   },
 
   // 依訂單號查詢
