@@ -136,6 +136,57 @@
       text-align: center; padding: 32px 20px;
       font-size: 0.8rem; color: var(--gray);
     }
+
+    /* LOOKUP MODAL */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.55); z-index: 1000;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: var(--radius);
+      width: 100%; max-width: 520px; max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 40px rgba(0,0,0,.2);
+      padding: 32px 28px;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 14px; right: 16px;
+      background: none; border: none; font-size: 1.3rem;
+      cursor: pointer; color: var(--gray);
+    }
+    .modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: .8rem; color: var(--gray); margin-bottom: 5px; }
+    .form-group input {
+      width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: .9rem; outline: none; transition: border-color .2s;
+    }
+    .form-group input:focus { border-color: var(--primary); }
+    .btn-lookup {
+      width: 100%; padding: 12px; background: var(--primary); color: #fff;
+      border: none; border-radius: 8px; font-size: .95rem; font-weight: 600;
+      cursor: pointer; transition: background .2s;
+    }
+    .btn-lookup:hover { background: #0f3460; }
+    .btn-lookup:disabled { opacity: .6; cursor: not-allowed; }
+    .lookup-error { display: none; margin-top: 12px; padding: 10px 14px; background: #fdecea; border: 1px solid #f5c6cb; border-radius: 8px; font-size: .85rem; color: #c0392b; }
+    .lookup-result { display: none; margin-top: 20px; }
+    .lookup-result .result-header { font-size: .85rem; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 420px) { .result-grid { grid-template-columns: 1fr; } }
+    .result-item label { font-size: .75rem; color: var(--gray); display: block; margin-bottom: 2px; }
+    .result-item .rv { font-size: .9rem; font-weight: 600; }
+    .status-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: .78rem; font-weight: 700;
+    }
+    .status-pending_payment { background: #fff3cd; color: #856404; }
+    .status-confirmed       { background: #d1e7dd; color: #0f5132; }
+    .status-completed       { background: #cfe2ff; color: #084298; }
+    .status-cancelled       { background: #f8d7da; color: #842029; }
   </style>
 </head>
 <body>
@@ -270,13 +321,47 @@
   <!-- ACTIONS -->
   <div class="action-buttons">
     <a href="index.html" class="btn-primary">🏠 返回首頁</a>
-    <a href="#" class="btn-outline">📋 查看我的預約</a>
+    <button class="btn-outline" id="btn-open-lookup" type="button">📋 查看我的預約</button>
   </div>
   <div style="text-align:center;margin-top:16px;font-size:.82rem;color:var(--gray);">
     如需修改或取消預約，請於使用前 48 小時前聯絡我們<br />
     📧 <span id="conf-contact-email">uiestudio123@gmail.com</span>
   </div>
 
+</div>
+
+<!-- ORDER LOOKUP MODAL -->
+<div class="modal-overlay" id="lookup-modal">
+  <div class="modal-box">
+    <button class="modal-close" id="btn-close-lookup" title="關閉">✕</button>
+    <div class="modal-title">📋 查詢預約狀態</div>
+    <div class="form-group">
+      <label>訂單編號（如 SS-20250101-00001）</label>
+      <input type="text" id="lookup-booking-no" placeholder="SS-YYYYMMDD-XXXXX" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label>手機號碼末 4 碼（用於身份驗證）</label>
+      <input type="text" id="lookup-phone" placeholder="例如：3456" maxlength="4" inputmode="numeric" autocomplete="off" />
+    </div>
+    <button class="btn-lookup" id="btn-do-lookup" type="button">查詢</button>
+    <div class="lookup-error" id="lookup-error"></div>
+
+    <div class="lookup-result" id="lookup-result">
+      <hr style="margin:20px 0;border:none;border-top:1px solid var(--border);" />
+      <div class="result-header">查詢結果</div>
+      <div class="result-grid">
+        <div class="result-item"><label>訂單編號</label><div class="rv" id="lr-booking-no">—</div></div>
+        <div class="result-item"><label>付款狀態</label><div class="rv" id="lr-status">—</div></div>
+        <div class="result-item"><label>場地</label><div class="rv" id="lr-studio">—</div></div>
+        <div class="result-item"><label>預約日期</label><div class="rv" id="lr-date">—</div></div>
+        <div class="result-item"><label>使用時段</label><div class="rv" id="lr-time">—</div></div>
+        <div class="result-item"><label>使用時數</label><div class="rv" id="lr-hours">—</div></div>
+        <div class="result-item"><label>聯絡人</label><div class="rv" id="lr-name">—</div></div>
+        <div class="result-item"><label>應付金額</label><div class="rv" id="lr-amount">—</div></div>
+      </div>
+      <div id="lr-cancel-info" style="display:none;margin-top:12px;padding:10px 14px;background:#fdecea;border-radius:8px;font-size:.85rem;color:#842029;"></div>
+    </div>
+  </div>
 </div>
 
 <footer>
@@ -310,6 +395,114 @@
         if (el) el.textContent = ap.contact_email;
       }
     } catch(e) { /* 外觀載入失敗不影響主功能 */ }
+  })();
+
+  // ─── 訂單查詢 Modal ──────────────────────────────
+  (function() {
+    function escapeHTML(s) {
+      if (s == null) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    const statusLabel = {
+      pending_payment: '⏳ 待付款',
+      confirmed:       '✅ 已確認',
+      completed:       '✓ 已完成',
+      cancelled:       '✕ 已取消',
+    };
+
+    const modal    = document.getElementById('lookup-modal');
+    const btnOpen  = document.getElementById('btn-open-lookup');
+    const btnClose = document.getElementById('btn-close-lookup');
+    const btnDo    = document.getElementById('btn-do-lookup');
+    const errEl    = document.getElementById('lookup-error');
+    const resultEl = document.getElementById('lookup-result');
+
+    function openModal(prefillNo) {
+      modal.classList.add('open');
+      errEl.style.display = 'none';
+      resultEl.style.display = 'none';
+      if (prefillNo) document.getElementById('lookup-booking-no').value = prefillNo;
+      document.getElementById('lookup-phone').value = '';
+      document.getElementById('lookup-phone').focus();
+    }
+    function closeModal() { modal.classList.remove('open'); }
+
+    btnOpen.addEventListener('click', () => {
+      const snap = sessionStorage.getItem('bookingSnapshot');
+      let prefill = '';
+      try { if (snap) prefill = JSON.parse(snap).booking_no || ''; } catch(e) {}
+      openModal(prefill);
+    });
+    btnClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+    async function doLookup() {
+      const bookingNo = document.getElementById('lookup-booking-no').value.trim();
+      const phone     = document.getElementById('lookup-phone').value.trim();
+      errEl.style.display = 'none';
+      resultEl.style.display = 'none';
+
+      if (!bookingNo) { showErr('請輸入訂單編號'); return; }
+      if (!/^\d{4}$/.test(phone)) { showErr('請輸入手機末 4 碼數字'); return; }
+
+      btnDo.disabled = true;
+      btnDo.textContent = '查詢中…';
+      try {
+        const res  = await fetch(`/api/bookings/${encodeURIComponent(bookingNo)}?phone=${encodeURIComponent(phone)}`);
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          showErr(json.message || '查無此訂單，請確認訂單編號與手機末 4 碼');
+          return;
+        }
+        renderResult(json.data);
+      } catch(e) {
+        showErr('網路異常，請稍後再試');
+      } finally {
+        btnDo.disabled = false;
+        btnDo.textContent = '查詢';
+      }
+    }
+
+    function showErr(msg) {
+      errEl.textContent = msg;
+      errEl.style.display = 'block';
+    }
+
+    function renderResult(b) {
+      const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+
+      const statusClass = `status-${escapeHTML(b.status || '')}`;
+      set('lr-booking-no', `<span style="font-family:monospace;">${escapeHTML(b.booking_no)}</span>`);
+      set('lr-status',     `<span class="status-badge ${statusClass}">${escapeHTML(statusLabel[b.status] || b.status)}</span>`);
+      set('lr-studio',     escapeHTML(b.studio_name || '—'));
+      set('lr-date',       escapeHTML(b.booking_date ? b.booking_date.slice(0,10) : '—'));
+      set('lr-time',       b.start_time && b.end_time
+        ? `${escapeHTML(String(b.start_time).slice(0,5))} – ${escapeHTML(String(b.end_time).slice(0,5))}`
+        : '—');
+      set('lr-hours',      b.duration_hours ? `${escapeHTML(String(b.duration_hours))} 小時` : '—');
+      set('lr-name',       escapeHTML(b.contact_name || '—'));
+      set('lr-amount',     b.total_amount != null
+        ? `NT$ ${Number(b.total_amount).toLocaleString()}`
+        : '—');
+
+      const cancelInfo = document.getElementById('lr-cancel-info');
+      if (b.status === 'cancelled' && b.cancel_reason) {
+        cancelInfo.innerHTML = `取消原因：${escapeHTML(b.cancel_reason)}` +
+          (b.refund_amount > 0 ? `　退款金額：NT$ ${Number(b.refund_amount).toLocaleString()}` : '');
+        cancelInfo.style.display = 'block';
+      } else {
+        cancelInfo.style.display = 'none';
+      }
+
+      resultEl.style.display = 'block';
+    }
+
+    btnDo.addEventListener('click', doLookup);
+    document.getElementById('lookup-phone').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLookup();
+    });
   })();
 
   (function() {

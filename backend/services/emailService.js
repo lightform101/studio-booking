@@ -131,13 +131,19 @@ const EmailService = {
   },
 
   // ─── 進門密碼通知 ──────────────────────────────
-  async sendAccessCode(booking, passcode) {
+  async sendAccessCode(booking, passcode, ttlockWindow = {}) {
     const dayjs = require('dayjs');
     const base  = buildBookingVars(booking);
-    // 密碼有效期：預約開始前 15 分鐘 ~ 結束後 15 分鐘
-    const dateStr = dayjs(booking.booking_date).format('YYYY-MM-DD');
-    const validFrom  = dayjs(`${dateStr} ${String(booking.start_time).slice(0,5)}`).subtract(15,'minute').format('HH:mm');
-    const validUntil = dayjs(`${dateStr} ${String(booking.end_time).slice(0,5)}`).add(15,'minute').format('HH:mm');
+    // 優先使用 TTLock 實際生效區間（整點對齊後），fallback 到 ±15 分鐘估算
+    let validFrom, validUntil;
+    if (ttlockWindow.validFromMs && ttlockWindow.validUntilMs) {
+      validFrom  = dayjs(ttlockWindow.validFromMs).format('HH:mm');
+      validUntil = dayjs(ttlockWindow.validUntilMs).format('HH:mm');
+    } else {
+      const dateStr = dayjs(booking.booking_date).format('YYYY-MM-DD');
+      validFrom  = dayjs(`${dateStr} ${String(booking.start_time).slice(0,5)}`).subtract(15,'minute').format('HH:mm');
+      validUntil = dayjs(`${dateStr} ${String(booking.end_time).slice(0,5)}`).add(15,'minute').format('HH:mm');
+    }
     const vars = {
       ...base,
       passcode,

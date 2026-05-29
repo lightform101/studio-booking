@@ -99,8 +99,6 @@ async function createPasscode({ lockId, name, startDate, endDate }) {
     req.end();
   });
 
-  console.log('[TTLock] keyboardPwd/get 回應:', JSON.stringify(data));
-
   if (data.errcode && data.errcode !== 0) {
     throw new Error(`[TTLock] 建立密碼失敗 (errcode ${data.errcode}): ${data.errmsg || JSON.stringify(data)}`);
   }
@@ -113,38 +111,100 @@ async function createPasscode({ lockId, name, startDate, endDate }) {
     throw new Error(`[TTLock] 回應未包含密碼: ${JSON.stringify(data)}`);
   }
 
-  console.log(`[TTLock] 密碼已建立: ${pwd} (id: ${pwdId})`);
+  console.log(`[TTLock] 密碼已建立 passkeyId=${pwdId}`);
   return {
-    passcode:  String(pwd),
-    passkeyId: pwdId,
+    passcode:         String(pwd),
+    passkeyId:        pwdId,
+    effectiveStartMs: startMs,
+    effectiveEndMs:   endMs,
   };
 }
 
 async function deletePasscode({ lockId, keyboardPwdId }) {
   if (!CLIENT_ID() || !keyboardPwdId) return;
-  try {
-    const token = await getAccessToken();
-    const resp = await axios.post(
-      `${BASE_URL}/v3/keyboardPwd/delete`,
-      qs.stringify({
-        clientId:      CLIENT_ID(),
-        accessToken:   token,
-        lockId:        String(lockId),
-        keyboardPwdId: String(keyboardPwdId),
-        deleteType:    2,
-        date:          String(Date.now()),
-      }),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    );
-    const data = resp.data;
-    if (data.errcode && data.errcode !== 0) {
-      console.warn(`[TTLock] 刪除密碼失敗: ${JSON.stringify(data)}`);
-    } else {
-      console.log(`[TTLock] 密碼已刪除 (id: ${keyboardPwdId})`);
-    }
-  } catch(e) {
-    console.error('[TTLock] deletePasscode error:', e.message);
+  const token = await getAccessToken();
+  const resp = await axios.post(
+    `${BASE_URL}/v3/keyboardPwd/delete`,
+    qs.stringify({
+      clientId:      CLIENT_ID(),
+      accessToken:   token,
+      lockId:        String(lockId),
+      keyboardPwdId: String(keyboardPwdId),
+      deleteType:    2,
+      date:          String(Date.now()),
+    }),
+    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+  );
+  const data = resp.data;
+  if (data.errcode && data.errcode !== 0) {
+    throw new Error(`[TTLock] 刪除密碼失敗 (errcode ${data.errcode}): ${data.errmsg}`);
   }
+  console.log(`[TTLock] 密碼已刪除 passkeyId=${keyboardPwdId}`);
 }
 
-module.exports = { createPasscode, deletePasscode };
+/**
+ * 為預約刪除 TTLock 密碼並清除 DB 記錄。
+ * 失敗時 throw，讓呼叫端決定如何處理。
+ */
+async function deleteTTLockForBooking(booking) {
+  if (!booking.ttlock_passcode_id) return; // 無密碼，不需刪
+  const { pool } = require('../config/database');
+
+  const [[studio]] = await pool.query(
+    'SELECT ttlock_lock_id FROM studios WHERE id=?',
+    [booking.studio_id]
+  );
+  if (!studio?.ttlock_lock_id) return;
+
+  await deletePasscode({
+    lockId:        studio.ttlock_lock_id,
+    keyboardPwdId: booking.ttlock_passcode_id,
+  });
+
+  await pool.query(
+    'UPDATE bookings SET ttlock_passcode=NULL, ttlock_passcode_id=NULL WHERE id=?',
+    [booking.id]
+  );
+}
+
+/**
+ * 為已確認預約建立 TTLock 密碼、更新 DB、寄送進門碼信件。
+ * 呼叫前確保 booking.status === 'confirmed'。
+ * 失敗時 throw，讓呼叫端決定是否 catch。
+ */
+async function createTTLockForBooking(booking) {
+  const { pool }        = require('../config/database');
+  const EmailSvc        = require('./emailService');
+  const dayjs           = require('dayjs');
+
+  const [[studio]] = await pool.query(
+    'SELECT ttlock_lock_id, name FROM studios WHERE id=?',
+    [booking.studio_id]
+  );
+  if (!studio?.ttlock_lock_id) return; // 場地未設 lock_id，靜默跳過
+
+  const dateStr  = dayjs(booking.booking_date).format('YYYY-MM-DD');
+  const startMs  = dayjs(`${dateStr} ${String(booking.start_time).slice(0,5)}`).subtract(15, 'minute').valueOf();
+  const endMs    = dayjs(`${dateStr} ${String(booking.end_time).slice(0,5)}`).add(15, 'minute').valueOf();
+
+  const { passcode, passkeyId, effectiveStartMs, effectiveEndMs } = await createPasscode({
+    lockId:    studio.ttlock_lock_id,
+    name:      `${booking.booking_no} ${booking.contact_name}`,
+    startDate: startMs,
+    endDate:   endMs,
+  });
+
+  await pool.query(
+    'UPDATE bookings SET ttlock_passcode=?, ttlock_passcode_id=? WHERE id=?',
+    [passcode, passkeyId, booking.id]
+  );
+
+  await EmailSvc.sendAccessCode(
+    { ...booking, studio_name: studio.name },
+    passcode,
+    { validFromMs: effectiveStartMs, validUntilMs: effectiveEndMs }
+  );
+  console.log(`[TTLock] 進門碼已建立並寄出 booking=${booking.booking_no} passkeyId=${passkeyId}`);
+}
+
+module.exports = { createPasscode, deletePasscode, createTTLockForBooking, deleteTTLockForBooking };

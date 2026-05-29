@@ -92,11 +92,14 @@ router.post('/upload/:type', auth, upload.single('image'), async (req, res, next
     const key = keyMap[type];
     if (!key) return res.status(400).json({ success: false, message: '不支援的圖片類型' });
 
-    // 刪除舊圖片檔案（若存在）
+    // 刪除舊圖片檔案（normalize 後限制在 /uploads 目錄內）
     const [[old]] = await pool.query('SELECT key_value FROM settings WHERE key_name=?', [key]);
     if (old?.key_value) {
-      const oldFile = path.join(__dirname, '..', old.key_value);
-      if (fs.existsSync(oldFile)) fs.unlinkSync(oldFile);
+      const allowedDir = path.resolve(path.join(__dirname, '..', 'uploads'));
+      const resolved   = path.resolve(path.join(__dirname, '..', old.key_value));
+      if (resolved.startsWith(allowedDir + path.sep)) {
+        if (fs.existsSync(resolved)) fs.unlinkSync(resolved);
+      }
     }
 
     // 存入資料庫
@@ -122,8 +125,11 @@ router.delete('/image/:type', auth, async (req, res, next) => {
 
     const [[row]] = await pool.query('SELECT key_value FROM settings WHERE key_name=?', [key]);
     if (row?.key_value) {
-      const filePath = path.join(__dirname, '..', row.key_value);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      const normalized = path.normalize(row.key_value);
+      if (normalized.startsWith('/uploads/')) {
+        const filePath = path.join(__dirname, '..', normalized);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      }
     }
     await pool.query(
       'INSERT INTO settings (key_name, key_value) VALUES (?,?) ON DUPLICATE KEY UPDATE key_value=?',
