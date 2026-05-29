@@ -50,6 +50,8 @@ app.use(helmet({
       fontSrc:         ["'self'", "data:", "https://fonts.gstatic.com"],
       objectSrc:       ["'none'"],
       frameAncestors:  ["'none'"],
+      // 允許 HTML inline 事件屬性（onsubmit, onclick 等），Helmet v7 預設為 'none' 會封鎖登入按鈕
+      scriptSrcAttr:   ["'unsafe-inline'"],
       // 允許藍新金流表單提交（沙盒 + 正式站）
       formAction:      ["'self'", "https://core.newebpay.com", "https://ccore.newebpay.com"],
     }
