@@ -51,7 +51,8 @@ const BookingModel = {
       const payment_expire = dayjs().add(lockMinutes, 'minute').format('YYYY-MM-DD HH:mm:ss');
 
       // INSERT：用暫時唯一訂單號佔位，INSERT 後再以 id 生成正式號
-      const tmpNo = `TMP-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      // 格式：T-xxxxxxxxxxxxxxx（不超過 18 碼，避免超出 booking_no 欄位限制）
+      const tmpNo = `T-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
       const [result] = await conn.query(
         `INSERT INTO bookings
          (booking_no, studio_id, contact_name, contact_phone, contact_email,
