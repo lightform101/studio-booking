@@ -59,7 +59,12 @@ const PUBLIC_KEYS = [
   'contact_address',    // 地址
   'contact_hours',      // 服務時間
   'contact_line',       // LINE ID
-  'contact_ig'          // Instagram
+  'contact_ig',         // Instagram
+  // ATM 轉帳帳戶資訊
+  'atm_bank_code',      // 銀行代號
+  'atm_bank_name',      // 銀行名稱
+  'atm_account',        // 銀行帳號
+  'atm_account_name'    // 戶名
 ];
 
 // ─── GET 公開外觀設定 ─────────────────────────────

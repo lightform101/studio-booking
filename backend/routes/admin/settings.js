@@ -47,6 +47,8 @@ const ALLOWED_SETTING_KEYS = new Set([
   'invoice_auto_issue','invoice_auto_email',
   'overtime_rate_30min',
   'site_email','site_phone','site_address',
+  // ATM 轉帳帳戶資訊
+  'atm_bank_code','atm_bank_name','atm_account','atm_account_name',
 ]);
 
 // 批次更新設定

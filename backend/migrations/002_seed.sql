@@ -48,5 +48,9 @@ INSERT INTO settings (key_name, key_value, description) VALUES
 ('notify_sms_enabled',   '1',                       'SMS 通知開關'),
 ('invoice_auto_issue',   '1',                       '付款後自動開立發票'),
 ('invoice_auto_email',   '1',                       '發票自動寄送 Email'),
-('overtime_rate_30min',  '400',                     '超時每30分鐘費率')
-ON DUPLICATE KEY UPDATE key_value=VALUES(key_value);
+('overtime_rate_30min',  '400',                     '超時每30分鐘費率'),
+('atm_bank_code',        '',                         'ATM 銀行代號'),
+('atm_bank_name',        '',                         'ATM 銀行名稱'),
+('atm_account',          '',                         'ATM 銀行帳號'),
+('atm_account_name',     '',                         'ATM 戶名')
+ON DUPLICATE KEY UPDATE description=VALUES(description);
