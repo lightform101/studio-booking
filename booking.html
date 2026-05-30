@@ -590,31 +590,15 @@
         <div id="confirm-discount-row" style="display:none;margin-top:8px;padding:7px 12px;background:#f0fff4;border:1px solid #b2dfdb;border-radius:6px;font-size:.82rem;color:#27ae60;"></div>
       </div>
 
-      <!-- Payment Methods -->
-      <div class="card-title" style="font-size:.95rem;"><span class="icon">💰</span> 選擇付款方式</div>
+      <!-- Payment Methods（目前僅開放 ATM 轉帳）-->
+      <div class="card-title" style="font-size:.95rem;"><span class="icon">💰</span> 付款方式</div>
       <div class="pay-methods">
-        <div class="pay-method selected" id="pm-newebpay" onclick="selectPayMethod('newebpay',this)">
-          <div class="pay-method-icon">💳</div>
-          <div class="pay-method-name">藍新金流</div>
-        </div>
-        <div class="pay-method" id="pm-linepay" onclick="selectPayMethod('linepay',this)">
-          <div class="pay-method-icon">💚</div>
-          <div class="pay-method-name">LINE Pay</div>
+        <div class="pay-method selected" id="pm-atm" style="cursor:default;">
+          <div class="pay-method-icon">🏦</div>
+          <div class="pay-method-name">ATM 轉帳</div>
         </div>
       </div>
-
-      <!-- NewebPay Sub-options -->
-      <div id="newebpay-opts" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-        <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;">
-          <input type="radio" name="pay-sub" value="credit" checked /> 信用卡
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;">
-          <input type="radio" name="pay-sub" value="atm" /> ATM 轉帳
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;">
-          <input type="radio" name="pay-sub" value="cvs" /> 超商代碼
-        </label>
-      </div>
+      <p style="font-size:.82rem;color:#888;margin-bottom:16px;">預約成功後將提供轉帳帳號，請於期限內完成付款。</p>
 
       <div style="background:rgba(233,69,96,.05);border:1px solid rgba(233,69,96,.2);border-radius:8px;padding:14px;font-size:.82rem;color:#666;margin-bottom:20px;">
         ⏰ 請於 <strong>2 小時內</strong>完成付款，否則預約將自動取消。<br />
@@ -632,7 +616,7 @@
       </div>
       <div class="secure-badges" style="margin-top:16px;">
         <span class="secure-badge">🔒 SSL 加密傳輸</span>
-        <span class="secure-badge">✅ 藍新金流認證</span>
+        <span class="secure-badge">✅ ATM 轉帳付款</span>
         <span class="secure-badge">📧 自動確認通知</span>
       </div>
     </div>
@@ -1194,9 +1178,8 @@
     const discountAmt  = state.promo ? calcDiscount(subtotal) : 0;
     const total_amount = Math.max(0, subtotal - discountAmt);
 
-    // 取得選取的付款子選項
-    const subPay = document.querySelector('input[name="pay-sub"]:checked')?.value || 'credit';
-    const pm     = document.getElementById('pm-linepay')?.classList.contains('selected') ? 'linepay' : subPay;
+    // 付款方式：目前僅開放 ATM 轉帳
+    const pm = 'atm';
 
     // ─── 發票欄位收集與驗證 ───────────────────────────
     const needInvoice = document.getElementById('invoice-toggle')?.classList.contains('active') ? 1 : 0;
