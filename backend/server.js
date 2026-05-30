@@ -1,5 +1,5 @@
 /**
- * Studio Space 預約系統 - 主伺服器
+ * LightForm Studio 預約系統 - 主伺服器
  */
 require('dotenv').config();
 
@@ -110,7 +110,7 @@ app.use('/api/admin/promotions',  adminPromotionsRouter);
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    message: 'Studio Space API 正常運行',
+    message: 'LightForm Studio API 正常運行',
     version: '1.0.0',
     time: new Date().toISOString()
   });
@@ -190,7 +190,7 @@ async function start() {
   } catch(e) { /* 同步失敗不影響啟動 */ }
   scheduler.init();
   const server = app.listen(PORT, () => {
-    console.log(`🚀 Studio Space API 啟動於 http://localhost:${PORT}`);
+    console.log(`🚀 LightForm Studio API 啟動於 http://localhost:${PORT}`);
     console.log(`📅 環境: ${process.env.NODE_ENV || 'development'}`);
   });
 

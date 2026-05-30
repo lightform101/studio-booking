@@ -46,7 +46,7 @@ const SmsService = {
     const date   = dayjs(booking.booking_date).format('MM/DD');
     const start  = String(booking.start_time).slice(0, 5);
     const end    = String(booking.end_time).slice(0, 5);
-    const msg    = `[Studio Space] 預約${booking.booking_no}已確認！` +
+    const msg    = `[LightForm Studio] 預約${booking.booking_no}已確認！` +
                    `${date} ${start}-${end} ${booking.studio_name}。` +
                    `如有問題請聯繫 ${process.env.SITE_PHONE || '02-XXXX-XXXX'}`;
     try {
@@ -62,7 +62,7 @@ const SmsService = {
     const dayjs  = require('dayjs');
     const date   = dayjs(booking.booking_date).format('MM/DD');
     const start  = String(booking.start_time).slice(0, 5);
-    const msg    = `[Studio Space] 提醒：明天${date} ${start} ` +
+    const msg    = `[LightForm Studio] 提醒：明天${date} ${start} ` +
                    `${booking.studio_name}場地使用。` +
                    `請準時到達，訂單:${booking.booking_no}`;
     try {
@@ -78,7 +78,7 @@ const SmsService = {
     const refundText = booking.refund_amount > 0
       ? `退款NT$${Number(booking.refund_amount).toLocaleString()}將於5-7工作天退回。`
       : '';
-    const msg = `[Studio Space] 預約${booking.booking_no}已取消。${refundText}` +
+    const msg = `[LightForm Studio] 預約${booking.booking_no}已取消。${refundText}` +
                 `如有疑問請聯繫 ${process.env.SITE_PHONE || '02-XXXX-XXXX'}`;
     try {
       await this.send(booking.contact_phone, msg);

@@ -117,7 +117,7 @@ router.post('/test-sms', async (req, res, next) => {
   try {
     const { phone } = req.body;
     if (!phone) return res.status(400).json({ success: false, message: '請提供手機號碼' });
-    await SmsSvc.send(phone, '【Studio Space】SMS 設定測試成功！');
+    await SmsSvc.send(phone, '【LightForm Studio】SMS 設定測試成功！');
     res.json({ success: true, message: `測試簡訊已發送至 ${phone}` });
   } catch (err) { next(err); }
 });

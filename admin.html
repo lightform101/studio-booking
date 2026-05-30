@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>後台管理 · Studio Space Admin</title>
+  <title>後台管理 · LightForm Studio Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -321,7 +321,7 @@
 <div class="sidebar">
   <div class="sb-brand">
     <div class="logo">📸</div>
-    <div class="name" id="sb-brand-name">Studio Space <span class="badge">Admin</span></div>
+    <div class="name" id="sb-brand-name">LightForm Studio <span class="badge">Admin</span></div>
   </div>
   <nav class="sb-nav">
     <div class="sb-section-label">主選單</div>
@@ -739,7 +739,7 @@
           <div class="form-group"><div class="form-label">簡訊服務商</div>
             <select class="form-select"><option>每日簡訊 (mitake)</option><option>亞太電信</option><option>TWSMS</option></select>
           </div>
-          <div class="form-group"><div class="form-label">帳號</div><input class="form-input" value="studiospace" /></div>
+          <div class="form-group"><div class="form-label">帳號</div><input class="form-input" value="lightformstudio" /></div>
           <div class="form-group"><div class="form-label">密碼 / API Key</div><input class="form-input" type="password" value="••••••••" /></div>
           <div class="form-group"><div class="form-label">發送者名稱</div><input class="form-input" value="StudioSP" /></div>
         </div>
@@ -790,7 +790,7 @@
       <div class="settings-section">
         <h3>⚙️ 系統基本設定</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-          <div class="form-group"><div class="form-label">系統名稱</div><input class="form-input" id="sys-site-name" placeholder="Studio Space" /></div>
+          <div class="form-group"><div class="form-label">系統名稱</div><input class="form-input" id="sys-site-name" placeholder="LightForm Studio" /></div>
           <div class="form-group"><div class="form-label">聯絡 Email</div><input class="form-input" id="sys-contact-email" placeholder="contact@studiospace.tw" /></div>
           <div class="form-group"><div class="form-label">聯絡電話</div><input class="form-input" id="sys-contact-phone" placeholder="02-XXXX-XXXX" /></div>
           <div class="form-group"><div class="form-label">地址</div><input class="form-input" id="sys-contact-address" placeholder="台北市..." /></div>
@@ -955,7 +955,7 @@
         <!-- 字型預覽 -->
         <div id="fontPreview" style="margin-top:10px;padding:14px 18px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
           <span style="font-size:.8rem;color:#888;display:block;margin-bottom:6px;">字型預覽</span>
-          <span id="fontPreviewText" style="font-size:1.1rem;">攝影棚預約系統 Studio Space — 專業·品質·創意</span>
+          <span id="fontPreviewText" style="font-size:1.1rem;">攝影棚預約系統 LightForm Studio — 專業·品質·創意</span>
         </div>
       </div>
 
@@ -1073,7 +1073,7 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
           <div class="form-group">
             <div class="form-label">網站名稱</div>
-            <input class="form-input" id="ap_site_name" value="Studio Space" placeholder="Studio Space" oninput="updatePreview()" />
+            <input class="form-input" id="ap_site_name" value="LightForm Studio" placeholder="LightForm Studio" oninput="updatePreview()" />
           </div>
           <div class="form-group">
             <div class="form-label">Hero 副標語 <span style="font-size:.75rem;color:#888;">（Logo 下方）</span></div>
@@ -1102,7 +1102,7 @@
           <div id="prev_nav" style="background:#1a1a2e;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;">
             <div style="display:flex;align-items:center;gap:10px;">
               <div id="prev_logo" style="width:32px;height:32px;background:#e94560;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;">📷</div>
-              <span id="prev_name" style="color:#fff;font-weight:700;font-size:.95rem;">Studio Space</span>
+              <span id="prev_name" style="color:#fff;font-weight:700;font-size:.95rem;">LightForm Studio</span>
             </div>
             <div style="display:flex;gap:20px;">
               <span style="color:rgba(255,255,255,.7);font-size:.85rem;">場地介紹</span>
@@ -1119,12 +1119,12 @@
           <!-- 卡片預覽 -->
           <div id="prev_cards" style="background:#f8f8f8;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
             <div id="prev_card1" style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-              <div style="font-weight:700;margin-bottom:4px;">Studio A 攝影棚甲</div>
+              <div style="font-weight:700;margin-bottom:4px;">LightForm Studio 101-4F</div>
               <div style="font-size:.82rem;color:#888;margin-bottom:8px;">60 坪・最多 15 人</div>
               <div id="prev_price" style="color:#c9a84c;font-weight:700;font-size:1.1rem;">$800 <span style="font-size:.75rem;font-weight:400;color:#888;">/ 小時</span></div>
             </div>
             <div id="prev_card2" style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-              <div style="font-weight:700;margin-bottom:4px;">Studio B 攝影棚乙</div>
+              <div style="font-weight:700;margin-bottom:4px;">攝影棚乙（已停用）</div>
               <div style="font-size:.82rem;color:#888;margin-bottom:8px;">30 坪・最多 8 人</div>
               <div style="color:#c9a84c;font-weight:700;font-size:1.1rem;">$600 <span style="font-size:.75rem;font-weight:400;color:#888;">/ 小時</span></div>
             </div>
@@ -2960,7 +2960,7 @@
     primary:'#1a1a2e', accent:'#e94560', gold:'#c9a84c',
     bg:'#f8f8f8', card_bg:'#ffffff', text:'#1a1a2e',
     font:'Noto Sans TC', font_size:'medium', radius:'12',
-    site_name:'Studio Space', tagline:'專業攝影棚空間・靈感的誕生地',
+    site_name:'LightForm Studio', tagline:'專業攝影棚空間・靈感的誕生地',
     hero_title:'打造完美視覺的地方',
     hero_subtitle:'台北市最專業的攝影棚，提供高規格設備與靈活預約服務'
   };
@@ -3253,7 +3253,7 @@
     document.getElementById('ap_font').value         = 'Noto Sans TC';
     document.getElementById('ap_font_size').value    = 'medium';
     document.getElementById('ap_radius').value       = '12';
-    document.getElementById('ap_site_name').value    = 'Studio Space';
+    document.getElementById('ap_site_name').value    = 'LightForm Studio';
     document.getElementById('ap_tagline').value      = '專業攝影棚空間・靈感的誕生地';
     document.getElementById('ap_hero_title').value   = '打造完美視覺的地方';
     document.getElementById('ap_hero_subtitle').value= '台北市最專業的攝影棚，提供高規格設備與靈活預約服務';

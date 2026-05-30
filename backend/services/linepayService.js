@@ -44,7 +44,7 @@ const LinePayService = {
       packages: [{
         id:       `pkg-${booking.booking_no}`,
         amount:   Math.round(booking.total_amount),
-        name:     `Studio Space - ${booking.studio_name}`,
+        name:     `LightForm Studio - ${booking.studio_name}`,
         products: [{
           name:     `${booking.studio_name} ${booking.booking_date}`,
           quantity: 1,

@@ -11,7 +11,7 @@ ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 -- 場地資料
 INSERT INTO studios (id, name, name_en, description, hourly_rate, min_hours, max_hours, capacity, size_sqm, sort_order) VALUES
-(1, '攝影棚甲', 'Studio A',
+(1, 'LightForm Studio 101-4F', 'LightForm Studio 101-4F',
  '寬敞的專業商業攝影空間，適合服裝拍攝、品牌廣告、形象照及大型商品攝影。配備業界頂規燈光設備，多款專業背景紙可供更換。',
  800.00, 2, 8, 15, 60, 1),
 (2, '攝影棚乙', 'Studio B',

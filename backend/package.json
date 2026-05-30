@@ -1,7 +1,7 @@
 {
   "name": "studio-booking-backend",
   "version": "1.0.0",
-  "description": "Studio Space 攝影棚預約系統後端",
+  "description": "LightForm Studio 攝影棚預約系統後端",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
