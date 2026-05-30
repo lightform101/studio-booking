@@ -509,7 +509,7 @@
     });
   })();
 
-  (function() {
+  (async function() {
     const raw = sessionStorage.getItem('bookingSnapshot');
     if (!raw) return; // 直接進入此頁時不覆蓋
     let bk;
