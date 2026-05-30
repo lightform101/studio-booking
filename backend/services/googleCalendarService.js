@@ -26,13 +26,18 @@ function getAuth() {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
   if (!raw) return null;
   try {
-    const credentials = JSON.parse(raw);
+    // 支援純 JSON 字串或 Base64 編碼（Zeabur 特殊字元限制時使用）
+    let jsonStr = raw.trim();
+    if (!jsonStr.startsWith('{')) {
+      jsonStr = Buffer.from(jsonStr, 'base64').toString('utf8');
+    }
+    const credentials = JSON.parse(jsonStr);
     return new google.auth.GoogleAuth({
       credentials,
       scopes: ['https://www.googleapis.com/auth/calendar'],
     });
   } catch {
-    console.error('[GoogleCal] GOOGLE_SERVICE_ACCOUNT_KEY 格式錯誤，請確認是完整 JSON 字串');
+    console.error('[GoogleCal] GOOGLE_SERVICE_ACCOUNT_KEY 格式錯誤，請確認是完整 JSON 或 Base64 字串');
     return null;
   }
 }
