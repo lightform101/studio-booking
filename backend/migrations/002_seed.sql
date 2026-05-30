@@ -38,8 +38,8 @@ INSERT INTO business_hours (studio_id, weekday, open_time, close_time, is_open) 
 
 -- 系統設定
 INSERT INTO settings (key_name, key_value, description) VALUES
-('site_name',            'Studio Space',           '網站名稱'),
-('site_email',           'contact@studiospace.tw',  '聯絡信箱'),
+('site_name',            'LightForm Studio',           '網站名稱'),
+('site_email',           'contact@lightformstudio.com.tw',  '聯絡信箱'),
 ('site_phone',           '02-XXXX-XXXX',            '聯絡電話'),
 ('site_address',         '台北市...',               '地址'),
 ('booking_lock_minutes', '120',                     '付款等待時間（分鐘）'),

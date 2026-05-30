@@ -203,7 +203,7 @@ function buildBookingVars(b) {
     payment_method:mapMethodLabel(b.payment_method),
     payment_expire:b.payment_expire ? dayjs(b.payment_expire).format('YYYY/MM/DD HH:mm') : '',
     invoice_no:    b.invoice_no || '',
-    site_email:    process.env.EMAIL_FROM || 'contact@studiospace.tw',
+    site_email:    process.env.EMAIL_FROM || 'contact@lightformstudio.com.tw',
     base_url:      process.env.BASE_URL || 'http://localhost:3000'
   };
 }

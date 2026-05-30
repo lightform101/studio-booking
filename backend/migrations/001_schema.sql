@@ -1,5 +1,5 @@
 -- =============================================
--- Studio Space 預約系統 資料庫 Schema
+-- LightForm Studio 預約系統 資料庫 Schema
 -- 執行方式: mysql -u root -p studio_booking < migrations/001_schema.sql
 -- =============================================
 
