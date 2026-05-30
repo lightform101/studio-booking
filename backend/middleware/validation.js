@@ -42,9 +42,9 @@ const bookingRules = [
   body('contact_name').notEmpty().withMessage('請輸入姓名').isLength({ max: 100 }),
   body('contact_phone').matches(/^09\d{8}$/).withMessage('請輸入有效手機號碼'),
   body('contact_email').isEmail().withMessage('請輸入有效 Email'),
-  body('invoice_tax_id').optional().isLength({ min: 8, max: 8 }).isNumeric()
-    .withMessage('統一編號須為 8 碼數字'),
-  body('invoice_carrier').optional()
+  body('invoice_tax_id').optional({ nullable: true, checkFalsy: true })
+    .isLength({ min: 8, max: 8 }).isNumeric().withMessage('統一編號須為 8 碼數字'),
+  body('invoice_carrier').optional({ nullable: true, checkFalsy: true })
     .matches(/^\/[A-Z0-9+\-.]{7}$/).withMessage('手機條碼格式不正確（/XXXXXXX）')
 ];
 
