@@ -48,7 +48,10 @@ async function getTransporter() {
   // 每次都建立新的（確保 DB 設定變更立即生效）
   return { transporter: nodemailer.createTransport({
     host: cfg.host, port: cfg.port, secure: cfg.secure,
-    auth: { user: cfg.user, pass: cfg.pass }
+    auth: { user: cfg.user, pass: cfg.pass },
+    connectionTimeout: 10000,  // 10 秒連線 timeout
+    greetingTimeout:   8000,   // 8 秒 greeting timeout
+    socketTimeout:     15000,  // 15 秒 socket timeout
   }), cfg };
 }
 
@@ -89,9 +92,13 @@ const EmailService = {
       from: `"${cfg.fromName}" <${cfg.fromEmail}>`,
       to, subject, html, attachments
     };
-    const info = await t.sendMail(mailOptions);
-    console.log(`[Email] 已發送: ${subject} → ${to} (${info.messageId})`);
-    return info;
+    try {
+      const info = await t.sendMail(mailOptions);
+      console.log(`[Email] 已發送: ${subject} → ${to} (${info.messageId})`);
+      return info;
+    } finally {
+      t.close(); // 發送完畢後關閉連線，避免佔用資源
+    }
   },
 
   // ─── 預約確認信 ────────────────────────────────
