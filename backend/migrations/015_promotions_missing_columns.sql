@@ -5,8 +5,5 @@
 ALTER TABLE promotions
   ADD COLUMN description TEXT NULL COMMENT '優惠說明（前台顯示）' AFTER name;
 
-ALTER TABLE promotions
-  ADD COLUMN valid_from DATE NULL COMMENT '優惠開始日期，NULL=即日起' AFTER end_hour;
-
-ALTER TABLE promotions
-  ADD COLUMN valid_to DATE NULL COMMENT '優惠截止日期，NULL=無限期' AFTER valid_from;
+-- valid_from / valid_to 已移至 018_promotions_valid_dates.sql 補齊
+-- (因 015 執行時 end_hour 欄位尚不存在，AFTER end_hour 會失敗)
