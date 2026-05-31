@@ -130,10 +130,14 @@ app.get('*', (req, res) => {
 app.use((err, req, res, next) => {
   console.error('[ERROR]', err);
   const status = err.status || 500;
+  // 在 production 中仍提供 DB 錯誤代碼，方便管理員排查（不洩漏敏感資訊）
+  const extra = (err.code && err.code.startsWith('ER_'))
+    ? ` (${err.code})`
+    : '';
   res.status(status).json({
     success: false,
     message: process.env.NODE_ENV === 'production'
-      ? '伺服器錯誤，請稍後再試'
+      ? `伺服器錯誤，請稍後再試${extra}`
       : err.message
   });
 });

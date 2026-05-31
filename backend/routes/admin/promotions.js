@@ -32,11 +32,28 @@ router.post('/', async (req, res, next) => {
       min_hours, studio_id, promo_code,
       applicable_days, start_hour, end_hour,
       valid_from, valid_to, is_active, sort_order
-    } = req.body;
+    } = req.body || {};
 
     if (!name)           return res.status(400).json({ success: false, message: '請輸入優惠名稱' });
     if (!discount_type)  return res.status(400).json({ success: false, message: '請選擇折扣類型' });
     if (discount_value == null) return res.status(400).json({ success: false, message: '請輸入折扣值' });
+
+    const values = [
+      name,
+      description || null,
+      discount_type,
+      parseFloat(discount_value),
+      parseInt(min_hours) || 1,
+      studio_id ? parseInt(studio_id) : null,
+      promo_code ? promo_code.trim().toUpperCase() : null,
+      applicable_days || null,
+      (start_hour !== null && start_hour !== undefined && start_hour !== '') ? parseInt(start_hour) : null,
+      (end_hour   !== null && end_hour   !== undefined && end_hour   !== '') ? parseInt(end_hour)   : null,
+      valid_from || null,
+      valid_to   || null,
+      is_active != null ? (is_active ? 1 : 0) : 1,
+      parseInt(sort_order) || 0
+    ];
 
     const [result] = await pool.query(
       `INSERT INTO promotions
@@ -44,25 +61,18 @@ router.post('/', async (req, res, next) => {
           studio_id, promo_code, applicable_days, start_hour, end_hour,
           valid_from, valid_to, is_active, sort_order)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [
-        name,
-        description || null,
-        discount_type,
-        parseFloat(discount_value),
-        parseInt(min_hours) || 1,
-        studio_id ? parseInt(studio_id) : null,
-        promo_code ? promo_code.trim().toUpperCase() : null,
-        applicable_days || null,
-        start_hour != null ? parseInt(start_hour) : null,
-        end_hour   != null ? parseInt(end_hour)   : null,
-        valid_from || null,
-        valid_to   || null,
-        is_active != null ? (is_active ? 1 : 0) : 1,
-        parseInt(sort_order) || 0
-      ]
+      values
     );
     res.json({ success: true, data: { id: result.insertId }, message: '優惠方案已新增' });
-  } catch (err) { next(err); }
+  } catch (err) {
+    // 後台管理介面：提供詳細錯誤訊息方便排查
+    console.error('[Promotions POST Error]', err);
+    res.status(500).json({
+      success: false,
+      message: `儲存失敗：${err.sqlMessage || err.message}`,
+      code: err.code
+    });
+  }
 });
 
 // 更新優惠
@@ -106,7 +116,14 @@ router.put('/:id', async (req, res, next) => {
     if (result.affectedRows === 0)
       return res.status(404).json({ success: false, message: '找不到此優惠方案' });
     res.json({ success: true, message: '優惠方案已更新' });
-  } catch (err) { next(err); }
+  } catch (err) {
+    console.error('[Promotions PUT Error]', err);
+    res.status(500).json({
+      success: false,
+      message: `儲存失敗：${err.sqlMessage || err.message}`,
+      code: err.code
+    });
+  }
 });
 
 // 刪除優惠
