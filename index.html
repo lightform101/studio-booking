@@ -997,10 +997,19 @@
 
       // ── 頁面內容：聯絡資訊 ───────────────────────
       const footerContact = document.getElementById('footer-contact');
+      const email = ap.contact_email || 'contact@lightformstudio.com.tw';
+      const phone = ap.contact_phone || '';
       if (footerContact) {
-        const email = ap.contact_email || 'contact@lightformstudio.com.tw';
-        const phone = ap.contact_phone || '02-XXXX-XXXX';
-        footerContact.textContent = `${email} ｜ ${phone}`;
+        footerContact.textContent = phone ? `${email} ｜ ${phone}` : email;
+      }
+
+      // 替換靜態 FAQ 中寫死的聯絡電話與 Email
+      if (phone) {
+        document.querySelectorAll('.faq-a').forEach(el => {
+          el.innerHTML = el.innerHTML
+            .replace(/02-XXXX-XXXX/g, phone)
+            .replace(/contact@lightformstudio\.com\.tw/g, email);
+        });
       }
 
     } catch(e) {
