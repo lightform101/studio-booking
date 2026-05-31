@@ -402,16 +402,21 @@ router.post('/trigger-ttlock/:bookingId', requireSuperAdmin, async (req, res) =>
       return res.json({ success: false, report: report.join('\n'), message: `只有已確認的預約才能建立門鎖密碼（目前狀態：${booking.status}）` });
     }
 
-    // 冪等保護：已有密碼時不重複建立
+    // 已有密碼：直接重寄 Email（不重新建立）
     if (booking.ttlock_passcode_id) {
-      return res.json({ success: false, report: report.join('\n'), message: '此預約已有門鎖密碼，請先至 TTLock 後台刪除再重新觸發' });
+      report.push(`已有密碼：${booking.ttlock_passcode}（ID: ${booking.ttlock_passcode_id}）`);
+      report.push('--- 重新寄送進門密碼 Email ---');
+      const EmailService = require('../../services/emailService');
+      await EmailService.sendAccessCode(booking, booking.ttlock_passcode);
+      report.push(`✅ 進門密碼 Email 已重新寄出 → ${booking.contact_email}`);
+      return res.json({ success: true, report: report.join('\n'), message: `進門密碼 Email 已重新寄出（密碼：${booking.ttlock_passcode}）` });
     }
 
     if (!booking.ttlock_lock_id) {
       return res.json({ success: false, report: report.join('\n'), message: '場地未設定 Lock ID' });
     }
 
-    report.push('--- 呼叫 TTLock API ---');
+    report.push('--- 呼叫 TTLock API 建立新密碼 ---');
     await TTLockSvc.createTTLockForBooking(booking);
     report.push(`✅ 密碼已建立並寄出 → ${booking.contact_email}`);
 
