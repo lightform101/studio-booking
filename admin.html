@@ -2242,8 +2242,8 @@
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       const d = await r.json();
-      const msg = d.report ? `\n\n${d.report}` : d.message;
-      alert(d.success ? `✅ 成功！\n${msg}` : `❌ 失敗：${msg}`);
+      const detail = [d.message, d.report ? `\n詳情：\n${d.report}` : ''].filter(Boolean).join('\n');
+      alert(d.success ? `✅ 成功！\n${detail}` : `❌ 失敗：${detail}`);
     } catch(e) {
       alert('❌ 錯誤：' + e.message);
     } finally {
