@@ -6,23 +6,56 @@ const fs         = require('fs');
 const path       = require('path');
 const { pool }   = require('../config/database');
 
-let transporter = null;
+let transporter  = null;
+let _smtpCache   = null; // DB 設定快取
 
-function getTransporter() {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host:   process.env.SMTP_HOST,
-      port:   parseInt(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === 'true',
-      auth:   { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-    });
+// 從 DB 讀取 SMTP 設定，若 DB 無值則 fallback 到環境變數
+async function loadSmtpConfig() {
+  try {
+    const [rows] = await pool.query(
+      "SELECT key_name, key_value FROM settings WHERE key_name IN ('smtp_host','smtp_port','smtp_user','smtp_pass','smtp_secure','smtp_from_email','smtp_from_name')"
+    );
+    const cfg = {};
+    for (const r of rows) cfg[r.key_name] = r.key_value;
+    return {
+      host:     cfg.smtp_host      || process.env.SMTP_HOST      || '',
+      port:     parseInt(cfg.smtp_port || process.env.SMTP_PORT) || 587,
+      secure:   (cfg.smtp_secure   || process.env.SMTP_SECURE)   === 'true',
+      user:     cfg.smtp_user      || process.env.SMTP_USER      || '',
+      pass:     cfg.smtp_pass      || process.env.SMTP_PASS      || '',
+      fromEmail:cfg.smtp_from_email|| process.env.EMAIL_FROM     || cfg.smtp_user || '',
+      fromName: cfg.smtp_from_name || process.env.EMAIL_FROM_NAME|| 'LightForm Studio',
+    };
+  } catch(e) {
+    console.warn('[Email] 無法從 DB 讀取 SMTP 設定，使用環境變數:', e.message);
+    return {
+      host:     process.env.SMTP_HOST  || '',
+      port:     parseInt(process.env.SMTP_PORT) || 587,
+      secure:   process.env.SMTP_SECURE === 'true',
+      user:     process.env.SMTP_USER  || '',
+      pass:     process.env.SMTP_PASS  || '',
+      fromEmail:process.env.EMAIL_FROM || '',
+      fromName: process.env.EMAIL_FROM_NAME || 'LightForm Studio',
+    };
   }
-  return transporter;
 }
 
-// 重置 transporter（設定變更後呼叫）
+async function getTransporter() {
+  const cfg = await loadSmtpConfig();
+  if (!cfg.host || !cfg.user) {
+    throw new Error('SMTP 尚未設定，請至後台系統設定填入 SMTP 資訊');
+  }
+  // 每次都建立新的（確保 DB 設定變更立即生效）
+  return { transporter: nodemailer.createTransport({
+    host: cfg.host, port: cfg.port, secure: cfg.secure,
+    auth: { user: cfg.user, pass: cfg.pass }
+  }), cfg };
+}
+
+// 重置 transporter（設定變更後呼叫，保留向下相容）
 function resetTransporter() {
   transporter = null;
+  _smtpCache  = null;
   console.log('[Email] Transporter 已重置，下次發信時套用新設定');
 }
 
@@ -51,9 +84,9 @@ const EmailService = {
 
   // 傳送 Email（低階）
   async send({ to, subject, html, attachments = [] }) {
-    const t = getTransporter();
+    const { transporter: t, cfg } = await getTransporter();
     const mailOptions = {
-      from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM}>`,
+      from: `"${cfg.fromName}" <${cfg.fromEmail}>`,
       to, subject, html, attachments
     };
     const info = await t.sendMail(mailOptions);
