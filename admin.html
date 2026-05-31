@@ -488,7 +488,11 @@
       <div class="card">
         <div class="card-header">
           <h3>📅 預約管理</h3>
-          <button class="btn-add" onclick="openCreateBookingModal()">+ 手動新增預約</button>
+          <div style="display:flex;gap:8px;">
+            <button style="padding:7px 14px;border-radius:7px;border:1px solid #aaa;background:#f8f9fa;color:#555;cursor:pointer;font-size:.85rem;"
+              onclick="deleteAllCancelledBookings()">🗑️ 清除所有已取消</button>
+            <button class="btn-add" onclick="openCreateBookingModal()">+ 手動新增預約</button>
+          </div>
         </div>
         <div class="card-body">
           <!-- 篩選列 -->
@@ -1473,6 +1477,8 @@
     <div class="modal-footer">
       <button class="btn btn-danger-sm" id="bk-cancel-btn" style="padding:8px 16px;display:none;"
         onclick="cancelBookingFromModal()">🚫 取消此預約</button>
+      <button id="bk-delete-btn" style="padding:8px 16px;border-radius:7px;border:none;background:#6c757d;color:#fff;cursor:pointer;display:none;"
+        onclick="deleteBookingFromModal()">🗑️ 刪除此預約</button>
       <button id="bk-ttlock-btn" style="padding:8px 16px;border-radius:7px;border:1px solid #6c757d;background:#f8f9fa;cursor:pointer;display:none;"
         onclick="triggerTTLock()">🔐 發送進門密碼</button>
       <button onclick="closeModal()" style="padding:8px 18px;border-radius:7px;border:1px solid #d0d4db;background:#fff;cursor:pointer;">關閉</button>
@@ -2164,6 +2170,12 @@
       const cancelBtn = document.getElementById('bk-cancel-btn');
       cancelBtn.style.display = ['pending_payment','confirmed'].includes(b.status) ? '' : 'none';
 
+      // 顯示「刪除」按鈕（只對已取消的訂單）
+      const deleteBtn = document.getElementById('bk-delete-btn');
+      deleteBtn.style.display = b.status === 'cancelled' ? '' : 'none';
+      deleteBtn.dataset.bookingId = b.id;
+      deleteBtn.dataset.bookingNo = b.booking_no;
+
       // 顯示「發送進門密碼」按鈕（已確認的訂單）
       const ttlockBtn = document.getElementById('bk-ttlock-btn');
       ttlockBtn.style.display = b.status === 'confirmed' ? '' : 'none';
@@ -2345,6 +2357,42 @@
     const d = await r.json();
     if (d.success) loadBookings(_bkPage);
     else alert('取消失敗：' + d.message);
+  }
+
+  // ─── 刪除已取消的預約 ──────────────────────────
+  async function deleteBookingFromModal() {
+    const btn = document.getElementById('bk-delete-btn');
+    const id  = btn.dataset.bookingId;
+    const no  = btn.dataset.bookingNo;
+    if (!confirm(`確定要永久刪除預約 ${no}？\n此操作無法復原。`)) return;
+    const r = await fetch(`${API}/admin/bookings/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    const d = await r.json();
+    if (d.success) {
+      alert('✅ ' + d.message);
+      closeModal();
+      loadBookings(_bkPage);
+    } else {
+      alert('❌ 刪除失敗：' + d.message);
+    }
+  }
+
+  async function deleteAllCancelledBookings() {
+    if (!confirm('確定要刪除所有已取消的預約記錄？\n此操作無法復原。')) return;
+    const r = await fetch(`${API}/admin/bookings`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ all_cancelled: true })
+    });
+    const d = await r.json();
+    if (d.success) {
+      alert(`✅ ${d.message}`);
+      loadBookings(1);
+    } else {
+      alert('❌ ' + d.message);
+    }
   }
 
   // Admin Calendar

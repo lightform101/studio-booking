@@ -340,4 +340,44 @@ router.post('/:id/issue-invoice', async (req, res, next) => {
   }
 });
 
+// ─── 刪除已取消的預約 ──────────────────────────────────
+// DELETE /api/admin/bookings/:id
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const booking = await BookingModel.findById(req.params.id);
+    if (!booking) return res.status(404).json({ success: false, message: '找不到此預約' });
+    if (booking.status !== 'cancelled') {
+      return res.status(400).json({ success: false, message: '只能刪除已取消的預約' });
+    }
+    await pool.query('DELETE FROM notifications WHERE booking_id = ?', [booking.id]);
+    await pool.query('DELETE FROM bookings WHERE id = ?', [booking.id]);
+    await auditLog(req, 'delete', 'booking', booking.booking_no, `刪除已取消預約 ${booking.contact_name}`);
+    res.json({ success: true, message: `預約 ${booking.booking_no} 已刪除` });
+  } catch (err) { next(err); }
+});
+
+// ─── 批次刪除已取消的預約 ──────────────────────────────
+// DELETE /api/admin/bookings（body: { ids: [1,2,3] } 或 { all_cancelled: true }）
+router.delete('/', async (req, res, next) => {
+  try {
+    let ids = [];
+    if (req.body.all_cancelled) {
+      const [rows] = await pool.query(`SELECT id FROM bookings WHERE status='cancelled'`);
+      ids = rows.map(r => r.id);
+    } else if (Array.isArray(req.body.ids) && req.body.ids.length) {
+      // 確保全是已取消狀態
+      const [rows] = await pool.query(
+        `SELECT id FROM bookings WHERE id IN (?) AND status='cancelled'`,
+        [req.body.ids]
+      );
+      ids = rows.map(r => r.id);
+    }
+    if (!ids.length) return res.json({ success: true, message: '沒有可刪除的已取消預約', deleted: 0 });
+    await pool.query('DELETE FROM notifications WHERE booking_id IN (?)', [ids]);
+    await pool.query('DELETE FROM bookings WHERE id IN (?)', [ids]);
+    await auditLog(req, 'delete', 'booking', 'BATCH', `批次刪除 ${ids.length} 筆已取消預約`);
+    res.json({ success: true, message: `已刪除 ${ids.length} 筆取消預約`, deleted: ids.length });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;
