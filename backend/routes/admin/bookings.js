@@ -162,8 +162,8 @@ router.put('/:id', async (req, res, next) => {
         return res.status(409).json({ success: false, message: '所選時段已有其他預約，請調整時間' });
     }
 
-    // 若狀態改為 confirmed 且有付款方式，一併更新 payment_at
-    if (body.status === 'confirmed' && body.payment_method && booking.status !== 'confirmed') {
+    // 若狀態改為 confirmed，一併更新 payment_at（不強制要求 payment_method）
+    if (body.status === 'confirmed' && booking.status !== 'confirmed') {
       await pool.query(
         `UPDATE bookings SET payment_at=NOW() WHERE id=? AND payment_at IS NULL`,
         [req.params.id]
@@ -178,11 +178,17 @@ router.put('/:id', async (req, res, next) => {
       .some(f => body[f] !== undefined && String(body[f]) !== String(booking[f]));
 
     if (nowConfirmed && !wasConfirmed) {
-      // 狀態首次改為 confirmed → 建立密碼
+      // 狀態首次改為 confirmed → 建立門鎖密碼（TTLock 內部會寄發進門碼 Email）
       try {
         await TTLockSvc.createTTLockForBooking(updated);
       } catch (e) {
         console.error('[Booking] TTLock 建立密碼失敗:', e.message);
+      }
+      // 發送預約確認通知（Email + SMS）
+      try {
+        await NotifySvc.send('booking_confirmed', updated);
+      } catch (e) {
+        console.error('[Booking] 確認通知發送失敗:', e.message);
       }
     } else if (nowConfirmed && wasConfirmed && slotChanged) {
       // 已 confirmed 但時段/場地變更 → 刪除舊密碼再建立新密碼

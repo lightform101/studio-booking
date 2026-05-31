@@ -1438,13 +1438,7 @@
         </div>
         <div class="form-group">
           <div class="form-label">付款方式</div>
-          <select class="form-input" id="bk-e-payment">
-            <option value="">（未付款）</option>
-            <option value="credit">信用卡</option>
-            <option value="atm">ATM 轉帳</option>
-            <option value="cvs">超商代碼</option>
-            <option value="linepay">LINE Pay</option>
-          </select>
+          <input class="form-input" id="bk-e-payment" readonly style="background:#f5f5f5;cursor:default;" tabindex="-1" />
         </div>
         <div class="form-group">
           <div class="form-label">總金額 (NT$)</div>
@@ -1826,7 +1820,7 @@
             <td>${escapeHTML(b.booking_date||'')} ${escapeHTML((b.start_time||'').slice(0,5))}–${escapeHTML((b.end_time||'').slice(0,5))}</td>
             <td>NT$ ${Number(b.total_amount||0).toLocaleString()}</td>
             <td>${statusMap[b.status] || escapeHTML(b.status)}</td>
-            <td><button class="btn btn-sm btn-primary-sm" onclick="openModal(${b.id})">詳情</button></td>
+            <td><button class="btn btn-sm btn-primary-sm" onclick="openEditBookingModal(${b.id})">詳情</button></td>
           </tr>
         `).join('');
       } else if (tbody) {
@@ -2160,7 +2154,8 @@
       document.getElementById('bk-e-purpose').value    = b.purpose       || '';
       document.getElementById('bk-e-note').value       = b.note          || '';
       document.getElementById('bk-e-admin-note').value = b.admin_note    || '';
-      document.getElementById('bk-e-payment').value    = b.payment_method|| '';
+      const pmLabel = { credit:'信用卡', atm:'ATM 轉帳', cvs:'超商代碼', linepay:'LINE Pay' };
+      document.getElementById('bk-e-payment').value    = pmLabel[b.payment_method] || b.payment_method || '（未填寫）';
       document.getElementById('bk-e-amount').value     = b.total_amount  || 0;
       document.getElementById('bk-e-status').value     = b.status;
 
@@ -2272,7 +2267,6 @@
     const purpose      = document.getElementById('bk-e-purpose').value.trim();
     const note         = document.getElementById('bk-e-note').value.trim();
     const admin_note   = document.getElementById('bk-e-admin-note').value.trim();
-    const payment_method = document.getElementById('bk-e-payment').value;
     const total_amount = +document.getElementById('bk-e-amount').value || null;
     const status       = document.getElementById('bk-e-status').value;
 
@@ -2288,7 +2282,7 @@
 
     const body = { studio_id: +studio_id, contact_name, contact_phone, contact_email,
                    booking_date, start_time, end_time, duration_hours, purpose, note,
-                   admin_note, payment_method, total_amount, status };
+                   admin_note, total_amount, status };
 
     const btn = document.getElementById('bk-save-btn');
     btn.disabled = true; btn.textContent = '儲存中...';
