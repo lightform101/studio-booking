@@ -1772,21 +1772,22 @@
     try {
       const h = { 'Authorization': `Bearer ${adminToken}` };
 
-      // 1. Get recent bookings (last 5)
-      const rb = await fetch(`${API}/admin/bookings?limit=5&sortBy=created_at&sortDir=desc`, { headers: h });
+      // 4 個 API 並行發出，縮短等待時間
+      const fetchWithTimeout = (url, opts, ms = 10000) => {
+        const ctrl = new AbortController();
+        const id = setTimeout(() => ctrl.abort(), ms);
+        return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
+      };
+      const [rb, rm, ro, rp] = await Promise.all([
+        fetchWithTimeout(`${API}/admin/bookings?limit=5`, { headers: h }),
+        fetchWithTimeout(`${API}/admin/revenue/monthly?months=1`, { headers: h }),
+        fetchWithTimeout(`${API}/admin/revenue/occupancy`, { headers: h }),
+        fetchWithTimeout(`${API}/admin/bookings?status=pending_payment&limit=1`, { headers: h }),
+      ]);
       const { data: recentBookings } = await rb.json();
-
-      // 2. Get this month's revenue stats
-      const rm = await fetch(`${API}/admin/revenue/monthly?months=1`, { headers: h });
-      const { data: monthlyData } = await rm.json();
-
-      // 3. Get occupancy
-      const ro = await fetch(`${API}/admin/revenue/occupancy`, { headers: h });
-      const { data: occupancy } = await ro.json();
-
-      // 4. Count pending bookings
-      const rp = await fetch(`${API}/admin/bookings?status=pending_payment&limit=1`, { headers: h });
-      const pendingData = await rp.json();
+      const { data: monthlyData }    = await rm.json();
+      const { data: occupancy }      = await ro.json();
+      const pendingData              = await rp.json();
 
       // Fill stats
       const thisMonth = monthlyData?.[0] || {};

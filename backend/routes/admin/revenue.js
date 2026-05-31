@@ -35,29 +35,34 @@ router.get('/payment-methods', async (req, res, next) => {
 // 本月使用率
 router.get('/occupancy', async (req, res, next) => {
   try {
-    const [rows] = await pool.query(
-      `SELECT
-         studio_id,
-         COUNT(*) AS booked_count,
-         SUM(duration_hours) AS booked_hours
-       FROM bookings
-       WHERE status IN ('confirmed','completed')
-         AND MONTH(booking_date)=MONTH(CURDATE())
-         AND YEAR(booking_date)=YEAR(CURDATE())
-       GROUP BY studio_id`
-    );
-    // 計算使用率（本月工作天 × 13 小時/天）
-    const [[{ days }]] = await pool.query(
-      `SELECT COUNT(*) AS days FROM (
-         SELECT DISTINCT booking_date FROM bookings
-         WHERE MONTH(booking_date)=MONTH(CURDATE())
-           AND YEAR(booking_date)=YEAR(CURDATE())
-       ) t`
-    );
+    // 同時執行兩個查詢
+    const [[bookingRows], [[{ days }]]] = await Promise.all([
+      pool.query(
+        `SELECT
+           b.studio_id,
+           s.name AS studio_name,
+           COUNT(*) AS booked_count,
+           SUM(b.duration_hours) AS booked_hours
+         FROM bookings b
+         JOIN studios s ON b.studio_id = s.id
+         WHERE b.status IN ('confirmed','completed')
+           AND MONTH(b.booking_date)=MONTH(CURDATE())
+           AND YEAR(b.booking_date)=YEAR(CURDATE())
+         GROUP BY b.studio_id, s.name`
+      ),
+      pool.query(
+        `SELECT COUNT(*) AS days FROM (
+           SELECT DISTINCT booking_date FROM bookings
+           WHERE MONTH(booking_date)=MONTH(CURDATE())
+             AND YEAR(booking_date)=YEAR(CURDATE())
+         ) t`
+      ),
+    ]);
     const totalHoursPerStudio = Math.max(days, 1) * 13;
-    const result = rows.map(r => ({
+    const result = bookingRows.map(r => ({
       ...r,
-      occupancy_rate: Math.min(100, Math.round(r.booked_hours / totalHoursPerStudio * 100))
+      available_hours: totalHoursPerStudio,
+      occupancy_rate:  Math.min(100, Math.round(r.booked_hours / totalHoursPerStudio * 100))
     }));
     res.json({ success: true, data: result });
   } catch (err) { next(err); }
