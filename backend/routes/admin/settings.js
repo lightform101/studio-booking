@@ -407,7 +407,11 @@ router.post('/trigger-ttlock/:bookingId', requireSuperAdmin, async (req, res) =>
       report.push(`已有密碼：${booking.ttlock_passcode}（ID: ${booking.ttlock_passcode_id}）`);
       report.push('--- 重新寄送進門密碼 Email ---');
       const EmailService = require('../../services/emailService');
-      await EmailService.sendAccessCode(booking, booking.ttlock_passcode);
+      // 20 秒 timeout 保護，避免 SMTP 卡住佔用請求
+      await Promise.race([
+        EmailService.sendAccessCode(booking, booking.ttlock_passcode),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('Email 發送逾時（20s），請確認 SMTP 設定')), 20000))
+      ]);
       report.push(`✅ 進門密碼 Email 已重新寄出 → ${booking.contact_email}`);
       return res.json({ success: true, report: report.join('\n'), message: `進門密碼 Email 已重新寄出（密碼：${booking.ttlock_passcode}）` });
     }

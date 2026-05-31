@@ -2237,16 +2237,25 @@
     if (!bookingId) return;
     btn.disabled = true;
     btn.textContent = '⏳ 處理中...';
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), 25000); // 25 秒前端 timeout
     try {
       const r = await fetch(`${API}/admin/settings/trigger-ttlock/${bookingId}`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${adminToken}` }
+        headers: { 'Authorization': `Bearer ${adminToken}` },
+        signal: ctrl.signal
       });
+      clearTimeout(tid);
       const d = await r.json();
       const detail = [d.message, d.report ? `\n詳情：\n${d.report}` : ''].filter(Boolean).join('\n');
       alert(d.success ? `✅ 成功！\n${detail}` : `❌ 失敗：${detail}`);
     } catch(e) {
-      alert('❌ 錯誤：' + e.message);
+      clearTimeout(tid);
+      if (e.name === 'AbortError') {
+        alert('⏰ 請求逾時（25 秒），請確認 SMTP 設定是否正確，或稍後再試');
+      } else {
+        alert('❌ 錯誤：' + e.message);
+      }
     } finally {
       btn.disabled = false;
       btn.textContent = '🔐 發送進門密碼';
