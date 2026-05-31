@@ -407,13 +407,24 @@ router.post('/trigger-ttlock/:bookingId', requireSuperAdmin, async (req, res) =>
       report.push(`已有密碼：${booking.ttlock_passcode}（ID: ${booking.ttlock_passcode_id}）`);
       report.push('--- 重新寄送進門密碼 Email ---');
       const EmailService = require('../../services/emailService');
-      // 20 秒 timeout 保護，避免 SMTP 卡住佔用請求
-      await Promise.race([
-        EmailService.sendAccessCode(booking, booking.ttlock_passcode),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('Email 發送逾時（20s），請確認 SMTP 設定')), 20000))
-      ]);
-      report.push(`✅ 進門密碼 Email 已重新寄出 → ${booking.contact_email}`);
-      return res.json({ success: true, report: report.join('\n'), message: `進門密碼 Email 已重新寄出（密碼：${booking.ttlock_passcode}）` });
+      // 用 setTimeout race，並用 .catch 防止 floating rejection crash server
+      let emailOk = false, emailErr = null;
+      const emailPromise = EmailService.sendAccessCode(booking, booking.ttlock_passcode)
+        .then(() => { emailOk = true; })
+        .catch(e => { emailErr = e.message; });
+      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 20000));
+      await Promise.race([emailPromise, timeoutPromise]);
+
+      if (emailOk) {
+        report.push(`✅ 進門密碼 Email 已寄出 → ${booking.contact_email}`);
+        return res.json({ success: true, report: report.join('\n'), message: `進門密碼 Email 已重新寄出（密碼：${booking.ttlock_passcode}）` });
+      } else if (emailErr) {
+        report.push(`❌ Email 發送失敗：${emailErr}`);
+        return res.json({ success: false, report: report.join('\n'), message: `Email 發送失敗：${emailErr}` });
+      } else {
+        report.push('⏰ Email 發送逾時（20s），請確認 SMTP 設定或稍後重試');
+        return res.json({ success: false, report: report.join('\n'), message: 'Email 發送逾時，請確認 SMTP 設定' });
+      }
     }
 
     if (!booking.ttlock_lock_id) {
