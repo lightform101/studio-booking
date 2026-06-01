@@ -1506,9 +1506,15 @@
       const r = await fetch('/api/admin/auth/me', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!r.ok) {
+      if (r.status === 401 || r.status === 403) {
+        // Token 過期或無效 → 清除並導回登入頁
         localStorage.removeItem('adminToken');
         window.location.href = 'admin-login.html';
+        return;
+      }
+      if (!r.ok) {
+        // 伺服器暫時性錯誤（例如部署重啟時的 502/503）→ 提示重新整理，不繼續載入
+        showConnError('伺服器暫時無法連線（可能正在更新中），請稍候再重新整理。');
         return;
       }
       const { data: admin } = await r.json();
@@ -1518,8 +1524,9 @@
       document.getElementById('sidebarName').textContent   = name;
       document.getElementById('sidebarEmail').textContent  = admin.email || '';
     } catch(e) {
-      // 後端未啟動時不強制跳轉，保留畫面讓使用者知道後端未啟動
-      document.getElementById('sidebarEmail').textContent = '⚠️ 後端未連線';
+      // 網路中斷或伺服器重啟中 → 顯示明確提示，不繼續載入（避免永久卡在「載入中…」）
+      showConnError('無法連線到伺服器（可能正在更新中），請稍候再重新整理。');
+      return;
     }
 
     // 從設定讀取系統名稱，更新側邊欄品牌名稱
@@ -1538,6 +1545,22 @@
     // 初始載入儀表板資料
     loadDashboard();
   })();
+
+  // ─── 連線錯誤提示（部署重啟 / 網路中斷時顯示，避免永久卡在「載入中…」）──
+  function showConnError(msg) {
+    if (document.getElementById('conn-error-banner')) return;
+    const div = document.createElement('div');
+    div.id = 'conn-error-banner';
+    div.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(20,20,35,.78);display:flex;align-items:center;justify-content:center;';
+    div.innerHTML = `
+      <div style="background:#fff;border-radius:14px;padding:32px 36px;max-width:420px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.3);">
+        <div style="font-size:2.4rem;margin-bottom:10px;">🔌</div>
+        <h3 style="margin:0 0 10px;color:#1a1a2e;">連線中斷</h3>
+        <p style="color:#666;font-size:.9rem;line-height:1.7;margin:0 0 20px;">${msg}</p>
+        <button onclick="location.reload()" style="background:#e94560;color:#fff;border:none;border-radius:8px;padding:11px 26px;font-size:.95rem;cursor:pointer;font-weight:600;">🔄 重新整理</button>
+      </div>`;
+    document.body.appendChild(div);
+  }
 
   // ─── 登出 ──────────────────────────────────────
   function doLogout() {
@@ -1790,6 +1813,13 @@
         fetchWithTimeout(`${API}/admin/revenue/occupancy`, { headers: h }),
         fetchWithTimeout(`${API}/admin/bookings?status=pending_payment&limit=1`, { headers: h }),
       ]);
+
+      // Token 過期 → 導回登入頁（避免永久卡在「載入中…」）
+      if ([rb, rm, ro, rp].some(r => r.status === 401 || r.status === 403)) {
+        localStorage.removeItem('adminToken');
+        window.location.href = 'admin-login.html';
+        return;
+      }
       const { data: recentBookings } = await rb.json();
       const { data: monthlyData }    = await rm.json();
       const { data: occupancy }      = await ro.json();
