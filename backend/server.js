@@ -72,11 +72,7 @@ const apiLimiter = rateLimit({
   max: 100,
   message: { success: false, message: '請求過於頻繁，請稍後再試' }
 });
-const bookingLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 小時
-  max: 10,
-  message: { success: false, message: '預約請求過於頻繁，請稍後再試' }
-});
+// 建立預約專用的速率限制已移至 routes/bookings.js（只套用在 POST /）
 
 app.use('/api/', apiLimiter);
 
@@ -91,7 +87,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ─── API Routes ─────────────────────────────────────
 app.use('/api/studios',       studiosRouter);
 app.use('/api/availability',  availabilityRouter);
-app.use('/api/bookings',      bookingLimiter, bookingsRouter);
+// 注意：bookingLimiter 只套用在「建立預約」(POST /)，查詢與取消不受此限
+// （避免客戶查詢自己訂單幾次後就無法取消的問題），limiter 已移至 bookings.js 內
+app.use('/api/bookings',      bookingsRouter);
 app.use('/api/payment',       paymentRouter);
 app.use('/api/appearance',    appearanceRouter);
 app.use('/api/promotions',    promotionsRouter);

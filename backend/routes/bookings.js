@@ -5,6 +5,7 @@
  * POST /api/bookings/:no/cancel  取消預約
  */
 const router        = require('express').Router();
+const rateLimit     = require('express-rate-limit');
 const BookingModel  = require('../models/BookingModel');
 const StudioModel   = require('../models/StudioModel');
 const NewebPaySvc   = require('../services/newebpayService');
@@ -13,13 +14,21 @@ const { validateSlot } = require('../services/bookingValidation');
 const { bookingRules, validate } = require('../middleware/validation');
 const dayjs         = require('dayjs');
 
+// 建立預約專用速率限制（每小時 10 次/IP），僅套用在 POST /
+// 查詢與取消不受此限，避免客戶被自己的查詢次數鎖住而無法取消自己的預約
+const createLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { success: false, message: '預約請求過於頻繁，請稍後再試' }
+});
+
 // 各用途加價設定（可日後移入資料庫設定）
 const PURPOSE_RATES = {
   '影片拍攝': 1200,   // 影片拍攝費率 NT$/hr
 };
 
 // ─── 建立預約 ────────────────────────────────────────
-router.post('/', bookingRules, validate, async (req, res, next) => {
+router.post('/', createLimiter, bookingRules, validate, async (req, res, next) => {
   try {
     const { studio_id, booking_date, start_time, duration_hours,
             payment_method, purpose } = req.body;
@@ -123,9 +132,11 @@ router.post('/', bookingRules, validate, async (req, res, next) => {
     // 發送通知（失敗不影響預約）
     try { await NotifySvc.send('payment_pending', booking); } catch(e) {}
 
+    // 依實際付款截止時間動態產生提示文字（避免與設定的鎖定時間不一致）
+    const hoursLeft = Math.max(1, Math.round(dayjs(booking.payment_expire).diff(dayjs(), 'hour')));
     res.status(201).json({
       success: true,
-      message: '預約建立成功，請於 2 小時內完成付款',
+      message: `預約建立成功，請於 ${hoursLeft} 小時內完成付款`,
       data: {
         booking_no:     booking.booking_no,
         studio_name:    studio.name,
