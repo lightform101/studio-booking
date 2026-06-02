@@ -4,25 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>後台管理 · LightForm Studio Admin</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --primary: #1a1a2e;
-      --accent: #e94560;
-      --gold: #c9a84c;
-      --success: #28a745;
-      --warning: #ffc107;
-      --danger: #dc3545;
-      --info: #17a2b8;
+      --primary: #3a4232;   /* 深抹茶（側邊欄）*/
+      --accent: #6f8060;    /* 抹茶綠（深）主要動作 */
+      --gold: #8a9a7b;      /* 抹茶綠 */
+      --success: #6f8060;
+      --warning: #d2a24c;
+      --danger: #c0623e;
+      --info: #6f8060;
       --sidebar-w: 240px;
       --header-h: 60px;
-      --bg: #f0f2f5;
+      --bg: #f7f7f4;
       --card: #ffffff;
-      --border: #e0e4ea;
-      --text: #2c3e50;
-      --gray: #8492a6;
-      --radius: 10px;
-      --shadow: 0 2px 12px rgba(0,0,0,.07);
+      --border: #e7e7e0;
+      --text: #3a3a36;
+      --gray: #9a9a92;
+      --radius: 12px;
+      --shadow: 0 8px 30px rgba(120,130,110,.08);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
@@ -39,7 +39,7 @@
       padding: 0 20px; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.08);
     }
     .sb-brand .logo { width:30px;height:30px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px; }
-    .sb-brand .name { color:#fff;font-weight:700;font-size:.95rem; }
+    .sb-brand .name { color:#fff;font-weight:700;font-size:.95rem;font-family:'Zen Kaku Gothic New','Noto Sans TC',sans-serif;letter-spacing:.03em; }
     .sb-brand .badge { font-size:.65rem;background:rgba(255,255,255,.15);color:rgba(255,255,255,.7);padding:2px 7px;border-radius:4px;margin-left:4px; }
     .sb-nav { padding: 16px 0; flex: 1; overflow-y: auto; }
     .sb-section-label { font-size:.65rem;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;padding:8px 20px 4px; }
@@ -50,7 +50,7 @@
       transition: all .2s; cursor: pointer; border: none; background: none; width: 100%;
     }
     .sb-item:hover { background: rgba(255,255,255,.07); color: #fff; }
-    .sb-item.active { background: rgba(233,69,96,.2); color: #fff; border-right: 3px solid var(--accent); }
+    .sb-item.active { background: rgba(111,128,96,.2); color: #fff; border-right: 3px solid var(--accent); }
     .sb-item .icon { width: 20px; text-align: center; font-size: 1rem; }
     .sb-item .badge-num { margin-left: auto; background: var(--accent); color: #fff; border-radius: 10px; padding: 1px 7px; font-size: .7rem; }
     .sb-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,.08); }
@@ -70,7 +70,7 @@
       padding: 0 28px; position: sticky; top: 0; z-index: 50;
       box-shadow: 0 1px 4px rgba(0,0,0,.06);
     }
-    .topbar-title { font-size: 1rem; font-weight: 700; }
+    .topbar-title { font-size: 1.05rem; font-weight: 700; font-family:'Zen Kaku Gothic New','Noto Sans TC',sans-serif; letter-spacing:.03em; }
     .topbar-right { display: flex; align-items: center; gap: 16px; }
     .notif-btn { position: relative; background: none; border: none; cursor: pointer; font-size: 1.2rem; }
     .notif-dot { position: absolute; top: 0; right: 0; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
@@ -155,7 +155,7 @@
     .btn { padding: 6px 14px; border-radius: 6px; font-size: .78rem; font-weight: 600; cursor: pointer; border: none; transition: all .2s; }
     .btn-sm { padding: 4px 10px; font-size: .72rem; }
     .btn-primary-sm { background: var(--primary); color: #fff; }
-    .btn-primary-sm:hover { background: #0f3460; }
+    .btn-primary-sm:hover { background: #2e3528; }
     .btn-danger-sm { background: #fde8e8; color: var(--danger); }
     .btn-danger-sm:hover { background: #f5c2c2; }
     .btn-success-sm { background: #e8f5e9; color: var(--success); }
@@ -217,7 +217,7 @@
     .booking-event {
       border-radius: 4px; padding: 4px 8px; font-size: .72rem; font-weight: 600; margin-bottom: 3px;
     }
-    .booking-event.studio-a { background: rgba(233,69,96,.15); color: var(--accent); border-left: 3px solid var(--accent); }
+    .booking-event.studio-a { background: rgba(111,128,96,.15); color: var(--accent); border-left: 3px solid var(--accent); }
     .booking-event.studio-b { background: rgba(201,168,76,.15); color: #b8943d; border-left: 3px solid var(--gold); }
 
     /* ─── MODAL ───────────────────────────────── */
@@ -302,7 +302,7 @@
       transition: all .2s;
     }
     .sb-sub-item:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.85); }
-    .sb-sub-item.active { color: #fff; background: rgba(233,69,96,.18); border-right: 3px solid var(--accent); }
+    .sb-sub-item.active { color: #fff; background: rgba(111,128,96,.18); border-right: 3px solid var(--accent); }
     .sb-sub-item .icon { width: 18px; text-align: center; font-size: .9rem; }
     .sb-arrow { margin-left: auto; font-size: .65rem; transition: transform .28s; display: inline-block; }
     .sb-item.parent-open { background: rgba(255,255,255,.06); color: rgba(255,255,255,.9); }
@@ -384,7 +384,7 @@
         <div class="role" id="sidebarEmail">載入中...</div>
       </div>
     </div>
-    <button onclick="doLogout()" style="margin-top:10px;width:100%;background:rgba(233,69,96,.15);border:1px solid rgba(233,69,96,.3);color:#e94560;border-radius:7px;padding:7px;font-size:.8rem;cursor:pointer;font-family:inherit;transition:background .2s;" onmouseover="this.style.background='rgba(233,69,96,.25)'" onmouseout="this.style.background='rgba(233,69,96,.15)'">
+    <button onclick="doLogout()" style="margin-top:10px;width:100%;background:rgba(111,128,96,.15);border:1px solid rgba(111,128,96,.3);color:#6f8060;border-radius:7px;padding:7px;font-size:.8rem;cursor:pointer;font-family:inherit;transition:background .2s;" onmouseover="this.style.background='rgba(111,128,96,.25)'" onmouseout="this.style.background='rgba(111,128,96,.15)'">
       🚪 登出
     </button>
   </div>
@@ -655,7 +655,7 @@
           <div id="newStudioAlert" style="display:none;background:#fff3f3;border:1px solid #ffcccc;border-radius:8px;padding:10px 14px;color:#c0392b;font-size:.85rem;margin-bottom:16px;"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
             <div class="form-group">
-              <div class="form-label">場地名稱 <span style="color:#e94560;">*</span></div>
+              <div class="form-label">場地名稱 <span style="color:#6f8060;">*</span></div>
               <input class="form-input" id="ns_name" placeholder="例：攝影棚丙 Studio C" />
             </div>
             <div class="form-group">
@@ -718,7 +718,7 @@
     <div id="lightboxModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:none;align-items:center;justify-content:center;">
       <div style="max-width:90vw;max-height:90vh;position:relative;">
         <img id="lightboxImg" src="" style="max-width:90vw;max-height:85vh;border-radius:8px;object-fit:contain;" />
-        <button onclick="closeLightbox()" style="position:absolute;top:-14px;right:-14px;background:#e94560;color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;">✕</button>
+        <button onclick="closeLightbox()" style="position:absolute;top:-14px;right:-14px;background:#6f8060;color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;">✕</button>
       </div>
     </div>
 
@@ -909,8 +909,8 @@
           <div class="form-group">
             <div class="form-label">強調色 <span style="font-size:.75rem;color:#888;">（按鈕 / 連結）</span></div>
             <div style="display:flex;gap:8px;align-items:center;">
-              <input type="color" id="ap_accent" value="#e94560" style="width:44px;height:36px;border:none;cursor:pointer;border-radius:6px;padding:2px;" oninput="syncColorText('accent')" />
-              <input type="text"  id="ap_accent_t" class="form-input" value="#e94560" style="flex:1;" oninput="syncColorPicker('accent')" />
+              <input type="color" id="ap_accent" value="#6f8060" style="width:44px;height:36px;border:none;cursor:pointer;border-radius:6px;padding:2px;" oninput="syncColorText('accent')" />
+              <input type="text"  id="ap_accent_t" class="form-input" value="#6f8060" style="flex:1;" oninput="syncColorPicker('accent')" />
             </div>
           </div>
           <div class="form-group">
@@ -998,9 +998,9 @@
             <!-- 操作 -->
             <div>
               <div class="form-group">
-                <div class="form-label">遮罩深度 <span id="overlayVal" style="color:#e94560;font-weight:700;">50</span>%</div>
+                <div class="form-label">遮罩深度 <span id="overlayVal" style="color:#6f8060;font-weight:700;">50</span>%</div>
                 <input type="range" id="ap_overlay" min="0" max="90" value="50" step="5"
-                  style="width:100%;accent-color:#e94560;"
+                  style="width:100%;accent-color:#6f8060;"
                   oninput="document.getElementById('overlayVal').textContent=this.value; updateHeroBgOverlay();" />
                 <div style="display:flex;justify-content:space-between;font-size:.72rem;color:#aaa;margin-top:2px;"><span>無遮罩</span><span>深遮罩</span></div>
               </div>
@@ -1120,20 +1120,20 @@
           <!-- 導覽列預覽 -->
           <div id="prev_nav" style="background:#1a1a2e;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;">
             <div style="display:flex;align-items:center;gap:10px;">
-              <div id="prev_logo" style="width:32px;height:32px;background:#e94560;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;">📷</div>
+              <div id="prev_logo" style="width:32px;height:32px;background:#6f8060;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;">📷</div>
               <span id="prev_name" style="color:#fff;font-weight:700;font-size:.95rem;">LightForm Studio</span>
             </div>
             <div style="display:flex;gap:20px;">
               <span style="color:rgba(255,255,255,.7);font-size:.85rem;">場地介紹</span>
               <span style="color:rgba(255,255,255,.7);font-size:.85rem;">預約流程</span>
-              <span id="prev_accent_btn" style="background:#e94560;color:#fff;padding:6px 16px;border-radius:6px;font-size:.82rem;font-weight:700;">立即預約</span>
+              <span id="prev_accent_btn" style="background:#6f8060;color:#fff;padding:6px 16px;border-radius:6px;font-size:.82rem;font-weight:700;">立即預約</span>
             </div>
           </div>
           <!-- Hero 預覽 -->
-          <div id="prev_hero" style="background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:40px 24px;text-align:center;">
+          <div id="prev_hero" style="background:linear-gradient(135deg,#1a1a2e,#2e3528);padding:40px 24px;text-align:center;">
             <div id="prev_hero_title" style="color:#fff;font-size:1.6rem;font-weight:700;margin-bottom:8px;">打造完美視覺的地方</div>
             <div id="prev_hero_sub"   style="color:rgba(255,255,255,.65);font-size:.9rem;margin-bottom:20px;">台北市最專業的攝影棚，提供高規格設備與靈活預約服務</div>
-            <span id="prev_cta" style="display:inline-block;background:#e94560;color:#fff;padding:10px 28px;border-radius:8px;font-weight:700;font-size:.9rem;">🗓 立即預約</span>
+            <span id="prev_cta" style="display:inline-block;background:#6f8060;color:#fff;padding:10px 28px;border-radius:8px;font-weight:700;font-size:.9rem;">🗓 立即預約</span>
           </div>
           <!-- 卡片預覽 -->
           <div id="prev_cards" style="background:#f8f8f8;padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
@@ -1595,7 +1595,7 @@
         <div style="font-size:2.4rem;margin-bottom:10px;">🔌</div>
         <h3 style="margin:0 0 10px;color:#1a1a2e;">連線中斷</h3>
         <p style="color:#666;font-size:.9rem;line-height:1.7;margin:0 0 20px;">${msg}</p>
-        <button onclick="location.reload()" style="background:#e94560;color:#fff;border:none;border-radius:8px;padding:11px 26px;font-size:.95rem;cursor:pointer;font-weight:600;">🔄 重新整理</button>
+        <button onclick="location.reload()" style="background:#6f8060;color:#fff;border:none;border-radius:8px;padding:11px 26px;font-size:.95rem;cursor:pointer;font-weight:600;">🔄 重新整理</button>
       </div>`;
     document.body.appendChild(div);
   }
@@ -2538,9 +2538,9 @@
       const isBooked  = bookings.length > 0;
       const dot       = isBooked ? `<div style="width:6px;height:6px;background:var(--accent);border-radius:50%;margin:1px auto;"></div>` : '';
       html += `<div onclick="showDayBookings(${d})" style="text-align:center;padding:6px 2px;border-radius:6px;cursor:pointer;font-size:.82rem;
-        background:${isToday ? 'var(--accent)' : isBooked ? 'rgba(233,69,96,.1)' : 'transparent'};
+        background:${isToday ? 'var(--accent)' : isBooked ? 'rgba(111,128,96,.1)' : 'transparent'};
         color:${isToday ? '#fff' : '#333'};font-weight:${isToday ? '700' : '400'};
-        border:${isBooked && !isToday ? '1px solid rgba(233,69,96,.3)' : '1px solid transparent'};
+        border:${isBooked && !isToday ? '1px solid rgba(111,128,96,.3)' : '1px solid transparent'};
         transition:.15s;">${d}${dot}</div>`;
     }
     document.getElementById('admin-cal-grid').innerHTML = html;
@@ -2628,7 +2628,7 @@
       // 載入每個場地的照片
       studios.forEach(s => loadImages(s.id));
     } catch(e) {
-      container.innerHTML = '<div style="text-align:center;padding:60px;color:#e94560;">⚠️ 無法載入場地資料</div>';
+      container.innerHTML = '<div style="text-align:center;padding:60px;color:#6f8060;">⚠️ 無法載入場地資料</div>';
     }
   }
 
@@ -2965,11 +2965,11 @@
 
     const cards = images.map((img, idx) => `
       <div class="img-card" data-id="${img.id}" data-sort="${img.sort_order}"
-        style="position:relative;border-radius:10px;overflow:hidden;background:#f0f2f5;border:2px solid ${img.is_main ? '#e94560' : '#e0e4ea'};">
+        style="position:relative;border-radius:10px;overflow:hidden;background:#f0f2f5;border:2px solid ${img.is_main ? '#6f8060' : '#e0e4ea'};">
         <img src="${img.url}" alt="${img.alt_text || ''}"
           style="width:100%;height:130px;object-fit:cover;cursor:pointer;display:block;"
           onclick="openLightbox('${img.url}')" />
-        ${img.is_main ? '<div style="position:absolute;top:6px;left:6px;background:#e94560;color:#fff;font-size:.65rem;padding:2px 7px;border-radius:4px;font-weight:700;">主圖</div>' : ''}
+        ${img.is_main ? '<div style="position:absolute;top:6px;left:6px;background:#6f8060;color:#fff;font-size:.65rem;padding:2px 7px;border-radius:4px;font-weight:700;">主圖</div>' : ''}
         <div style="display:flex;justify-content:space-around;padding:6px 4px;background:#fff;gap:2px;">
           ${!img.is_main ? `<button title="設為主圖" onclick="setMain(${studioId},${img.id})" style="flex:1;border:none;background:none;cursor:pointer;font-size:1rem;">⭐</button>` : '<span style="flex:1;"></span>'}
           <button title="左移" onclick="moveImage(${studioId},${img.id},'up')"   style="flex:1;border:none;background:none;cursor:pointer;font-size:.9rem;" ${idx===0?'disabled':''}>◀</button>
@@ -3090,7 +3090,7 @@
 
   // 預設值
   const AP_DEFAULTS = {
-    primary:'#1a1a2e', accent:'#e94560', gold:'#c9a84c',
+    primary:'#1a1a2e', accent:'#6f8060', gold:'#c9a84c',
     bg:'#f8f8f8', card_bg:'#ffffff', text:'#1a1a2e',
     font:'Noto Sans TC', font_size:'medium', radius:'12',
     site_name:'LightForm Studio', tagline:'專業攝影棚空間・靈感的誕生地',
@@ -3100,7 +3100,7 @@
 
   // 色票預設方案
   const PRESETS = {
-    dark:   { primary:'#1a1a2e', accent:'#e94560', gold:'#c9a84c', bg:'#f8f8f8', card_bg:'#ffffff', text:'#1a1a2e' },
+    dark:   { primary:'#1a1a2e', accent:'#6f8060', gold:'#c9a84c', bg:'#f8f8f8', card_bg:'#ffffff', text:'#1a1a2e' },
     light:  { primary:'#2c3e50', accent:'#3498db', gold:'#f39c12', bg:'#ecf0f1', card_bg:'#ffffff', text:'#2c3e50' },
     ocean:  { primary:'#03045e', accent:'#0077b6', gold:'#48cae4', bg:'#e0f7fa', card_bg:'#ffffff', text:'#03045e' },
     forest: { primary:'#1b4332', accent:'#2d6a4f', gold:'#95d5b2', bg:'#f0fdf4', card_bg:'#ffffff', text:'#1b4332' },
