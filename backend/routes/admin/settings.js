@@ -447,7 +447,8 @@ router.post('/run-migration', requireSuperAdmin, async (req, res, next) => {
   const IGNORABLE = new Set(['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY']);
   const migrDir = path.join(__dirname, '../../migrations');
   const migrationFiles = fs.readdirSync(migrDir)
-    .filter(f => /^\d+.*\.sql$/i.test(f))
+    // 跳過種子檔（seed），避免把已刪除/修改的資料還原
+    .filter(f => /^\d+.*\.sql$/i.test(f) && !/seed/i.test(f))
     .sort();
   const logs = [];
   try {

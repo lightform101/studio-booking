@@ -160,7 +160,9 @@ async function runMigrationsOnStart() {
   const IGNORABLE = new Set(['ER_DUP_FIELDNAME','ER_TABLE_EXISTS_ERROR','ER_DUP_ENTRY']);
   const migrDir = path.join(__dirname, 'migrations');
   const files = fs.readdirSync(migrDir)
-    .filter(f => /^\d+.*\.sql$/i.test(f))
+    // 跳過種子檔（seed）：種子資料只在初次建置時手動執行一次，
+    // 不可每次部署重跑，否則會把已刪除/已修改的資料（如刪掉的場地）還原回來
+    .filter(f => /^\d+.*\.sql$/i.test(f) && !/seed/i.test(f))
     .sort();
   for (const file of files) {
     const fp = path.join(migrDir, file);
