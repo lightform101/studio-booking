@@ -886,8 +886,18 @@
     <!-- ═══ APPEARANCE SETTINGS ══════════════════ -->
     <div class="page" id="page-appearance">
 
-      <!-- 色彩主題 -->
-      <div class="settings-section">
+      <div class="settings-section" style="background:#f4f7f3;border:1px solid #dde7d8;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="font-size:1.3rem;">🍵</span>
+          <div style="font-size:.88rem;color:#5a6a4d;line-height:1.7;">
+            前台目前採用<strong>固定的日系清新設計</strong>，配色與字型已鎖定，因此下方的「色彩主題 / 字型 / 即時預覽」已停用並隱藏。<br>
+            您仍可在此設定：<strong>站名、Hero 標題文案、頂部 Banner、聯絡資訊</strong>等內容。如需變更前台配色或版型，請告知工程協助調整。
+          </div>
+        </div>
+      </div>
+
+      <!-- 色彩主題（已停用：前台採固定日系設計）-->
+      <div class="settings-section" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
           <h3 style="margin:0;">🎨 色彩主題</h3>
           <div style="display:flex;gap:8px;">
@@ -944,8 +954,8 @@
         </div>
       </div>
 
-      <!-- 字型與排版 -->
-      <div class="settings-section">
+      <!-- 字型與排版（已停用：前台採固定日系字型）-->
+      <div class="settings-section" style="display:none;">
         <h3>🔤 字型與排版</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
           <div class="form-group">
@@ -982,8 +992,8 @@
       <div class="settings-section">
         <h3>🖼 背景圖片 / Banner</h3>
 
-        <!-- Hero 背景圖 -->
-        <div style="margin-bottom:24px;">
+        <!-- Hero 背景圖（已停用：日系版型採左文右圖，不使用整片背景圖）-->
+        <div style="margin-bottom:24px;display:none;">
           <div style="font-weight:600;margin-bottom:10px;font-size:.92rem;">🌅 Hero 背景圖片 <span style="font-weight:400;color:#888;font-size:.8rem;">（建議尺寸 1920×800px，≤20MB）</span></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
             <!-- 預覽區 -->
@@ -1113,8 +1123,8 @@
         </div>
       </div>
 
-      <!-- 即時預覽 -->
-      <div class="settings-section">
+      <!-- 即時預覽（已停用：前台採固定日系設計）-->
+      <div class="settings-section" style="display:none;">
         <h3>👁 即時預覽</h3>
         <div id="themePreview" style="border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow);">
           <!-- 導覽列預覽 -->
