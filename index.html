@@ -889,7 +889,6 @@
           if (grid && Array.isArray(notes) && notes.length) {
             // 依後台資料重建須知卡片（每筆 = 一張卡，含圖示/標題/內容）
             // 相容新格式 {icon,title,content} 與舊格式（純字串）
-            const tints = ['', 'gold', 'blue'];
             grid.innerHTML = notes.map((n, i) => {
               const isObj = n && typeof n === 'object';
               const icon  = isObj ? (n.icon  || '📋') : '📋';
@@ -898,7 +897,7 @@
               // 內容若含換行/分號則拆成多條；否則整段一條
               const items = String(body).split(/\r?\n|；|;/).map(s => s.trim()).filter(Boolean);
               const lis = items.map(t => `<li>${escapeHTML(t)}</li>`).join('');
-              return `<div class="rule-card ${tints[i % tints.length]}">
+              return `<div class="rule-card gold">
                 ${icon ? `<div class="rule-icon">${escapeHTML(icon)}</div>` : ''}
                 ${title ? `<div class="rule-title">${escapeHTML(title)}</div>` : ''}
                 ${lis ? `<ul class="rule-list">${lis}</ul>` : ''}
