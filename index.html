@@ -887,14 +887,23 @@
           const notes = JSON.parse(ap.page_notes);
           const grid  = document.getElementById('rules-grid');
           if (grid && Array.isArray(notes) && notes.length) {
-            // 保留原有 3 欄卡片結構，將後台「須知」列表填入第一欄
-            const firstCard = grid.querySelector('.rule-card');
-            if (firstCard) {
-              const ul = firstCard.querySelector('.rule-list');
-              if (ul) {
-                ul.innerHTML = notes.map(n => `<li>${n}</li>`).join('');
-              }
-            }
+            // 依後台資料重建須知卡片（每筆 = 一張卡，含圖示/標題/內容）
+            // 相容新格式 {icon,title,content} 與舊格式（純字串）
+            const tints = ['', 'gold', 'blue'];
+            grid.innerHTML = notes.map((n, i) => {
+              const isObj = n && typeof n === 'object';
+              const icon  = isObj ? (n.icon  || '📋') : '📋';
+              const title = isObj ? (n.title || '')   : '';
+              const body  = isObj ? (n.content || '') : String(n);
+              // 內容若含換行/分號則拆成多條；否則整段一條
+              const items = String(body).split(/\r?\n|；|;/).map(s => s.trim()).filter(Boolean);
+              const lis = items.map(t => `<li>${escapeHTML(t)}</li>`).join('');
+              return `<div class="rule-card ${tints[i % tints.length]}">
+                ${icon ? `<div class="rule-icon">${escapeHTML(icon)}</div>` : ''}
+                ${title ? `<div class="rule-title">${escapeHTML(title)}</div>` : ''}
+                ${lis ? `<ul class="rule-list">${lis}</ul>` : ''}
+              </div>`;
+            }).join('');
           }
         } catch(e) { /* 解析失敗保持預設 */ }
       }
