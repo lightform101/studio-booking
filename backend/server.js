@@ -34,6 +34,8 @@ const adminRevenueRouter = require('./routes/admin/revenue');
 const adminSettingsRouter    = require('./routes/admin/settings');
 const adminPromotionsRouter  = require('./routes/admin/promotions');
 const promotionsRouter       = require('./routes/promotions');
+const adminCarouselRouter    = require('./routes/admin/carousel');
+const carouselRouter         = require('./routes/carousel');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -93,6 +95,7 @@ app.use('/api/bookings',      bookingsRouter);
 app.use('/api/payment',       paymentRouter);
 app.use('/api/appearance',    appearanceRouter);
 app.use('/api/promotions',    promotionsRouter);
+app.use('/api/carousel',      carouselRouter);
 
 // Admin Routes
 app.use('/api/admin/auth',     adminAuthRouter);
@@ -103,6 +106,7 @@ app.use('/api/admin',          adminImagesRouter);   // 照片操作（/images/:
 app.use('/api/admin/revenue',  adminRevenueRouter);
 app.use('/api/admin/settings',    adminSettingsRouter);
 app.use('/api/admin/promotions',  adminPromotionsRouter);
+app.use('/api/admin/carousel',    adminCarouselRouter);
 
 // ─── Health Check ───────────────────────────────────
 app.get('/api/health', (req, res) => {

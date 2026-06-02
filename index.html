@@ -5,491 +5,436 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LightForm Studio 攝影棚預約系統</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@200;300;400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
+    /* ═══ 風格 5 · 日系清新（抹茶綠 + Zen Kaku Gothic New）═══ */
     :root {
-      --primary: #1A1A1A;
-      --accent:  #B07D5A;
-      --gold:    #C4956A;
-      --light:   #FAFAF8;
-      --cream:   #F5F0EB;
-      --gray:    #8A8580;
-      --border:  #E8E4DF;
-      --success: #5A9E6B;
-      --card-bg: #FFFFFF;
-      --text:    #1A1A1A;
-      --shadow:  0 2px 16px rgba(0,0,0,0.05);
-      --radius:  14px;
+      --primary: #3a3a36;   /* 文字/標題 墨色 */
+      --accent:  #6f8060;   /* 抹茶綠（深）— 價格、連結重點 */
+      --gold:    #8a9a7b;   /* 抹茶綠 */
+      --light:   #f7f7f4;   /* 頁面底色 霧白 */
+      --cream:   #eef0ea;   /* 柔和區塊底色 */
+      --gray:    #9a9a92;   /* 次要文字 */
+      --border:  #e7e7e0;   /* 細線 */
+      --success: #6f8060;
+      --card-bg: #ffffff;
+      --text:    #3a3a36;
+      --sage:    #8a9a7b;
+      --sage-d:  #6f8060;
+      --soft:    #eef0ea;
+      --shadow:  0 8px 30px rgba(120,130,110,0.08);
+      --radius:  22px;
+      --head: 'Zen Kaku Gothic New','Noto Sans TC',sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Noto Sans TC', sans-serif;
       background: var(--light);
       color: var(--text);
-      line-height: 1.6;
+      line-height: 1.9;
+      font-weight: 300;
+      letter-spacing: .02em;
     }
+    .head { font-family: var(--head); }
 
     /* ─── NAV ─────────────────────────────── */
     nav {
       position: fixed; top: 0; width: 100%; z-index: 999;
-      background: rgba(250,250,248,0.96);
+      background: rgba(247,247,244,0.88);
       backdrop-filter: blur(12px);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 5%;
-      height: 64px;
+      padding: 0 6%;
+      height: 70px;
       border-bottom: 1px solid var(--border);
       transition: box-shadow .3s;
     }
-    .nav-logo {
-      display: flex; align-items: center; gap: 10px;
-      text-decoration: none;
-    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .nav-logo .logo-icon {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      overflow: hidden;
+      width: 36px; height: 36px; border-radius: 10px; overflow: hidden;
       display: flex; align-items: center; justify-content: center;
     }
-    .nav-logo .logo-icon img {
-      width: 100%; height: 100%; object-fit: contain;
-    }
+    .nav-logo .logo-icon img { width: 100%; height: 100%; object-fit: contain; }
     .nav-logo span {
-      color: var(--primary);
-      font-family: 'DM Mono', monospace;
-      font-size: 1rem;
-      font-weight: 500;
-      letter-spacing: 0.06em;
+      color: var(--sage-d);
+      font-family: var(--head);
+      font-size: 1.1rem; font-weight: 500; letter-spacing: 0.04em;
     }
-    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links { display: flex; gap: 30px; align-items: center; }
     .nav-links a {
-      color: var(--gray);
-      text-decoration: none;
-      font-size: 0.88rem;
-      font-weight: 500;
-      transition: color .2s;
-      letter-spacing: 0.02em;
+      color: var(--text); text-decoration: none;
+      font-size: 0.88rem; font-weight: 400; opacity: .7; transition: opacity .2s;
     }
-    .nav-links a:hover { color: var(--primary); }
+    .nav-links a:hover { opacity: 1; color: var(--sage-d); }
     .nav-cta {
-      background: var(--primary) !important;
-      color: #fff !important;
-      padding: 9px 22px;
-      border-radius: 8px;
-      font-size: 0.85rem !important;
-      font-weight: 600 !important;
-      transition: opacity .2s !important;
-      letter-spacing: 0.03em;
+      background: var(--sage) !important; color: #fff !important;
+      padding: 11px 26px; border-radius: 30px;
+      font-size: 0.86rem !important; font-weight: 500 !important;
+      transition: background .25s !important; opacity: 1 !important;
     }
-    .nav-cta:hover { opacity: 0.82 !important; color: #fff !important; }
+    .nav-cta:hover { background: var(--sage-d) !important; color: #fff !important; }
 
     /* ─── HERO ────────────────────────────── */
     .hero {
-      margin-top: 64px;
-      min-height: 88vh;
-      background: var(--cream);
+      margin-top: 70px;
+      min-height: 72vh;
+      background: var(--light);
       display: flex; align-items: center;
       position: relative; overflow: hidden;
     }
     .hero::before {
       content: '';
-      position: absolute; top: -120px; right: -80px;
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(176,125,90,0.10) 0%, transparent 70%);
+      position: absolute; top: -140px; right: -100px;
+      width: 560px; height: 560px;
+      background: radial-gradient(circle, rgba(138,154,123,0.16) 0%, transparent 70%);
       border-radius: 50%;
     }
     .hero-inner {
       position: relative; z-index: 1;
-      max-width: 1200px; margin: 0 auto;
-      padding: 80px 5%;
-      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+      max-width: 1180px; margin: 0 auto;
+      padding: 48px 6%;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
     }
     .hero-badge {
       display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(176,125,90,0.12);
-      border: 1px solid rgba(176,125,90,0.3);
-      color: var(--accent);
-      padding: 6px 16px; border-radius: 30px;
-      font-size: 0.78rem; font-weight: 600;
-      margin-bottom: 24px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      color: var(--sage-d);
+      padding: 0; margin-bottom: 26px;
+      font-size: 0.82rem; font-weight: 400; letter-spacing: 0.12em;
+    }
+    .hero-badge::before {
+      content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--sage);
     }
     .hero-title {
-      font-family: 'DM Serif Display', serif;
-      font-size: clamp(2.2rem, 4.5vw, 3.6rem);
-      color: var(--primary); line-height: 1.2;
-      margin-bottom: 22px;
-      letter-spacing: -0.01em;
+      font-family: var(--head);
+      font-size: clamp(2.2rem, 4.2vw, 3.2rem);
+      color: var(--text); line-height: 1.4; font-weight: 500;
+      margin-bottom: 24px; letter-spacing: .03em;
     }
-    .hero-title span { color: var(--accent); }
+    .hero-title span { color: var(--sage-d); }
     .hero-desc {
       color: var(--gray);
-      font-size: 1rem; line-height: 1.9;
-      margin-bottom: 40px;
-      font-weight: 300;
+      font-size: 1rem; line-height: 1.95;
+      margin-bottom: 38px; font-weight: 300; max-width: 420px;
     }
     .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
     .btn-primary {
       display: inline-flex; align-items: center; gap: 8px;
-      background: var(--primary); color: #fff;
-      padding: 14px 32px; border-radius: 10px;
-      font-size: 0.92rem; font-weight: 600;
+      background: var(--sage); color: #fff;
+      padding: 13px 30px; border-radius: 30px;
+      font-size: 0.92rem; font-weight: 500;
       text-decoration: none; border: none; cursor: pointer;
-      transition: opacity .2s, transform .2s;
-      letter-spacing: 0.02em;
+      transition: background .25s, transform .2s;
     }
-    .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-primary:hover { background: var(--sage-d); transform: translateY(-2px); }
     .btn-outline {
       display: inline-flex; align-items: center; gap: 8px;
-      border: 1.5px solid var(--border); color: var(--primary);
-      padding: 14px 32px; border-radius: 10px;
-      font-size: 0.92rem; font-weight: 500;
+      border: 1px solid var(--sage); color: var(--sage-d);
+      padding: 13px 30px; border-radius: 30px;
+      font-size: 0.92rem; font-weight: 400;
       text-decoration: none; cursor: pointer;
-      transition: all .2s; background: transparent;
+      transition: all .25s; background: transparent;
     }
-    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-outline:hover { background: var(--sage); color: #fff; }
     .hero-stats {
-      display: flex; gap: 40px; margin-top: 52px;
-      padding-top: 32px;
-      border-top: 1px solid var(--border);
+      display: flex; gap: 40px; margin-top: 50px;
+      padding-top: 32px; border-top: 1px solid var(--border);
     }
     .stat { text-align: left; }
-    .stat-num { font-family: 'DM Serif Display', serif; font-size: 2rem; font-weight: 400; color: var(--primary); }
-    .stat-label { font-size: 0.78rem; color: var(--gray); margin-top: 2px; letter-spacing: 0.04em; }
+    .stat-num { font-family: var(--head); font-size: 2rem; font-weight: 500; color: var(--sage-d); }
+    .stat-label { font-size: 0.78rem; color: var(--gray); margin-top: 2px; }
 
     /* Hero visual */
     .hero-visual { position: relative; }
     .hero-card-main {
       background: #fff;
       border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 28px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.07);
+      border-radius: 28px;
+      padding: 26px;
+      box-shadow: 0 18px 50px rgba(120,130,110,0.12);
     }
-    .studio-preview {
-      width: 100%; aspect-ratio: 16/9;
-      background: linear-gradient(135deg, var(--cream), #E8E0D6);
-      border-radius: 12px; margin-bottom: 20px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 4rem; position: relative; overflow: hidden;
-    }
-    .studio-preview::after {
-      content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.25));
-    }
-    .studio-preview-label {
-      position: absolute; bottom: 14px; left: 14px; z-index: 1;
-      font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em;
-      background: var(--primary); color: #fff; padding: 4px 12px; border-radius: 5px;
-    }
-    /* Studio photo cards in hero */
     .studio-photo-cards {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-      margin-top: 16px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px;
     }
     .studio-photo-card {
-      position: relative; border-radius: 12px; overflow: hidden;
+      position: relative; border-radius: 16px; overflow: hidden;
       aspect-ratio: 4/3; display: block; text-decoration: none;
       background: var(--cream); cursor: pointer;
-      transition: transform .2s, box-shadow .2s;
+      transition: transform .25s, box-shadow .25s;
     }
-    .studio-photo-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.15); }
-    .studio-photo-card img {
-      width: 100%; height: 100%; object-fit: cover; display: block;
-      transition: transform .3s;
-    }
-    .studio-photo-card:hover img { transform: scale(1.04); }
+    .studio-photo-card:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(120,130,110,.18); }
+    .studio-photo-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .35s; }
+    .studio-photo-card:hover img { transform: scale(1.05); }
     .studio-photo-card .card-placeholder {
-      width: 100%; height: 100%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2.5rem; background: linear-gradient(135deg, var(--cream), #E8E0D6);
+      width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+      font-size: 2.4rem; background: linear-gradient(135deg, var(--cream), #e3e7dd);
     }
     .studio-photo-card .card-overlay {
       position: absolute; inset: 0;
-      background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,.65));
+      background: linear-gradient(180deg, transparent 45%, rgba(50,55,45,.6));
     }
-    .studio-photo-card .card-info {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 10px 12px; color: #fff;
-    }
+    .studio-photo-card .card-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 10px 12px; color: #fff; }
     .studio-photo-card .card-name {
-      font-size: .8rem; font-weight: 700; letter-spacing: .02em;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: .82rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .studio-photo-card .card-price {
-      font-size: .7rem; opacity: .8; margin-top: 2px;
-    }
+    .studio-photo-card .card-price { font-size: .7rem; opacity: .85; margin-top: 2px; }
     .studio-photo-card .card-badge {
       position: absolute; top: 8px; right: 8px;
-      background: rgba(255,255,255,.18); backdrop-filter: blur(4px);
-      color: #fff; font-size: .65rem; font-weight: 600;
-      padding: 3px 8px; border-radius: 5px; letter-spacing: .04em;
+      background: rgba(255,255,255,.22); backdrop-filter: blur(4px);
+      color: #fff; font-size: .65rem; font-weight: 500;
+      padding: 3px 9px; border-radius: 20px; letter-spacing: .04em;
     }
 
     /* ─── SECTION ─────────────────────────── */
-    section { padding: 96px 5%; }
-    .section-header { text-align: center; margin-bottom: 56px; }
+    section { padding: 64px 6%; }
+    .section-header { text-align: center; margin-bottom: 40px; }
     .section-tag {
-      display: inline-block;
-      background: rgba(176,125,90,0.10);
-      color: var(--accent);
-      padding: 5px 16px; border-radius: 20px;
-      font-size: 0.75rem; font-weight: 600;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      margin-bottom: 16px;
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--sage-d);
+      padding: 0; margin-bottom: 16px;
+      font-size: 0.8rem; font-weight: 400; letter-spacing: 0.14em;
     }
+    .section-tag::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--sage); }
     .section-title {
-      font-family: 'DM Serif Display', serif;
-      font-size: clamp(1.8rem, 3vw, 2.6rem);
-      font-weight: 400; line-height: 1.25;
-      color: var(--primary);
+      font-family: var(--head);
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      font-weight: 500; line-height: 1.4; color: var(--text); letter-spacing: .03em;
     }
-    .section-sub {
-      color: var(--gray); margin-top: 12px; font-size: 0.92rem; font-weight: 300;
-    }
-    .max-w { max-width: 1200px; margin: 0 auto; }
+    .section-sub { color: var(--gray); margin-top: 12px; font-size: 0.92rem; font-weight: 300; }
+    .max-w { max-width: 1180px; margin: 0 auto; }
 
     /* ─── STUDIOS ─────────────────────────── */
-    #studios { background: #fff; }
+    #studios { background: var(--light); }
     .studios-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 36px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 40px;
     }
     .studio-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 28px;
       overflow: hidden;
       transition: transform .3s, box-shadow .3s;
+      box-shadow: 0 8px 30px rgba(120,130,110,.06);
     }
-    .studio-card:hover { transform: translateY(-5px); box-shadow: 0 16px 48px rgba(0,0,0,0.08); }
+    .studio-card:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(120,130,110,.13); }
 
     /* ─── 照片輪播 ─────────────────────────── */
-    .studio-carousel {
-      width: 100%; aspect-ratio: 16/9; position: relative; overflow: hidden;
-      background: var(--cream);
-    }
-    .studio-carousel .carousel-track {
-      display: flex; height: 100%; transition: transform .45s ease;
-    }
-    .studio-carousel .carousel-track img {
-      min-width: 100%; height: 100%; object-fit: cover; flex-shrink: 0;
-    }
+    .studio-carousel { width: 100%; aspect-ratio: 16/10; position: relative; overflow: hidden; background: var(--cream); }
+    .studio-carousel .carousel-track { display: flex; height: 100%; transition: transform .45s ease; }
+    .studio-carousel .carousel-track img { min-width: 100%; height: 100%; object-fit: cover; flex-shrink: 0; }
     .studio-carousel .carousel-placeholder {
-      min-width: 100%; height: 100%; display: flex; align-items: center;
-      justify-content: center; font-size: 5rem; flex-shrink: 0;
-      background: var(--cream);
+      min-width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+      font-size: 5rem; flex-shrink: 0; background: linear-gradient(135deg, var(--cream), #e3e7dd);
     }
     .carousel-btn {
       position: absolute; top: 50%; transform: translateY(-50%);
-      background: rgba(255,255,255,0.88); color: var(--primary); border: none;
-      width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+      background: rgba(255,255,255,0.9); color: var(--sage-d); border: none;
+      width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
       font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
-      z-index: 5; transition: background .2s;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      z-index: 5; transition: background .2s; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     .carousel-btn:hover { background: #fff; }
-    .carousel-btn.prev { left: 12px; }
-    .carousel-btn.next { right: 12px; }
-    .carousel-dots {
-      position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 6px;
-    }
+    .carousel-btn.prev { left: 14px; }
+    .carousel-btn.next { right: 14px; }
+    .carousel-dots { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
     .carousel-dots span {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: rgba(255,255,255,.55); cursor: pointer; transition: background .2s, transform .2s;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(255,255,255,.6); cursor: pointer; transition: background .2s, transform .2s;
     }
     .carousel-dots span.active { background: #fff; transform: scale(1.3); }
-    .studio-img { display: none; }
-    .studio-img-a { display: none; }
-    .studio-img-b { display: none; }
+    .studio-img, .studio-img-a, .studio-img-b { display: none; }
     .studio-badge {
       position: absolute; top: 16px; left: 16px;
-      background: var(--primary); color: #fff;
-      padding: 4px 12px; border-radius: 5px;
-      font-size: 0.72rem; font-weight: 600;
-      letter-spacing: 0.08em; z-index: 5;
-      text-transform: uppercase;
+      background: rgba(111,128,96,.92); color: #fff;
+      padding: 5px 14px; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 500; letter-spacing: 0.04em; z-index: 5;
     }
-    .studio-badge.b { background: var(--accent); color: #fff; }
-    .studio-info { padding: 32px; }
+    .studio-badge.b { background: rgba(58,58,54,.85); color: #fff; }
+    .studio-info { padding: 32px 34px 34px; }
     .studio-name {
-      font-family: 'DM Mono', monospace;
-      font-size: 1.1rem; font-weight: 500;
-      margin-bottom: 10px; letter-spacing: 0.04em;
-      color: var(--primary);
+      font-family: var(--head);
+      font-size: 1.3rem; font-weight: 500;
+      margin-bottom: 12px; letter-spacing: 0.02em; color: var(--text);
     }
-    .studio-desc { color: var(--gray); font-size: 0.9rem; line-height: 1.8; margin-bottom: 20px; font-weight: 300; }
-    .studio-specs {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 10px; margin-bottom: 20px;
-    }
-    .spec-item {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.82rem; color: var(--gray);
-    }
+    .studio-desc { color: var(--gray); font-size: 0.9rem; line-height: 1.85; margin-bottom: 22px; font-weight: 300; }
+    .studio-specs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+    .spec-item { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--gray); }
     .spec-icon { font-size: 0.95rem; }
     .studio-price {
       display: flex; align-items: baseline; gap: 6px;
-      margin-bottom: 20px;
-      padding: 16px 0;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
+      margin-bottom: 22px; padding: 18px 0;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
     }
-    .price-amount {
-      font-family: 'DM Serif Display', serif;
-      font-size: 2rem; font-weight: 400; color: var(--primary);
-    }
+    .price-amount { font-family: var(--head); font-size: 1.7rem; font-weight: 500; color: var(--sage-d); }
     .price-unit { font-size: 0.82rem; color: var(--gray); }
-    .studio-features { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 24px; }
+    .studio-features { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 26px; }
     .feature-tag {
-      background: var(--light); color: var(--gray);
-      padding: 4px 12px; border-radius: 20px;
-      font-size: 0.75rem; font-weight: 500;
-      border: 1px solid var(--border);
+      background: var(--soft); color: var(--sage-d);
+      padding: 5px 14px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 400; border: 1px solid var(--border);
     }
     .studio-actions { display: flex; gap: 12px; }
     .btn-book {
-      flex: 1; background: var(--primary); color: #fff;
-      border: none; border-radius: 10px; padding: 13px 20px;
-      font-size: 0.88rem; font-weight: 600; cursor: pointer;
-      transition: opacity .2s; text-align: center; text-decoration: none;
+      flex: 1; background: var(--sage); color: #fff;
+      border: none; border-radius: 30px; padding: 14px 20px;
+      font-size: 0.9rem; font-weight: 500; cursor: pointer;
+      transition: background .25s; text-align: center; text-decoration: none;
       display: flex; align-items: center; justify-content: center; gap: 8px;
-      letter-spacing: 0.02em;
     }
-    .btn-book:hover { opacity: 0.82; }
+    .btn-book:hover { background: var(--sage-d); }
     .btn-detail {
-      border: 1.5px solid var(--border); color: var(--primary); background: #fff;
-      border-radius: 10px; padding: 13px 20px;
-      font-size: 0.88rem; font-weight: 500; cursor: pointer;
-      transition: all .2s; text-decoration: none;
+      border: 1px solid var(--sage); color: var(--sage-d); background: #fff;
+      border-radius: 30px; padding: 14px 20px;
+      font-size: 0.9rem; font-weight: 400; cursor: pointer;
+      transition: all .25s; text-decoration: none;
       display: flex; align-items: center; justify-content: center; gap: 8px;
     }
-    .btn-detail:hover { border-color: var(--primary); }
+    .btn-detail:hover { background: var(--sage); color: #fff; }
 
     /* ─── HOW IT WORKS ────────────────────── */
-    #how { background: var(--cream); }
-    .steps-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;
-    }
+    #how { background: var(--soft); }
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
     .step-card {
-      text-align: center; padding: 40px 24px;
-      background: #fff; border-radius: var(--radius);
-      border: 1px solid var(--border);
-      position: relative;
-      transition: box-shadow .25s;
+      text-align: center; padding: 42px 24px;
+      background: #fff; border-radius: 24px; border: 1px solid var(--border);
+      position: relative; transition: transform .25s, box-shadow .25s;
     }
-    .step-card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.06); }
+    .step-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(120,130,110,.1); }
     .step-num {
-      width: 44px; height: 44px;
-      background: var(--cream);
-      color: var(--accent);
+      width: 44px; height: 44px; background: var(--soft); color: var(--sage-d);
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.95rem; font-weight: 500;
-      margin: 0 auto 16px;
+      font-family: var(--head); font-size: 1rem; font-weight: 500; margin: 0 auto 16px;
       border: 1px solid var(--border);
     }
     .step-icon { font-size: 1.8rem; margin-bottom: 12px; }
-    .step-title { font-weight: 700; margin-bottom: 8px; font-size: 0.95rem; }
+    .step-title { font-family: var(--head); font-weight: 500; margin-bottom: 8px; font-size: 1rem; }
     .step-desc { color: var(--gray); font-size: 0.82rem; line-height: 1.7; font-weight: 300; }
-    .step-arrow {
-      position: absolute; right: -14px; top: 50%;
-      transform: translateY(-50%);
-      font-size: 1.2rem; color: var(--border); z-index: 1;
-    }
+    .step-arrow { position: absolute; right: -14px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: var(--sage); z-index: 1; }
     .step-card:last-child .step-arrow { display: none; }
 
     /* ─── NOTICE & RULES ──────────────────── */
-    #rules { background: #fff; }
-    .rules-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;
-    }
+    #rules { background: var(--light); }
+    .rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
     .rule-card {
-      padding: 28px; border-radius: var(--radius);
-      border: 1px solid var(--border);
-      background: #fff;
-      transition: box-shadow .25s;
+      padding: 30px; border-radius: 24px; border: 1px solid var(--border);
+      background: #fff; transition: box-shadow .25s;
     }
     .rule-card:hover { box-shadow: var(--shadow); }
-    .rule-card.gold { background: #FDFAF5; border-color: #E8DFD0; }
-    .rule-card.blue { background: #F7F9FC; border-color: #D5E0EF; }
+    .rule-card.gold { background: #f6f8f2; border-color: #e2e8d6; }
+    .rule-card.blue { background: #f4f7f3; border-color: #dde7d8; }
     .rule-icon { font-size: 1.6rem; margin-bottom: 12px; }
-    .rule-title { font-weight: 700; margin-bottom: 10px; font-size: 0.95rem; }
+    .rule-title { font-family: var(--head); font-weight: 500; margin-bottom: 12px; font-size: 1rem; }
     .rule-list { list-style: none; }
     .rule-list li {
-      font-size: 0.85rem; color: var(--gray); padding: 5px 0;
+      font-size: 0.85rem; color: var(--gray); padding: 6px 0;
       display: flex; align-items: flex-start; gap: 8px; font-weight: 300;
     }
-    .rule-list li::before { content: '—'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+    .rule-list li::before { content: '—'; color: var(--sage); font-weight: 500; flex-shrink: 0; }
 
     /* ─── FAQ ─────────────────────────────── */
-    #faq { background: var(--light); }
+    #faq { background: var(--soft); }
     .faq-list { max-width: 760px; margin: 0 auto; }
     .faq-item {
-      background: #fff; border-radius: var(--radius);
-      border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden;
-      transition: box-shadow .2s;
+      background: #fff; border-radius: 18px; border: 1px solid var(--border);
+      margin-bottom: 12px; overflow: hidden; transition: box-shadow .2s;
     }
     .faq-item:hover { box-shadow: var(--shadow); }
     .faq-q {
-      width: 100%; padding: 18px 24px;
-      background: none; border: none; cursor: pointer;
-      text-align: left; font-size: 0.92rem; font-weight: 600;
+      width: 100%; padding: 20px 26px; background: none; border: none; cursor: pointer;
+      text-align: left; font-size: 0.94rem; font-weight: 500; font-family: var(--head);
       display: flex; justify-content: space-between; align-items: center;
-      color: var(--primary); transition: background .2s;
+      color: var(--text); transition: background .2s;
     }
     .faq-q:hover { background: var(--light); }
-    .faq-q .arrow { transition: transform .3s; font-size: 0.85rem; color: var(--accent); }
+    .faq-q .arrow { transition: transform .3s; font-size: 0.85rem; color: var(--sage); }
     .faq-q.open .arrow { transform: rotate(180deg); }
     .faq-a {
-      padding: 0 24px; max-height: 0; overflow: hidden;
+      padding: 0 26px; max-height: 0; overflow: hidden;
       transition: max-height .3s, padding .3s;
-      font-size: 0.86rem; color: var(--gray); line-height: 1.9; font-weight: 300;
+      font-size: 0.87rem; color: var(--gray); line-height: 1.95; font-weight: 300;
     }
-    .faq-a.open { max-height: 200px; padding: 0 24px 18px; }
+    .faq-a.open { max-height: 240px; padding: 0 26px 20px; }
 
     /* ─── CTA BANNER ──────────────────────── */
     .cta-banner {
-      background: var(--primary);
-      color: #fff; text-align: center;
-      padding: 96px 5%;
+      background: var(--soft); color: var(--text); text-align: center; padding: 72px 6%;
     }
     .cta-banner h2 {
-      font-family: 'DM Serif Display', serif;
-      font-size: clamp(1.8rem, 3vw, 2.8rem);
-      font-weight: 400; margin-bottom: 16px;
-      letter-spacing: -0.01em;
+      font-family: var(--head);
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      font-weight: 500; margin-bottom: 16px; letter-spacing: .03em;
     }
-    .cta-banner p { color: rgba(255,255,255,0.6); margin-bottom: 36px; font-size: 1rem; font-weight: 300; }
+    .cta-banner p { color: var(--gray); margin-bottom: 36px; font-size: 1rem; font-weight: 300; }
 
     /* ─── FOOTER ──────────────────────────── */
-    footer {
-      background: #111;
-      color: rgba(255,255,255,0.5);
-      padding: 56px 5% 28px;
-    }
+    footer { background: #2b2e27; color: rgba(255,255,255,0.5); padding: 60px 6% 30px; }
     .footer-inner {
-      max-width: 1200px; margin: 0 auto;
+      max-width: 1180px; margin: 0 auto;
       display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px;
-      padding-bottom: 36px; border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 36px; border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     .footer-brand p { font-size: 0.83rem; line-height: 1.9; margin-top: 14px; font-weight: 300; }
     .footer-col h4 {
-      color: rgba(255,255,255,0.9); font-weight: 500;
-      margin-bottom: 16px; font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase;
+      color: rgba(255,255,255,0.9); font-weight: 500; font-family: var(--head);
+      margin-bottom: 16px; font-size: 0.88rem; letter-spacing: 0.04em;
     }
     .footer-col a {
-      display: block; color: rgba(255,255,255,0.4);
-      text-decoration: none; font-size: 0.83rem; margin-bottom: 9px;
-      transition: color .2s;
+      display: block; color: rgba(255,255,255,0.45);
+      text-decoration: none; font-size: 0.83rem; margin-bottom: 10px; transition: color .2s;
     }
-    .footer-col a:hover { color: rgba(255,255,255,0.85); }
+    .footer-col a:hover { color: #fff; }
     .footer-bottom {
-      max-width: 1200px; margin: 0 auto;
+      max-width: 1180px; margin: 0 auto;
       display: flex; justify-content: space-between; align-items: center;
       padding-top: 22px; font-size: 0.78rem;
     }
+
+    /* ─── 最新消息 / 優惠輪播 ─── */
+    .news-sec { background: var(--light); padding: 36px 6% 8px; }
+    .news-carousel {
+      position: relative; border-radius: 24px; overflow: hidden;
+      box-shadow: var(--shadow); aspect-ratio: 21/7; background: var(--cream);
+    }
+    .news-track { display: flex; height: 100%; transition: transform .5s ease; }
+    .news-slide { min-width: 100%; height: 100%; position: relative; flex-shrink: 0; }
+    .news-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .news-slide a { display: block; height: 100%; }
+    .news-caption {
+      position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 30px; color: #fff;
+      background: linear-gradient(transparent, rgba(43,46,39,.72));
+      font-family: var(--head); font-size: 1.15rem; font-weight: 500; letter-spacing: .02em;
+    }
+    .news-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(255,255,255,0.9); color: var(--sage-d); border: none;
+      width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.3rem;
+      z-index: 5; box-shadow: 0 2px 10px rgba(0,0,0,.1); transition: background .2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .news-btn:hover { background: #fff; }
+    .news-btn.prev { left: 16px; } .news-btn.next { right: 16px; }
+    .news-dots { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 7px; z-index: 5; }
+    .news-dots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.6); cursor: pointer; transition: .2s; }
+    .news-dots span.active { background: #fff; transform: scale(1.3); }
+    @media (max-width: 600px) { .news-carousel { aspect-ratio: 16/9; } .news-caption { font-size: .95rem; padding: 16px 18px; } }
+
+    /* ─── 分頁區塊（優惠 / 常見問題 / 立即預約）─── */
+    #explore { background: var(--light); }
+    .tab-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+    .tab-btn {
+      font-family: var(--head);
+      background: #fff; color: var(--sage-d);
+      border: 1px solid var(--sage);
+      padding: 13px 30px; border-radius: 30px;
+      font-size: 0.95rem; font-weight: 500; cursor: pointer;
+      transition: all .25s;
+    }
+    .tab-btn:hover { background: var(--soft); }
+    .tab-btn.active { background: var(--sage); color: #fff; box-shadow: 0 8px 22px rgba(138,154,123,.3); }
+    .tab-panel { display: none; animation: fadeTab .3s ease; }
+    .tab-panel.active { display: block; }
+    @keyframes fadeTab { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .tab-book-cta { text-align: center; background: var(--soft); border-radius: 28px; padding: 60px 30px; }
+    .tab-book-cta h3 { font-family: var(--head); font-size: 1.7rem; font-weight: 500; color: var(--text); margin-bottom: 14px; letter-spacing: .03em; }
+    .tab-book-cta p { color: var(--gray); margin-bottom: 30px; }
 
     /* ─── RESPONSIVE ──────────────────────── */
     @media (max-width: 900px) {
@@ -499,9 +444,9 @@
       .footer-inner { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 600px) {
-      nav { padding: 0 4%; }
+      nav { padding: 0 5%; }
       .nav-links { display: none; }
-      section { padding: 64px 4%; }
+      section { padding: 48px 5%; }
       .footer-inner { grid-template-columns: 1fr; }
       .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
     }
@@ -519,7 +464,7 @@
     <a href="#studios">場地介紹</a>
     <a href="#how">預約流程</a>
     <a href="#rules">注意事項</a>
-    <a href="#faq">常見問題</a>
+    <a href="#explore" onclick="switchTab('faq')">常見問題</a>
     <a href="booking.html" class="nav-cta">立即預約</a>
   </div>
 </nav>
@@ -528,7 +473,7 @@
 <section class="hero">
   <div class="hero-inner">
     <div class="hero-text">
-      <div class="hero-badge">⚡ 台北頂級攝影棚空間</div>
+      <div class="hero-badge">台北 · 自然光攝影棚空間</div>
       <h1 class="hero-title">
         打造您的<br />
         <span>完美創作空間</span>
@@ -541,20 +486,6 @@
       <div class="hero-actions">
         <a href="booking.html" class="btn-primary">🗓 立即預約場地</a>
         <a href="#studios" class="btn-outline">了解更多</a>
-      </div>
-      <div class="hero-stats">
-        <div class="stat">
-          <div class="stat-num">2</div>
-          <div class="stat-label">專業場地</div>
-        </div>
-        <div class="stat">
-          <div class="stat-num">24/7</div>
-          <div class="stat-label">線上預約</div>
-        </div>
-        <div class="stat">
-          <div class="stat-num">500+</div>
-          <div class="stat-label">滿意客戶</div>
-        </div>
       </div>
     </div>
     <div class="hero-visual">
@@ -579,6 +510,18 @@
   </div>
 </section>
 
+<!-- ─── 最新消息 / 優惠輪播（後台管理）──────── -->
+<section id="news" class="news-sec" style="display:none;">
+  <div class="max-w">
+    <div class="news-carousel" id="news-carousel">
+      <div class="news-track" id="news-track"></div>
+      <button class="news-btn prev" id="news-prev" onclick="newsMove(-1)">‹</button>
+      <button class="news-btn next" id="news-next" onclick="newsMove(1)">›</button>
+      <div class="news-dots" id="news-dots"></div>
+    </div>
+  </div>
+</section>
+
 <!-- ─── STUDIOS ─────────────────────────── -->
 <section id="studios">
   <div class="max-w">
@@ -597,15 +540,62 @@
   </div>
 </section>
 
-<!-- ─── PROMOTIONS ──────────────────────── -->
-<section id="promotions" style="display:none;background:linear-gradient(135deg,#fff9f0 0%,#fff3e0 100%);">
+<!-- ─── 分頁區塊：常見問題 / 優惠方案 / 立即預約 ──── -->
+<section id="explore">
   <div class="max-w">
-    <div class="section-header">
-      <div class="section-tag">限時優惠</div>
-      <h2 class="section-title">🎁 專屬優惠方案</h2>
-      <p class="section-sub">把握限時優惠，以更優惠的價格預約您的理想場地</p>
+    <div class="tab-btns">
+      <button class="tab-btn active" data-tab="faq"   onclick="switchTab('faq')">❓ 常見問題</button>
+      <button class="tab-btn"        data-tab="promo" onclick="switchTab('promo')">🎁 優惠方案</button>
+      <button class="tab-btn"        data-tab="book"  onclick="switchTab('book')">📅 立即預約</button>
     </div>
-    <div id="promotions-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;"></div>
+
+    <!-- 常見問題 -->
+    <div class="tab-panel active" id="tab-faq">
+      <div class="faq-list" id="faq-list">
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">預約後可以修改時間嗎？<span class="arrow">▼</span></button>
+          <div class="faq-a">可以，但需在預約日期 48 小時前提出變更申請，且更改後的時間須有空檔可用。更改次數以一次為限，請透過系統發送的確認信中的連結提出申請。</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">支援哪些付款方式？<span class="arrow">▼</span></button>
+          <div class="faq-a">目前支援藍新金流（信用卡、ATM 轉帳、超商代碼繳費）及 LINE Pay 行動支付，歡迎任何一種方式完成付款。</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">可以開立電子發票嗎？<span class="arrow">▼</span></button>
+          <div class="faq-a">可以。在填寫預約資料時，勾選「需要發票」並填入統一編號或載具資訊（手機條碼 / 自然人憑證），系統將於付款完成後自動開立電子發票並寄送至您的 Email。</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">場地有提供停車位嗎？<span class="arrow">▼</span></button>
+          <div class="faq-a">場地附近有合作與公共停車場，預約確認信中將附上建議停車地點與優惠資訊。</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">可以帶外部設備入棚使用嗎？<span class="arrow">▼</span></button>
+          <div class="faq-a">可以，歡迎攜帶自己的相機、燈具等器材入場。若需使用 220V 電源請事先告知，現場由工作人員協助確認安全連接。</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">如何聯絡客服？<span class="arrow">▼</span></button>
+          <div class="faq-a">您可以透過網站底部的 LINE 官方帳號、Email (contact@lightformstudio.com.tw) 或電話 02-XXXX-XXXX 聯絡我們，服務時間為週一至週日 09:00–21:00。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 優惠方案 -->
+    <div class="tab-panel" id="tab-promo">
+      <div id="promotions">
+        <div id="promotions-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;">
+          <div style="text-align:center;color:var(--gray);padding:40px;grid-column:1/-1;">目前暫無優惠活動，敬請期待 🍃</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 立即預約 -->
+    <div class="tab-panel" id="tab-book">
+      <div class="tab-book-cta">
+        <h3>準備好開始創作了嗎？</h3>
+        <p>線上預約，即時確認，創作無障礙。</p>
+        <a href="booking.html" class="btn-primary" style="display:inline-flex;">📅 立即選擇場地與時間</a>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -674,7 +664,7 @@
         <div class="rule-icon">💰</div>
         <div class="rule-title">付款與退款</div>
         <ul class="rule-list">
-          <li>預約成立後 2 小時內須完成付款，否則自動取消</li>
+          <li>預約成立後 48 小時內須完成付款，否則自動取消</li>
           <li>48 小時前取消，退還 100% 費用</li>
           <li>24–48 小時前取消，退還 50% 費用</li>
           <li>24 小時內取消，恕不退費</li>
@@ -696,67 +686,6 @@
   </div>
 </section>
 
-<!-- ─── FAQ ────────────────────────────── -->
-<section id="faq">
-  <div class="max-w">
-    <div class="section-header">
-      <div class="section-tag">常見問題</div>
-      <h2 class="section-title">您的疑問，我們來解答</h2>
-    </div>
-    <div class="faq-list" id="faq-list">
-      <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">
-          預約後可以修改時間嗎？
-          <span class="arrow">▼</span>
-        </button>
-        <div class="faq-a">可以，但需在預約日期 48 小時前提出變更申請，且更改後的時間須有空檔可用。更改次數以一次為限，請透過系統發送的確認信中的連結提出申請。</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">
-          支援哪些付款方式？
-          <span class="arrow">▼</span>
-        </button>
-        <div class="faq-a">目前支援藍新金流（信用卡、ATM 轉帳、超商代碼繳費）及 LINE Pay 行動支付，歡迎任何一種方式完成付款。</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">
-          可以開立電子發票嗎？
-          <span class="arrow">▼</span>
-        </button>
-        <div class="faq-a">可以。在填寫預約資料時，勾選「需要發票」並填入統一編號或載具資訊（手機條碼 / 自然人憑證），系統將於付款完成後自動開立電子發票並寄送至您的 Email。</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">
-          場地有提供停車位嗎？
-          <span class="arrow">▼</span>
-        </button>
-        <div class="faq-a">Studio A 場地附近有合作停車場，出示預約確認信可享優惠停車費率。Studio B 請使用周邊公共停車場，預約確認信中將附上建議停車地點。</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">
-          可以帶外部設備入棚使用嗎？
-          <span class="arrow">▼</span>
-        </button>
-        <div class="faq-a">可以，歡迎攜帶自己的相機、燈具等器材入場。若需使用 220V 電源請事先告知，現場由工作人員協助確認安全連接。</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">
-          如何聯絡客服？
-          <span class="arrow">▼</span>
-        </button>
-        <div class="faq-a">您可以透過網站底部的 LINE 官方帳號、Email (contact@lightformstudio.com.tw) 或電話 02-XXXX-XXXX 聯絡我們，服務時間為週一至週日 09:00–21:00。</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ─── CTA ────────────────────────────── -->
-<div class="cta-banner">
-  <h2>立即預約，開始創作</h2>
-  <p>專業空間等您來使用，線上即時確認，方便快速</p>
-  <a href="booking.html" class="btn-primary" style="display:inline-flex;">🗓 立即選擇場地與時間</a>
-</div>
-
 <!-- ─── FOOTER ─────────────────────────── -->
 <footer>
   <div class="footer-inner">
@@ -777,7 +706,7 @@
     <div class="footer-col">
       <h4>服務</h4>
       <a href="booking.html">線上預約</a>
-      <a href="#faq">常見問題</a>
+      <a href="#explore" onclick="switchTab('faq')">常見問題</a>
       <a href="#">聯絡我們</a>
     </div>
     <div class="footer-col">
@@ -810,6 +739,12 @@
     document.querySelectorAll('.faq-a.open').forEach(el => { el.classList.remove('open'); el.previousElementSibling.classList.remove('open'); });
     if (!isOpen) { a.classList.add('open'); btn.classList.add('open'); }
   }
+
+  // 分頁切換（常見問題 / 優惠方案 / 立即預約）
+  function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  }
   // Smooth scroll
   document.querySelectorAll('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
@@ -834,30 +769,15 @@
 
       const root = document.documentElement;
 
-      // CSS 變數套用
-      if (ap.theme_primary)       root.style.setProperty('--primary',  ap.theme_primary);
-      if (ap.theme_accent)        root.style.setProperty('--accent',   ap.theme_accent);
-      if (ap.theme_gold)          root.style.setProperty('--gold',     ap.theme_gold);
-      if (ap.theme_bg)            root.style.setProperty('--light',    ap.theme_bg);
-      if (ap.theme_card_bg)       root.style.setProperty('--card-bg',  ap.theme_card_bg);
-      if (ap.theme_text)          root.style.setProperty('--text',     ap.theme_text);
-      if (ap.theme_border_radius) root.style.setProperty('--radius',   ap.theme_border_radius + 'px');
-
-      // 字型
-      if (ap.theme_font) {
-        const fontSizes = { small: '14px', medium: '16px', large: '18px' };
-        const size = fontSizes[ap.theme_font_size] || '16px';
-        document.body.style.fontFamily = `'${ap.theme_font}', sans-serif`;
-        document.body.style.fontSize   = size;
-        // 動態載入 Google Fonts（如果是常見字型）
-        const googleFonts = ['Noto Sans TC','Noto Serif TC'];
-        if (googleFonts.includes(ap.theme_font)) {
-          const link = document.createElement('link');
-          link.rel  = 'stylesheet';
-          link.href = `https://fonts.googleapis.com/css2?family=${ap.theme_font.replace(/ /g,'+')}:wght@300;400;500;700&display=swap`;
-          document.head.appendChild(link);
-        }
-      }
+      // ⚠️ 風格 5（日系清新）已鎖定配色與字型，不再套用後台「外觀→顏色/字型」設定，
+      //    避免覆蓋抹茶綠配色。如未來想恢復後台調色，移除下方註解即可。
+      // if (ap.theme_primary)       root.style.setProperty('--primary',  ap.theme_primary);
+      // if (ap.theme_accent)        root.style.setProperty('--accent',   ap.theme_accent);
+      // if (ap.theme_gold)          root.style.setProperty('--gold',     ap.theme_gold);
+      // if (ap.theme_bg)            root.style.setProperty('--light',    ap.theme_bg);
+      // if (ap.theme_card_bg)       root.style.setProperty('--card-bg',  ap.theme_card_bg);
+      // if (ap.theme_text)          root.style.setProperty('--text',     ap.theme_text);
+      // if (ap.theme_border_radius) root.style.setProperty('--radius',   ap.theme_border_radius + 'px');
 
       // 網站名稱
       if (ap.site_name) {
@@ -886,16 +806,18 @@
       }
 
       // ── Hero 背景圖片 ──────────────────────────
-      if (ap.hero_bg_image) {
-        const heroSection = document.querySelector('#hero, .hero, section:first-of-type');
-        if (heroSection) {
-          const overlay = ap.hero_bg_overlay ? ap.hero_bg_overlay / 100 : 0.5;
-          heroSection.style.backgroundImage    = `linear-gradient(rgba(0,0,0,${overlay}),rgba(0,0,0,${overlay})), url(${ap.hero_bg_image})`;
-          heroSection.style.backgroundSize     = 'cover';
-          heroSection.style.backgroundPosition = 'center';
-          heroSection.style.backgroundRepeat   = 'no-repeat';
-        }
-      }
+      // 風格 5 採用左文右圖的清新版面，不使用整片 Hero 背景圖（保持留白通透）。
+      // 如未來想改回整片背景圖，移除下方註解即可。
+      // if (ap.hero_bg_image) {
+      //   const heroSection = document.querySelector('#hero, .hero, section:first-of-type');
+      //   if (heroSection) {
+      //     const overlay = ap.hero_bg_overlay ? ap.hero_bg_overlay / 100 : 0.5;
+      //     heroSection.style.backgroundImage    = `linear-gradient(rgba(0,0,0,${overlay}),rgba(0,0,0,${overlay})), url(${ap.hero_bg_image})`;
+      //     heroSection.style.backgroundSize     = 'cover';
+      //     heroSection.style.backgroundPosition = 'center';
+      //     heroSection.style.backgroundRepeat   = 'no-repeat';
+      //   }
+      // }
 
       // ── 頁面背景圖片 ───────────────────────────
       if (ap.page_bg_image) {
@@ -1034,24 +956,24 @@
       grid.innerHTML = data.map(p => {
         const typeLabel = { percent:'百分比折扣', fixed:'固定金額折扣', schedule:'時段優惠' }[p.discount_type] || '';
         const discountBadge = p.discount_type === 'fixed'
-          ? `<div style="font-size:1.5rem;font-weight:800;color:#e67e22;">折扣 NT$ ${Number(p.discount_value).toLocaleString()}</div>`
-          : `<div style="font-size:1.5rem;font-weight:800;color:#e67e22;">${p.discount_value}% 折扣</div>`;
+          ? `<div style="font-family:var(--head);font-size:1.5rem;font-weight:500;color:var(--sage-d);">折扣 NT$ ${Number(p.discount_value).toLocaleString()}</div>`
+          : `<div style="font-family:var(--head);font-size:1.5rem;font-weight:500;color:var(--sage-d);">${p.discount_value}% 折扣</div>`;
         const codeBadge = p.promo_code
-          ? `<div style="margin-top:10px;background:#fff3cd;border:1px dashed #f0ad4e;border-radius:6px;padding:6px 10px;font-size:.85rem;display:inline-flex;align-items:center;gap:8px;">
-               <span style="color:#856404;">優惠碼：</span>
-               <strong style="font-size:1rem;letter-spacing:2px;">${p.promo_code}</strong>
+          ? `<div style="margin-top:10px;background:var(--soft);border:1px dashed var(--sage);border-radius:10px;padding:6px 12px;font-size:.85rem;display:inline-flex;align-items:center;gap:8px;">
+               <span style="color:var(--sage-d);">優惠碼：</span>
+               <strong style="font-size:1rem;letter-spacing:2px;color:var(--text);">${p.promo_code}</strong>
              </div>`
-          : `<div style="margin-top:10px;font-size:.8rem;color:#888;">預約時自動套用</div>`;
+          : `<div style="margin-top:10px;font-size:.8rem;color:var(--gray);">預約時自動套用</div>`;
         const validStr = p.valid_to
-          ? `<div style="font-size:.78rem;color:#888;margin-top:8px;">有效期限至 ${p.valid_to}</div>`
+          ? `<div style="font-size:.78rem;color:var(--gray);margin-top:8px;">有效期限至 ${p.valid_to}</div>`
           : '';
-        return `<div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.08);border:2px solid #ffe0b2;position:relative;overflow:hidden;">
-          <div style="position:absolute;top:-10px;right:-10px;width:60px;height:60px;background:linear-gradient(135deg,#ff9800,#e67e22);border-radius:50%;opacity:.15;"></div>
-          <div style="font-size:.75rem;color:#e67e22;font-weight:600;letter-spacing:1px;margin-bottom:8px;text-transform:uppercase;">${typeLabel}</div>
-          <h3 style="margin:0 0 8px;font-size:1.1rem;">${p.name}</h3>
-          ${p.description ? `<p style="color:#666;font-size:.85rem;margin:0 0 10px;">${p.description}</p>` : ''}
+        return `<div style="background:#fff;border-radius:24px;padding:26px;box-shadow:0 8px 30px rgba(120,130,110,.08);border:1px solid var(--border);position:relative;overflow:hidden;">
+          <div style="position:absolute;top:-14px;right:-14px;width:64px;height:64px;background:var(--sage);border-radius:50%;opacity:.12;"></div>
+          <div style="font-size:.75rem;color:var(--sage-d);font-weight:500;letter-spacing:1px;margin-bottom:8px;">${typeLabel}</div>
+          <h3 style="font-family:var(--head);margin:0 0 8px;font-size:1.1rem;font-weight:500;color:var(--text);">${p.name}</h3>
+          ${p.description ? `<p style="color:var(--gray);font-size:.85rem;margin:0 0 10px;">${p.description}</p>` : ''}
           ${discountBadge}
-          ${p.studio_name ? `<div style="font-size:.8rem;color:#888;margin-top:6px;">適用場地：${p.studio_name}</div>` : ''}
+          ${p.studio_name ? `<div style="font-size:.8rem;color:var(--gray);margin-top:6px;">適用場地：${p.studio_name}</div>` : ''}
           ${codeBadge}
           ${validStr}
         </div>`;
@@ -1215,8 +1137,62 @@
     Object.keys(carouselState).forEach(key => carouselMove(key, 1));
   }, 5000);
 
+  // ═══════════════════════════════════════════════
+  // 最新消息 / 優惠輪播（後台管理）
+  // ═══════════════════════════════════════════════
+  const newsState = { idx: 0, slides: [] };
+  async function initNews() {
+    try {
+      const r = await fetch('/api/carousel');
+      if (!r.ok) return;
+      const { data } = await r.json();
+      if (!data || !data.length) return;   // 無資料則整區隱藏
+      newsState.slides = data;
+
+      const sec   = document.getElementById('news');
+      const track = document.getElementById('news-track');
+      const dots  = document.getElementById('news-dots');
+
+      track.innerHTML = data.map(s => {
+        const img = `<img src="${safeSrc(s.image_url)}" alt="${escapeHTML(s.title || '')}" loading="lazy" />`;
+        const cap = s.title ? `<div class="news-caption">${escapeHTML(s.title)}</div>` : '';
+        const inner = img + cap;
+        return `<div class="news-slide">${ s.link_url
+          ? `<a href="${safeSrc(s.link_url)}" target="_blank" rel="noopener">${inner}</a>`
+          : inner }</div>`;
+      }).join('');
+
+      dots.innerHTML = data.map((_, i) =>
+        `<span class="${i === 0 ? 'active' : ''}" onclick="newsGo(${i})"></span>`
+      ).join('');
+
+      // 只有一張時隱藏箭頭與圓點
+      if (data.length <= 1) {
+        document.getElementById('news-prev').style.display = 'none';
+        document.getElementById('news-next').style.display = 'none';
+        dots.style.display = 'none';
+      } else {
+        setInterval(() => newsMove(1), 5000);
+      }
+
+      sec.style.display = '';
+    } catch (e) { /* 靜默 */ }
+  }
+  function newsMove(d) {
+    if (!newsState.slides.length) return;
+    newsState.idx = (newsState.idx + d + newsState.slides.length) % newsState.slides.length;
+    newsUpdate();
+  }
+  function newsGo(i) { newsState.idx = i; newsUpdate(); }
+  function newsUpdate() {
+    const t = document.getElementById('news-track');
+    if (t) t.style.transform = `translateX(-${newsState.idx * 100}%)`;
+    document.querySelectorAll('#news-dots span').forEach((d, i) => d.classList.toggle('active', i === newsState.idx));
+  }
+
   // 初始化
   initStudios();
+  initNews();
 </script>
 </body>
 </html>

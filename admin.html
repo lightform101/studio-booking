@@ -348,6 +348,9 @@
     <button class="sb-item" onclick="showPage('promotions', this)">
       <span class="icon">🎁</span> 優惠方案
     </button>
+    <button class="sb-item" onclick="showPage('carousel', this)">
+      <span class="icon">🖼</span> 首頁輪播
+    </button>
     <button class="sb-item" onclick="showPage('notify', this)">
       <span class="icon">🔔</span> 通知設定
     </button>
@@ -1295,6 +1298,41 @@
       </div>
     </div>
 
+    <!-- ─── 首頁輪播管理 ─────────────────────────── -->
+    <div class="page" id="page-carousel">
+      <div class="settings-section">
+        <h3 style="margin:0 0 6px;">🖼 新增輪播圖</h3>
+        <p style="color:#888;font-size:.85rem;margin:0 0 16px;">上傳最新消息、優惠活動等圖片，會顯示在首頁場地介紹上方的輪播區。建議尺寸 1200×400（寬版橫幅）。</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:760px;">
+          <div class="form-group" style="grid-column:1/-1;">
+            <div class="form-label">圖片 *</div>
+            <input type="file" id="cr-image" accept="image/*" class="form-input" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">標題文字（可留空，顯示於圖片下方）</div>
+            <input type="text" id="cr-title" class="form-input" placeholder="例：六月開幕優惠 9 折" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">點擊連結（可留空）</div>
+            <input type="text" id="cr-link" class="form-input" placeholder="例：https://..." />
+          </div>
+          <div class="form-group">
+            <div class="form-label">排序（數字小優先）</div>
+            <input type="number" id="cr-sort" class="form-input" value="0" min="0" />
+          </div>
+        </div>
+        <div id="cr-add-msg" style="display:none;margin-top:10px;font-size:.85rem;"></div>
+        <button class="btn-add" id="cr-add-btn" onclick="addCarousel()" style="margin-top:14px;">＋ 上傳並新增</button>
+      </div>
+
+      <div class="settings-section" style="margin-top:20px;">
+        <h3 style="margin:0 0 16px;">目前輪播圖</h3>
+        <div id="carousel-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+          <div style="color:#aaa;padding:20px;">載入中...</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1574,7 +1612,7 @@
   const titles = {
     dashboard: '📊 儀表板', bookings: '📅 預約管理', calendar: '🗓 排程日曆',
     revenue: '💰 收入報表', studios: '🏠 場地設定', photos: '📷 場地照片',
-    promotions: '🎁 優惠方案', notify: '🔔 通知設定', invoice: '🧾 發票設定',
+    promotions: '🎁 優惠方案', carousel: '🖼 首頁輪播', notify: '🔔 通知設定', invoice: '🧾 發票設定',
     system: '⚙️ 系統設定', appearance: '🎨 外觀設定', content: '📝 頁面內容',
     admins: '👤 帳號管理'
   };
@@ -1630,6 +1668,7 @@
     if (id === 'appearance') { loadAppearance(); updatePreview(); }
     if (id === 'system')     loadSystemSettings();
     if (id === 'promotions') loadPromotions();
+    if (id === 'carousel')   loadCarousel();
     if (id === 'notify')    loadSmtpSettings();
   }
 
@@ -3654,6 +3693,111 @@
 
   // ─── 優惠方案管理 ──────────────────────────────
   let _promoStudios = [];
+
+  // ═══════════════════════════════════════════════
+  // 首頁輪播管理
+  // ═══════════════════════════════════════════════
+  async function loadCarousel() {
+    const box = document.getElementById('carousel-list');
+    box.innerHTML = '<div style="color:#aaa;padding:20px;">載入中...</div>';
+    try {
+      const r = await fetch(`${API}/admin/carousel`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+      const { success, data } = await r.json();
+      if (!success || !data.length) {
+        box.innerHTML = '<div style="color:#aaa;padding:20px;grid-column:1/-1;">尚無輪播圖，請於上方新增。</div>';
+        return;
+      }
+      box.innerHTML = data.map(s => `
+        <div style="border:1px solid #e8e4df;border-radius:12px;overflow:hidden;background:#fff;">
+          <div style="aspect-ratio:21/9;background:#f5f0eb center/cover url('${s.image_url}');"></div>
+          <div style="padding:12px 14px;">
+            <input value="${(s.title||'').replace(/"/g,'&quot;')}" placeholder="標題（可留空）" id="crt-${s.id}" class="form-input" style="font-size:.85rem;margin-bottom:6px;" />
+            <input value="${(s.link_url||'').replace(/"/g,'&quot;')}" placeholder="連結（可留空）" id="crl-${s.id}" class="form-input" style="font-size:.8rem;margin-bottom:6px;" />
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span style="font-size:.78rem;color:#888;">排序</span>
+              <input type="number" value="${s.sort_order||0}" id="crs-${s.id}" class="form-input" style="width:70px;font-size:.8rem;" />
+              <label style="font-size:.8rem;display:flex;align-items:center;gap:4px;margin-left:auto;cursor:pointer;">
+                <input type="checkbox" id="cra-${s.id}" ${s.is_active ? 'checked' : ''} /> 顯示
+              </label>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="saveCarousel(${s.id})" style="flex:1;padding:7px;border-radius:6px;border:1px solid #8a9a7b;background:#8a9a7b;color:#fff;cursor:pointer;font-size:.82rem;">💾 儲存</button>
+              <button onclick="deleteCarousel(${s.id})" style="padding:7px 12px;border-radius:6px;border:1px solid #fcc;background:#fff5f5;color:#c0392b;cursor:pointer;font-size:.82rem;">🗑</button>
+            </div>
+          </div>
+        </div>`).join('');
+    } catch(e) {
+      box.innerHTML = '<div style="color:#e74c3c;padding:20px;">載入失敗</div>';
+    }
+  }
+
+  async function addCarousel() {
+    const fileEl = document.getElementById('cr-image');
+    const msg    = document.getElementById('cr-add-msg');
+    const btn    = document.getElementById('cr-add-btn');
+    msg.style.display = 'none';
+    if (!fileEl.files || !fileEl.files[0]) {
+      msg.style.display='block'; msg.style.color='#c0392b'; msg.textContent='請先選擇圖片'; return;
+    }
+    const fd = new FormData();
+    fd.append('image', fileEl.files[0]);
+    fd.append('title', document.getElementById('cr-title').value.trim());
+    fd.append('link_url', document.getElementById('cr-link').value.trim());
+    fd.append('sort_order', document.getElementById('cr-sort').value || '0');
+    btn.disabled = true; btn.textContent = '上傳中...';
+    try {
+      const r = await fetch(`${API}/admin/carousel`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}` },
+        body: fd
+      });
+      const { success, message } = await r.json();
+      msg.style.display='block';
+      if (success) {
+        msg.style.color='#27ae60'; msg.textContent='✅ 已新增';
+        fileEl.value=''; document.getElementById('cr-title').value=''; document.getElementById('cr-link').value=''; document.getElementById('cr-sort').value='0';
+        loadCarousel();
+      } else {
+        msg.style.color='#c0392b'; msg.textContent='❌ ' + (message || '新增失敗');
+      }
+    } catch(e) {
+      msg.style.display='block'; msg.style.color='#c0392b'; msg.textContent='❌ 連線失敗';
+    } finally {
+      btn.disabled = false; btn.textContent = '＋ 上傳並新增';
+    }
+  }
+
+  async function saveCarousel(id) {
+    const body = {
+      title:      document.getElementById('crt-'+id).value.trim(),
+      link_url:   document.getElementById('crl-'+id).value.trim(),
+      sort_order: document.getElementById('crs-'+id).value || 0,
+      is_active:  document.getElementById('cra-'+id).checked
+    };
+    try {
+      const r = await fetch(`${API}/admin/carousel/${id}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const { success, message } = await r.json();
+      if (success) { alert('✅ 已儲存'); loadCarousel(); }
+      else alert('❌ ' + (message || '儲存失敗'));
+    } catch(e) { alert('❌ 連線失敗'); }
+  }
+
+  async function deleteCarousel(id) {
+    if (!confirm('確定刪除這張輪播圖嗎？')) return;
+    try {
+      const r = await fetch(`${API}/admin/carousel/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const { success, message } = await r.json();
+      if (success) loadCarousel();
+      else alert('❌ ' + (message || '刪除失敗'));
+    } catch(e) { alert('❌ 連線失敗'); }
+  }
 
   async function loadPromotions() {
     const tbody = document.getElementById('promotions-table');
