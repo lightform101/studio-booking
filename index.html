@@ -437,17 +437,57 @@
     .tab-book-cta p { color: var(--gray); margin-bottom: 30px; }
 
     /* ─── RESPONSIVE ──────────────────────── */
+    /* 平板 */
     @media (max-width: 900px) {
-      .hero-inner { grid-template-columns: 1fr; }
+      .hero { min-height: auto; }
+      .hero-inner { grid-template-columns: 1fr; padding: 44px 6%; gap: 36px; }
       .hero-visual { display: none; }
-      .studios-grid { grid-template-columns: 1fr; }
+      .studios-grid { grid-template-columns: 1fr; gap: 26px; }
       .footer-inner { grid-template-columns: 1fr 1fr; }
+      section { padding: 56px 6%; }
     }
+    /* 手機 */
     @media (max-width: 600px) {
-      nav { padding: 0 5%; }
+      nav { padding: 0 5%; height: 60px; }
       .nav-links { display: none; }
-      section { padding: 48px 5%; }
-      .footer-inner { grid-template-columns: 1fr; }
+      .hero { margin-top: 60px; }
+      .hero-inner { padding: 30px 5%; }
+      .hero-title { font-size: 2rem; line-height: 1.35; margin-bottom: 16px; }
+      .hero-desc { font-size: .92rem; line-height: 1.8; margin-bottom: 26px; }
+      .hero-badge { font-size: .95rem; margin-bottom: 16px; }
+      .hero-actions { gap: 10px; }
+      .btn-primary, .btn-outline { padding: 12px 24px; font-size: .9rem; }
+
+      section { padding: 38px 5%; }
+      .section-header { margin-bottom: 26px; }
+      .section-title { font-size: 1.5rem; }
+      .section-sub { font-size: .86rem; }
+
+      .news-sec { padding: 22px 5% 2px; }
+      .news-carousel { aspect-ratio: 16/9; }
+      .news-caption { font-size: .85rem; padding: 12px 16px; }
+
+      .studios-grid { gap: 20px; }
+      .studio-carousel { aspect-ratio: 16/10; }
+      .studio-info { padding: 22px 22px 24px; }
+      .studio-name { font-size: 1.2rem; margin-bottom: 8px; }
+      .studio-desc { font-size: .86rem; line-height: 1.7; margin-bottom: 16px; }
+      .studio-specs { gap: 6px; margin-bottom: 16px; }
+      .studio-price { padding: 14px 0; margin-bottom: 16px; }
+      .price-amount { font-size: 1.5rem; }
+      .studio-features { gap: 6px; margin-bottom: 18px; }
+
+      .tab-btns { gap: 8px; margin-bottom: 26px; }
+      .tab-btn { padding: 11px 16px; font-size: .88rem; }
+
+      .steps-grid { gap: 14px; }
+      .step-card { padding: 26px 20px; }
+      .step-arrow { display: none; }
+
+      .rule-card { padding: 22px; }
+      .cta-banner { padding: 52px 5%; }
+
+      .footer-inner { grid-template-columns: 1fr; gap: 24px; }
       .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
     }
   </style>
