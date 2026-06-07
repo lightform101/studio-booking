@@ -1149,8 +1149,11 @@
     const dotsEl = document.getElementById('dots' + key);
     if (!track || !state || state.imgs.length === 0) return;
 
-    track.innerHTML = state.imgs.map(img =>
-      `<img src="${img.url}" alt="${img.alt_text || ''}" loading="lazy" />`
+    // 效能優化：只先載入第一張，其餘存在 data-src，滑到時才載入
+    track.innerHTML = state.imgs.map((img, i) =>
+      i === 0
+        ? `<img src="${img.url}" alt="${img.alt_text || ''}" />`
+        : `<img data-src="${img.url}" alt="${img.alt_text || ''}" loading="lazy" />`
     ).join('');
 
     dotsEl.innerHTML = state.imgs.map((_, i) =>
@@ -1158,6 +1161,17 @@
     ).join('');
 
     updateCarouselPos(key);
+  }
+
+  // 將指定投影片的 data-src 換成 src（真正載入）
+  function loadSlide(key, idx) {
+    const track = document.getElementById('track' + key);
+    if (!track || !track.children[idx]) return;
+    const img = track.children[idx];
+    if (img.dataset && img.dataset.src) {
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src');
+    }
   }
 
   function carouselMove(key, dir) {
@@ -1176,7 +1190,12 @@
     const state = carouselState[key];
     const track = document.getElementById('track' + key);
     const dots  = document.querySelectorAll(`#dots${key} span`);
-    if (track && state) track.style.transform = `translateX(-${state.idx * 100}%)`;
+    if (track && state) {
+      track.style.transform = `translateX(-${state.idx * 100}%)`;
+      // 載入目前這張與下一張（其餘維持延遲）
+      loadSlide(key, state.idx);
+      loadSlide(key, (state.idx + 1) % state.imgs.length);
+    }
     dots.forEach((d, i) => d.classList.toggle('active', i === state?.idx));
   }
 
@@ -1201,8 +1220,11 @@
       const track = document.getElementById('news-track');
       const dots  = document.getElementById('news-dots');
 
-      track.innerHTML = data.map(s => {
-        const img = `<img src="${safeSrc(s.image_url)}" alt="${escapeHTML(s.title || '')}" loading="lazy" />`;
+      track.innerHTML = data.map((s, i) => {
+        // 只先載第一張，其餘 data-src 延遲載入
+        const img = i === 0
+          ? `<img src="${safeSrc(s.image_url)}" alt="${escapeHTML(s.title || '')}" />`
+          : `<img data-src="${safeSrc(s.image_url)}" alt="${escapeHTML(s.title || '')}" loading="lazy" />`;
         const cap = s.title ? `<div class="news-caption">${escapeHTML(s.title)}</div>` : '';
         const inner = img + cap;
         return `<div class="news-slide">${ s.link_url
@@ -1234,7 +1256,15 @@
   function newsGo(i) { newsState.idx = i; newsUpdate(); }
   function newsUpdate() {
     const t = document.getElementById('news-track');
-    if (t) t.style.transform = `translateX(-${newsState.idx * 100}%)`;
+    if (t) {
+      t.style.transform = `translateX(-${newsState.idx * 100}%)`;
+      // 載入目前與下一張消息圖
+      [newsState.idx, (newsState.idx + 1) % newsState.slides.length].forEach(idx => {
+        const slide = t.children[idx];
+        const img = slide && slide.querySelector('img[data-src]');
+        if (img) { img.src = img.dataset.src; img.removeAttribute('data-src'); }
+      });
+    }
     document.querySelectorAll('#news-dots span').forEach((d, i) => d.classList.toggle('active', i === newsState.idx));
   }
 
