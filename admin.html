@@ -2976,7 +2976,7 @@
     const cards = images.map((img, idx) => `
       <div class="img-card" data-id="${img.id}" data-sort="${img.sort_order}"
         style="position:relative;border-radius:10px;overflow:hidden;background:#f0f2f5;border:2px solid ${img.is_main ? '#6f8060' : '#e0e4ea'};">
-        <img src="${img.url}" alt="${img.alt_text || ''}"
+        <img src="${img.url}" alt="${img.alt_text || ''}" loading="lazy"
           style="width:100%;height:130px;object-fit:cover;cursor:pointer;display:block;"
           onclick="openLightbox('${img.url}')" />
         ${img.is_main ? '<div style="position:absolute;top:6px;left:6px;background:#6f8060;color:#fff;font-size:.65rem;padding:2px 7px;border-radius:4px;font-weight:700;">主圖</div>' : ''}
