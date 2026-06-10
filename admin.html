@@ -2368,7 +2368,7 @@
     const purpose      = document.getElementById('bk-e-purpose').value.trim();
     const note         = document.getElementById('bk-e-note').value.trim();
     const admin_note   = document.getElementById('bk-e-admin-note').value.trim();
-    const total_amount = +document.getElementById('bk-e-amount').value || null;
+    const total_amount = +document.getElementById('bk-e-amount').value || 0;  // 0 不可轉成 null（DB 欄位 NOT NULL）
     const status       = document.getElementById('bk-e-status').value;
 
     if (!studio_id || !contact_name || !contact_phone || !booking_date || !start_time || !end_time) {
