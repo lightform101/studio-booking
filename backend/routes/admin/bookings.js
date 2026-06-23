@@ -110,6 +110,16 @@ router.post('/', async (req, res, next) => {
     if (admin_note) await pool.query(`UPDATE bookings SET admin_note=? WHERE id=?`, [admin_note, booking.id]);
 
     const created = await BookingModel.findById(booking.id);
+
+    // ── Google Calendar：後台直接新增且已確認的預約，同步行事曆（失敗不阻斷）──
+    if (created.status === 'confirmed') {
+      try {
+        await GoogleCalSvc.createEvent(created);
+      } catch (e) {
+        console.warn('[GoogleCal] 後台新增預約同步失敗:', e.message);
+      }
+    }
+
     await auditLog(req, 'create', 'booking', created.booking_no, `新增預約 ${created.contact_name} ${created.booking_date}`);
     res.status(201).json({ success: true, data: created, message: `預約 ${created.booking_no} 已建立` });
   } catch (err) { next(err); }
