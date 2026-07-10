@@ -416,6 +416,79 @@
     .news-dots span.active { background: #fff; transform: scale(1.3); }
     @media (max-width: 600px) { .news-carousel { aspect-ratio: 16/9; } .news-caption { font-size: .95rem; padding: 16px 18px; } }
 
+    /* ─── 活動專區 ─── */
+    #events { background: var(--soft); }
+    .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 26px; }
+    .event-card {
+      background: #fff; border-radius: 24px; overflow: hidden;
+      border: 1px solid var(--border); box-shadow: 0 8px 30px rgba(120,130,110,.07);
+      display: flex; flex-direction: column;
+      transition: transform .3s, box-shadow .3s;
+    }
+    .event-card:hover { transform: translateY(-5px); box-shadow: 0 18px 44px rgba(120,130,110,.14); }
+    .event-img { aspect-ratio: 16/9; background: linear-gradient(135deg, var(--cream), #e3e7dd); position: relative; overflow: hidden; }
+    .event-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s; }
+    .event-card:hover .event-img img { transform: scale(1.04); }
+    .event-img .no-img { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.6rem; }
+    .event-cat {
+      position: absolute; top: 12px; left: 12px;
+      padding: 5px 14px; border-radius: 20px;
+      font-size: .74rem; font-weight: 500; letter-spacing: .05em;
+      background: rgba(255,255,255,.92); color: var(--sage-d);
+    }
+    .event-cat.course { background: rgba(111,128,96,.92); color: #fff; }
+    .event-cat.promo  { background: rgba(210,162,76,.92); color: #fff; }
+    .event-cat.talk   { background: rgba(90,199,208,.85); color: #fff; }
+    .event-body { padding: 22px 24px 24px; display: flex; flex-direction: column; flex: 1; }
+    .event-title { font-family: var(--head); font-size: 1.15rem; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+    .event-date { font-size: .8rem; color: var(--sage-d); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .event-desc { font-size: .87rem; color: var(--gray); line-height: 1.8; margin-bottom: 18px; flex: 1; }
+    .event-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: auto; }
+    .event-link {
+      background: var(--sage); color: #fff; text-decoration: none;
+      padding: 10px 24px; border-radius: 30px; font-size: .86rem; font-weight: 500;
+      transition: background .25s; cursor: pointer; border: none;
+    }
+    .event-link:hover { background: var(--sage-d); }
+    .event-detail-btn {
+      background: #fff; color: var(--sage-d); border: 1px solid var(--sage);
+      padding: 10px 22px; border-radius: 30px; font-size: .86rem; font-weight: 500; cursor: pointer;
+      transition: all .25s;
+    }
+    .event-detail-btn:hover { background: var(--soft); }
+    /* 活動詳情彈窗 */
+    .ev-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(43,46,39,.55); backdrop-filter: blur(3px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .ev-modal-overlay.open { display: flex; }
+    .ev-modal {
+      background: #fff; border-radius: 22px; max-width: 680px; width: 100%;
+      max-height: 88vh; overflow-y: auto; position: relative;
+      box-shadow: 0 24px 70px rgba(0,0,0,.3);
+    }
+    .ev-modal-close {
+      position: sticky; top: 12px; float: right; margin: 12px 12px 0 0;
+      width: 34px; height: 34px; border: none; border-radius: 50%;
+      background: rgba(43,46,39,.55); color: #fff; font-size: 1rem; cursor: pointer; z-index: 2;
+    }
+    .ev-modal-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+    .ev-modal-body { padding: 24px 28px 30px; }
+    .ev-modal-cat { display: inline-block; font-size: .76rem; font-weight: 500; color: var(--sage-d); background: var(--soft); padding: 4px 14px; border-radius: 20px; margin-bottom: 10px; }
+    .ev-modal h3 { font-family: var(--head); font-size: 1.5rem; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+    .ev-modal-meta { font-size: .85rem; color: var(--sage-d); margin-bottom: 16px; line-height: 1.9; }
+    .ev-modal-desc { font-size: .94rem; color: #555; line-height: 1.95; white-space: pre-wrap; margin-bottom: 20px; }
+    .ev-modal-video { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 14px; overflow: hidden; margin-bottom: 20px; background: #000; }
+    .ev-modal-video iframe, .ev-modal-video video { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    .ev-modal-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .ev-modal-gallery img { width: 100%; border-radius: 12px; display: block; }
+    .ev-modal .event-link { display: inline-block; }
+    @media (max-width: 600px) {
+      .events-grid { grid-template-columns: 1fr; gap: 18px; }
+      .event-body { padding: 18px 20px 20px; }
+    }
+
     /* ─── 分頁區塊（優惠 / 常見問題 / 立即預約）─── */
     #explore { background: var(--light); }
     .tab-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
@@ -502,6 +575,7 @@
   </a>
   <div class="nav-links">
     <a href="#studios">場地介紹</a>
+    <a href="#events" id="nav-events-link" style="display:none;">活動專區</a>
     <a href="#how">預約流程</a>
     <a href="#rules">注意事項</a>
     <a href="#explore" onclick="switchTab('faq')">常見問題</a>
@@ -639,6 +713,18 @@
   </div>
 </section>
 
+<!-- ─── 活動專區（後台管理，無活動時整區隱藏）── -->
+<section id="events" style="display:none;">
+  <div class="max-w">
+    <div class="section-header">
+      <div class="section-tag">活動專區</div>
+      <h2 class="section-title">課程與最新活動</h2>
+      <p class="section-sub">攝影課程、特惠活動與講座資訊</p>
+    </div>
+    <div class="events-grid" id="events-grid"></div>
+  </div>
+</section>
+
 <!-- ─── HOW IT WORKS ────────────────────── -->
 <section id="how">
   <div class="max-w">
@@ -761,6 +847,14 @@
     <span id="footer-contact">contact@lightformstudio.com.tw ｜ 02-XXXX-XXXX</span>
   </div>
 </footer>
+
+<!-- ─── 活動詳情彈窗 ─── -->
+<div class="ev-modal-overlay" id="ev-modal-overlay" onclick="if(event.target===this)closeEventDetail()">
+  <div class="ev-modal">
+    <button class="ev-modal-close" onclick="closeEventDetail()">✕</button>
+    <div id="ev-modal-content"></div>
+  </div>
+</div>
 
 <script>
   function escapeHTML(s) {
@@ -1268,9 +1362,118 @@
     document.querySelectorAll('#news-dots span').forEach((d, i) => d.classList.toggle('active', i === newsState.idx));
   }
 
+  // ═══════════════════════════════════════════════
+  // 活動專區（後台管理）
+  // ═══════════════════════════════════════════════
+  const EV_CAT_LABEL = { course: '📚 課程', promo: '🎁 特惠活動', talk: '🎤 講座', other: '📌 活動' };
+  let _eventsData = [];
+  function evMeta(ev) {
+    return [
+      ev.capacity != null ? `👥 限 ${ev.capacity} 人` : '',
+      ev.price != null ? (Number(ev.price) === 0 ? '💰 免費' : `💰 NT$ ${Number(ev.price).toLocaleString()}`) : ''
+    ].filter(Boolean).join('　');
+  }
+  function evDate(ev) {
+    return [ev.event_date ? String(ev.event_date).slice(0, 10) : '', ev.date_note || ''].filter(Boolean).join(' ｜ ');
+  }
+
+  async function initEvents() {
+    try {
+      const r = await fetch('/api/events');
+      if (!r.ok) return;
+      const { data } = await r.json();
+      if (!data || !data.length) return;   // 無活動則整區隱藏
+      _eventsData = data;
+
+      const grid = document.getElementById('events-grid');
+      grid.innerHTML = data.map(ev => {
+        const cat = EV_CAT_LABEL[ev.category] ? ev.category : 'other';
+        const dateStr = evDate(ev), metaStr = evMeta(ev);
+        const img = ev.image_url && safeSrc(ev.image_url)
+          ? `<img src="${safeSrc(ev.image_url)}" alt="${escapeHTML(ev.title)}" loading="lazy" />`
+          : `<div class="no-img">📸</div>`;
+        // 有附圖或影片 → 顯示「查看詳情」開彈窗
+        const hasDetail = (ev.gallery && ev.gallery.length) || ev.video_url;
+        return `<div class="event-card">
+          <div class="event-img">
+            ${img}
+            <span class="event-cat ${cat}">${EV_CAT_LABEL[cat]}</span>
+          </div>
+          <div class="event-body">
+            <div class="event-title">${escapeHTML(ev.title)}</div>
+            ${dateStr ? `<div class="event-date">🗓 ${escapeHTML(dateStr)}</div>` : ''}
+            ${metaStr ? `<div class="event-date">${escapeHTML(metaStr)}</div>` : ''}
+            ${ev.description ? `<p class="event-desc">${escapeHTML(ev.description)}</p>` : ''}
+            <div class="event-actions">
+              ${ev.link_url && safeSrc(ev.link_url)
+                ? `<a class="event-link" href="${safeSrc(ev.link_url)}" target="_blank" rel="noopener">${escapeHTML(ev.link_label || '立即報名 →')}</a>`
+                : ''}
+              ${hasDetail ? `<button class="event-detail-btn" onclick="openEventDetail(${ev.id})">查看詳情</button>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+      document.getElementById('events').style.display = '';
+      const navLink = document.getElementById('nav-events-link');
+      if (navLink) navLink.style.display = '';
+    } catch (e) { /* 靜默 */ }
+  }
+
+  // 將 YouTube / Vimeo 網址轉為可嵌入的 embed 網址
+  function toEmbedUrl(url) {
+    if (!url) return '';
+    const u = String(url);
+    let m;
+    if ((m = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/)))
+      return `https://www.youtube.com/embed/${m[1]}`;
+    if ((m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/)))
+      return `https://player.vimeo.com/video/${m[1]}`;
+    return ''; // 非 YouTube/Vimeo，改用 <video> 直連
+  }
+
+  function openEventDetail(id) {
+    const ev = _eventsData.find(x => x.id === id);
+    if (!ev) return;
+    const cat = EV_CAT_LABEL[ev.category] ? ev.category : 'other';
+    const dateStr = evDate(ev), metaStr = evMeta(ev);
+    const embed = toEmbedUrl(ev.video_url);
+    const videoHtml = ev.video_url
+      ? `<div class="ev-modal-video">${ embed
+          ? `<iframe src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`
+          : `<video src="${safeSrc(ev.video_url)}" controls preload="metadata"></video>` }</div>`
+      : '';
+    const galleryHtml = (ev.gallery && ev.gallery.length)
+      ? `<div class="ev-modal-gallery">${ev.gallery.map(g => `<img src="${safeSrc(g)}" alt="" loading="lazy" />`).join('')}</div>`
+      : '';
+    const mainImg = ev.image_url && safeSrc(ev.image_url)
+      ? `<img class="ev-modal-img" src="${safeSrc(ev.image_url)}" alt="${escapeHTML(ev.title)}" />` : '';
+    document.getElementById('ev-modal-content').innerHTML = `
+      ${mainImg}
+      <div class="ev-modal-body">
+        <span class="ev-modal-cat">${EV_CAT_LABEL[cat]}</span>
+        <h3>${escapeHTML(ev.title)}</h3>
+        ${(dateStr || metaStr) ? `<div class="ev-modal-meta">${dateStr ? '🗓 ' + escapeHTML(dateStr) + '<br>' : ''}${metaStr ? escapeHTML(metaStr) : ''}</div>` : ''}
+        ${ev.description ? `<div class="ev-modal-desc">${escapeHTML(ev.description)}</div>` : ''}
+        ${videoHtml}
+        ${galleryHtml}
+        ${ev.link_url && safeSrc(ev.link_url)
+          ? `<a class="event-link" href="${safeSrc(ev.link_url)}" target="_blank" rel="noopener">${escapeHTML(ev.link_label || '立即報名 →')}</a>`
+          : ''}
+      </div>`;
+    document.getElementById('ev-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeEventDetail() {
+    document.getElementById('ev-modal-overlay').classList.remove('open');
+    document.getElementById('ev-modal-content').innerHTML = ''; // 清空以停止影片播放
+    document.body.style.overflow = '';
+  }
+
   // 初始化
   initStudios();
   initNews();
+  initEvents();
 </script>
 </body>
 </html>

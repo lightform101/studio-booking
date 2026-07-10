@@ -351,6 +351,9 @@
     <button class="sb-item" onclick="showPage('carousel', this)">
       <span class="icon">🖼</span> 首頁輪播
     </button>
+    <button class="sb-item" onclick="showPage('events', this)">
+      <span class="icon">🎪</span> 活動專區
+    </button>
     <button class="sb-item" onclick="showPage('notify', this)">
       <span class="icon">🔔</span> 通知設定
     </button>
@@ -1343,6 +1346,93 @@
       </div>
     </div>
 
+    <!-- ─── 活動專區管理 ─────────────────────────── -->
+    <div class="page" id="page-events">
+      <div class="settings-section">
+        <h3 style="margin:0 0 6px;" id="ev-form-title">🎪 新增活動</h3>
+        <p style="color:#888;font-size:.85rem;margin:0 0 16px;">發布攝影課程、特惠活動、講座等，會顯示在前台首頁的「活動專區」。圖片建議尺寸 800×450（16:9）。</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:760px;">
+          <input type="hidden" id="ev-id" />
+          <div class="form-group" style="grid-column:1/-1;">
+            <div class="form-label">活動標題 *</div>
+            <input type="text" id="ev-title" class="form-input" placeholder="例：手機商品攝影入門課" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">類別</div>
+            <select id="ev-category" class="form-select">
+              <option value="course">📚 課程</option>
+              <option value="promo">🎁 特惠活動</option>
+              <option value="talk">🎤 講座</option>
+              <option value="other">📌 其他</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">圖片（16:9 橫幅，可留空）</div>
+            <input type="file" id="ev-image" accept="image/*" class="form-input" />
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <div class="form-label">活動說明</div>
+            <textarea id="ev-desc" class="form-input" rows="3" style="resize:vertical;" placeholder="顯示在前台的活動介紹文字"></textarea>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <div class="form-label">說明附圖（可多張，<strong>每張 ≤ 1MB</strong>，顯示在「查看詳情」彈窗）</div>
+            <input type="file" id="ev-gallery" accept="image/*" multiple class="form-input" />
+            <div id="ev-gallery-existing" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <div class="form-label">影片連結（外連，不佔硬碟；貼 YouTube／Vimeo 網址即可）</div>
+            <input type="text" id="ev-video" class="form-input" placeholder="例：https://www.youtube.com/watch?v=xxxx" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">活動日期（可留空）</div>
+            <input type="date" id="ev-date" class="form-input" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">日期補充文字（可留空）</div>
+            <input type="text" id="ev-date-note" class="form-input" placeholder="例：每週六開課、報名至 7/31" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">人數上限（可留空=不顯示）</div>
+            <input type="number" id="ev-capacity" class="form-input" min="1" placeholder="例：8" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">費用 NT$（0=免費，留空=不顯示）</div>
+            <input type="number" id="ev-price" class="form-input" min="0" placeholder="例：1200" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">報名/詳情連結（可留空）</div>
+            <input type="text" id="ev-link" class="form-input" placeholder="例：https://forms.gle/... 或 LINE 連結" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">按鈕文字（預設：立即報名 →）</div>
+            <input type="text" id="ev-link-label" class="form-input" placeholder="立即報名 →" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">排序（數字小優先）</div>
+            <input type="number" id="ev-sort" class="form-input" value="0" min="0" />
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:24px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;">
+              <input type="checkbox" id="ev-active" checked style="width:16px;height:16px;" />
+              顯示此活動
+            </label>
+          </div>
+        </div>
+        <div id="ev-form-msg" style="display:none;margin-top:10px;font-size:.85rem;"></div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn-add" id="ev-submit-btn" onclick="submitEvent()">＋ 新增活動</button>
+          <button id="ev-cancel-btn" onclick="resetEventForm()" style="display:none;padding:8px 18px;border-radius:7px;border:1px solid #d0d4db;background:#fff;cursor:pointer;">取消編輯</button>
+        </div>
+      </div>
+
+      <div class="settings-section" style="margin-top:20px;">
+        <h3 style="margin:0 0 16px;">目前活動</h3>
+        <div id="events-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">
+          <div style="color:#aaa;padding:20px;">載入中...</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1622,7 +1712,7 @@
   const titles = {
     dashboard: '📊 儀表板', bookings: '📅 預約管理', calendar: '🗓 排程日曆',
     revenue: '💰 收入報表', studios: '🏠 場地設定', photos: '📷 場地照片',
-    promotions: '🎁 優惠方案', carousel: '🖼 首頁輪播', notify: '🔔 通知設定', invoice: '🧾 發票設定',
+    promotions: '🎁 優惠方案', carousel: '🖼 首頁輪播', events: '🎪 活動專區', notify: '🔔 通知設定', invoice: '🧾 發票設定',
     system: '⚙️ 系統設定', appearance: '🎨 外觀設定', content: '📝 頁面內容',
     admins: '👤 帳號管理'
   };
@@ -1679,6 +1769,7 @@
     if (id === 'system')     loadSystemSettings();
     if (id === 'promotions') loadPromotions();
     if (id === 'carousel')   loadCarousel();
+    if (id === 'events')     loadEvents();
     if (id === 'notify')    loadSmtpSettings();
   }
 
@@ -3805,6 +3896,182 @@
       });
       const { success, message } = await r.json();
       if (success) loadCarousel();
+      else alert('❌ ' + (message || '刪除失敗'));
+    } catch(e) { alert('❌ 連線失敗'); }
+  }
+
+  // ═══════════════════════════════════════════════
+  // 活動專區管理
+  // ═══════════════════════════════════════════════
+  let _eventsCache = [];
+  let _evKeepGallery = [];   // 編輯時要保留的既有附圖
+  const EV_CAT_LABEL = { course: '📚 課程', promo: '🎁 特惠活動', talk: '🎤 講座', other: '📌 其他' };
+
+  // 渲染編輯中要保留的既有附圖縮圖（可逐張移除）
+  function renderEvGalleryThumbs() {
+    const box = document.getElementById('ev-gallery-existing');
+    if (!box) return;
+    box.innerHTML = _evKeepGallery.map(url => `
+      <div style="position:relative;width:74px;height:74px;border-radius:8px;overflow:hidden;border:1px solid #e7e7e0;">
+        <img src="${url}" style="width:100%;height:100%;object-fit:cover;" />
+        <button type="button" onclick="removeEvGalleryThumb('${url.replace(/'/g,"\\'")}')" title="移除"
+          style="position:absolute;top:2px;right:2px;width:20px;height:20px;border:none;border-radius:50%;background:rgba(192,57,43,.85);color:#fff;cursor:pointer;font-size:.7rem;line-height:1;">✕</button>
+      </div>`).join('');
+  }
+  function removeEvGalleryThumb(url) {
+    _evKeepGallery = _evKeepGallery.filter(u => u !== url);
+    renderEvGalleryThumbs();
+  }
+
+  async function loadEvents() {
+    const box = document.getElementById('events-list');
+    box.innerHTML = '<div style="color:#aaa;padding:20px;">載入中...</div>';
+    try {
+      const r = await fetch(`${API}/admin/events`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+      const { success, data } = await r.json();
+      _eventsCache = data || [];
+      if (!success || !_eventsCache.length) {
+        box.innerHTML = '<div style="color:#aaa;padding:20px;grid-column:1/-1;">尚無活動，請於上方新增。</div>';
+        return;
+      }
+      box.innerHTML = _eventsCache.map(ev => `
+        <div style="border:1px solid #e7e7e0;border-radius:12px;overflow:hidden;background:#fff;${ev.is_active ? '' : 'opacity:.55;'}">
+          <div style="aspect-ratio:16/9;background:#eef0ea center/cover ${ev.image_url ? `url('${ev.image_url}')` : ''};display:flex;align-items:center;justify-content:center;">
+            ${ev.image_url ? '' : '<span style="font-size:2rem;">📸</span>'}
+          </div>
+          <div style="padding:12px 14px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="font-size:.72rem;background:#eef0ea;color:#6f8060;padding:2px 9px;border-radius:12px;">${EV_CAT_LABEL[ev.category] || ev.category}</span>
+              ${ev.is_active ? '' : '<span style="font-size:.72rem;background:#f5e6e0;color:#c0623e;padding:2px 9px;border-radius:12px;">已隱藏</span>'}
+            </div>
+            <div style="font-weight:700;font-size:.95rem;margin-bottom:4px;">${(ev.title||'').replace(/</g,'&lt;')}</div>
+            <div style="font-size:.78rem;color:#9a9a92;margin-bottom:10px;">
+              ${ev.event_date ? String(ev.event_date).slice(0,10) : ''} ${(ev.date_note||'').replace(/</g,'&lt;')}
+              ${ev.capacity != null ? ` ・👥 ${ev.capacity} 人` : ''}
+              ${ev.price != null ? (Number(ev.price) === 0 ? ' ・💰 免費' : ` ・💰 NT$${Number(ev.price).toLocaleString()}`) : ''}
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="editEvent(${ev.id})" style="flex:1;padding:7px;border-radius:6px;border:1px solid #8a9a7b;background:#8a9a7b;color:#fff;cursor:pointer;font-size:.82rem;">✏️ 編輯</button>
+              <button onclick="deleteEvent(${ev.id})" style="padding:7px 12px;border-radius:6px;border:1px solid #fcc;background:#fff5f5;color:#c0392b;cursor:pointer;font-size:.82rem;">🗑</button>
+            </div>
+          </div>
+        </div>`).join('');
+    } catch(e) {
+      box.innerHTML = '<div style="color:#e74c3c;padding:20px;">載入失敗</div>';
+    }
+  }
+
+  async function submitEvent() {
+    const id    = document.getElementById('ev-id').value;
+    const title = document.getElementById('ev-title').value.trim();
+    const msg   = document.getElementById('ev-form-msg');
+    const btn   = document.getElementById('ev-submit-btn');
+    msg.style.display = 'none';
+    if (!title) {
+      msg.style.display='block'; msg.style.color='#c0392b'; msg.textContent='請輸入活動標題'; return;
+    }
+    const fd = new FormData();
+    fd.append('title', title);
+    fd.append('category', document.getElementById('ev-category').value);
+    fd.append('description', document.getElementById('ev-desc').value.trim());
+    fd.append('event_date', document.getElementById('ev-date').value || '');
+    fd.append('date_note', document.getElementById('ev-date-note').value.trim());
+    fd.append('capacity', document.getElementById('ev-capacity').value);
+    fd.append('price', document.getElementById('ev-price').value);
+    fd.append('video_url', document.getElementById('ev-video').value.trim());
+    fd.append('link_url', document.getElementById('ev-link').value.trim());
+    fd.append('link_label', document.getElementById('ev-link-label').value.trim());
+    fd.append('sort_order', document.getElementById('ev-sort').value || '0');
+    fd.append('is_active', document.getElementById('ev-active').checked ? '1' : '0');
+    const fileEl = document.getElementById('ev-image');
+    if (fileEl.files && fileEl.files[0]) fd.append('image', fileEl.files[0]);
+    // 說明附圖（新上傳）＋ 編輯時保留的既有附圖
+    const galEl = document.getElementById('ev-gallery');
+    if (galEl.files && galEl.files.length) {
+      for (const f of galEl.files) {
+        if (f.size > 1024 * 1024) {
+          msg.style.display='block'; msg.style.color='#c0392b';
+          msg.textContent = `附圖「${f.name}」超過 1MB，請壓縮後再上傳`; return;
+        }
+        fd.append('gallery', f);
+      }
+    }
+    if (id) fd.append('keep_gallery', JSON.stringify(_evKeepGallery));
+
+    btn.disabled = true; btn.textContent = '儲存中...';
+    try {
+      const r = await fetch(id ? `${API}/admin/events/${id}` : `${API}/admin/events`, {
+        method: id ? 'PUT' : 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}` },
+        body: fd
+      });
+      const { success, message } = await r.json();
+      msg.style.display = 'block';
+      if (success) {
+        msg.style.color='#27ae60'; msg.textContent = id ? '✅ 已更新' : '✅ 已新增';
+        resetEventForm();
+        loadEvents();
+      } else {
+        msg.style.color='#c0392b'; msg.textContent='❌ ' + (message || '儲存失敗');
+      }
+    } catch(e) {
+      msg.style.display='block'; msg.style.color='#c0392b'; msg.textContent='❌ 連線失敗';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = document.getElementById('ev-id').value ? '💾 更新活動' : '＋ 新增活動';
+    }
+  }
+
+  function editEvent(id) {
+    const ev = _eventsCache.find(x => x.id === id);
+    if (!ev) return;
+    document.getElementById('ev-id').value         = ev.id;
+    document.getElementById('ev-title').value      = ev.title || '';
+    document.getElementById('ev-category').value   = ev.category || 'other';
+    document.getElementById('ev-desc').value       = ev.description || '';
+    document.getElementById('ev-date').value       = ev.event_date ? String(ev.event_date).slice(0,10) : '';
+    document.getElementById('ev-date-note').value  = ev.date_note || '';
+    document.getElementById('ev-capacity').value   = ev.capacity != null ? ev.capacity : '';
+    document.getElementById('ev-price').value      = ev.price != null ? ev.price : '';
+    document.getElementById('ev-video').value      = ev.video_url || '';
+    document.getElementById('ev-link').value       = ev.link_url || '';
+    document.getElementById('ev-link-label').value = ev.link_label || '';
+    document.getElementById('ev-sort').value       = ev.sort_order || 0;
+    document.getElementById('ev-active').checked   = !!ev.is_active;
+    document.getElementById('ev-image').value      = '';
+    document.getElementById('ev-gallery').value    = '';
+    _evKeepGallery = Array.isArray(ev.gallery) ? ev.gallery.slice() : [];
+    renderEvGalleryThumbs();
+    document.getElementById('ev-form-title').textContent = '✏️ 編輯活動';
+    document.getElementById('ev-submit-btn').textContent = '💾 更新活動';
+    document.getElementById('ev-cancel-btn').style.display = '';
+    document.getElementById('page-events').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function resetEventForm() {
+    document.getElementById('ev-id').value = '';
+    ['ev-title','ev-desc','ev-date','ev-date-note','ev-capacity','ev-price','ev-video','ev-link','ev-link-label'].forEach(i => document.getElementById(i).value = '');
+    document.getElementById('ev-category').value = 'course';
+    document.getElementById('ev-sort').value = '0';
+    document.getElementById('ev-active').checked = true;
+    document.getElementById('ev-image').value = '';
+    document.getElementById('ev-gallery').value = '';
+    _evKeepGallery = [];
+    renderEvGalleryThumbs();
+    document.getElementById('ev-form-title').textContent = '🎪 新增活動';
+    document.getElementById('ev-submit-btn').textContent = '＋ 新增活動';
+    document.getElementById('ev-cancel-btn').style.display = 'none';
+  }
+
+  async function deleteEvent(id) {
+    if (!confirm('確定刪除這個活動嗎？')) return;
+    try {
+      const r = await fetch(`${API}/admin/events/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const { success, message } = await r.json();
+      if (success) loadEvents();
       else alert('❌ ' + (message || '刪除失敗'));
     } catch(e) { alert('❌ 連線失敗'); }
   }
