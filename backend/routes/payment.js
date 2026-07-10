@@ -122,6 +122,12 @@ router.post('/newebpay/notify', async (req, res, next) => {
     // 發送確認通知
     await NotifySvc.send('booking_confirmed', updated);
 
+    // LINE：推播「付款完成」通知給管理員（失敗不阻斷）
+    try {
+      const LineSvc = require('../services/lineService');
+      await LineSvc.pushToOwners('💰 有預約完成付款！\n' + LineSvc.buildBookingAlert(updated));
+    } catch (e) { console.warn('[LINE] 付款完成通知失敗:', e.message); }
+
     res.send('1|OK');
   } catch (err) {
     console.error('[NewebPay Notify Error]', err);

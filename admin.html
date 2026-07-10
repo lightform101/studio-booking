@@ -354,6 +354,9 @@
     <button class="sb-item" onclick="showPage('events', this)">
       <span class="icon">🎪</span> 活動專區
     </button>
+    <button class="sb-item" onclick="showPage('line', this)">
+      <span class="icon">💬</span> LINE 通知
+    </button>
     <button class="sb-item" onclick="showPage('notify', this)">
       <span class="icon">🔔</span> 通知設定
     </button>
@@ -1346,6 +1349,56 @@
       </div>
     </div>
 
+    <!-- ─── LINE 通知設定 ─────────────────────────── -->
+    <div class="page" id="page-line">
+      <div class="settings-section">
+        <h3 style="margin:0 0 6px;">💬 LINE 通知設定</h3>
+        <p style="color:#888;font-size:.85rem;margin:0 0 16px;">設定後，<strong>有新預約 / 客戶完成付款</strong>時，系統會即時推播 LINE 通知給你。</p>
+
+        <div style="max-width:720px;">
+          <div class="form-group">
+            <div class="form-label">Channel Access Token（long-lived）</div>
+            <input type="text" id="line_token" class="form-input" placeholder="貼上 LINE Developers 發行的 token" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">Channel Secret</div>
+            <input type="text" id="line_secret" class="form-input" placeholder="貼上 Basic settings 的 Channel secret" autocomplete="off" />
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;margin:6px 0 14px;">
+            <input type="checkbox" id="line_enabled" checked /> 啟用 LINE 通知
+          </label>
+          <div id="line-save-msg" style="display:none;font-size:.85rem;margin-bottom:10px;"></div>
+          <button class="btn-add" id="line-save-btn" onclick="saveLineSettings()">💾 儲存金鑰</button>
+        </div>
+      </div>
+
+      <div class="settings-section" style="margin-top:20px;">
+        <h3 style="margin:0 0 10px;">🔗 Webhook 網址</h3>
+        <p style="color:#888;font-size:.85rem;margin:0 0 10px;">請到 LINE Developers → Messaging API → Webhook settings，把下面這個網址貼上並「啟用 Webhook」：</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <code id="line-webhook-url" style="background:#eef0ea;padding:8px 14px;border-radius:8px;font-size:.85rem;">https://lightformstudio.com.tw/api/line/webhook</code>
+          <button onclick="copyLineWebhook()" style="padding:7px 14px;border-radius:7px;border:1px solid #8a9a7b;background:#fff;color:#6f8060;cursor:pointer;font-size:.82rem;">📋 複製</button>
+        </div>
+      </div>
+
+      <div class="settings-section" style="margin-top:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <h3 style="margin:0;">👥 通知對象</h3>
+          <div style="display:flex;gap:8px;">
+            <button onclick="loadLineContacts()" style="padding:7px 14px;border-radius:7px;border:1px solid #d0d4db;background:#fff;cursor:pointer;font-size:.82rem;">🔄 重新整理</button>
+            <button class="btn-add" onclick="testLinePush()">🔔 測試推播</button>
+          </div>
+        </div>
+        <p style="color:#888;font-size:.85rem;margin:0 0 12px;">
+          用你的 LINE <strong>加官方帳號好友</strong>並傳一則訊息後，你的帳號會出現在下方。把自己「✅ 設為通知對象」，就會收到新預約通知。
+        </p>
+        <div id="line-test-msg" style="display:none;font-size:.85rem;margin-bottom:10px;"></div>
+        <div id="line-contacts" style="display:grid;gap:10px;">
+          <div style="color:#aaa;padding:20px;">載入中...</div>
+        </div>
+      </div>
+    </div>
+
     <!-- ─── 活動專區管理 ─────────────────────────── -->
     <div class="page" id="page-events">
       <div class="settings-section">
@@ -1712,7 +1765,7 @@
   const titles = {
     dashboard: '📊 儀表板', bookings: '📅 預約管理', calendar: '🗓 排程日曆',
     revenue: '💰 收入報表', studios: '🏠 場地設定', photos: '📷 場地照片',
-    promotions: '🎁 優惠方案', carousel: '🖼 首頁輪播', events: '🎪 活動專區', notify: '🔔 通知設定', invoice: '🧾 發票設定',
+    promotions: '🎁 優惠方案', carousel: '🖼 首頁輪播', events: '🎪 活動專區', line: '💬 LINE 通知', notify: '🔔 通知設定', invoice: '🧾 發票設定',
     system: '⚙️ 系統設定', appearance: '🎨 外觀設定', content: '📝 頁面內容',
     admins: '👤 帳號管理'
   };
@@ -1770,6 +1823,7 @@
     if (id === 'promotions') loadPromotions();
     if (id === 'carousel')   loadCarousel();
     if (id === 'events')     loadEvents();
+    if (id === 'line')       loadLineSettings();
     if (id === 'notify')    loadSmtpSettings();
   }
 
@@ -3898,6 +3952,102 @@
       if (success) loadCarousel();
       else alert('❌ ' + (message || '刪除失敗'));
     } catch(e) { alert('❌ 連線失敗'); }
+  }
+
+  // ═══════════════════════════════════════════════
+  // LINE 通知設定
+  // ═══════════════════════════════════════════════
+  async function loadLineSettings() {
+    try {
+      const r = await fetch(`${API}/admin/settings`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+      const { data } = await r.json();
+      document.getElementById('line_token').value   = data.line_channel_access_token || '';
+      document.getElementById('line_secret').value  = data.line_channel_secret || '';
+      document.getElementById('line_enabled').checked = data.line_notify_enabled !== '0';
+    } catch(e) { /* 靜默 */ }
+    loadLineContacts();
+  }
+
+  async function saveLineSettings() {
+    const msg = document.getElementById('line-save-msg');
+    const btn = document.getElementById('line-save-btn');
+    const settings = {
+      line_channel_access_token: document.getElementById('line_token').value.trim(),
+      line_channel_secret:       document.getElementById('line_secret').value.trim(),
+      line_notify_enabled:       document.getElementById('line_enabled').checked ? '1' : '0',
+    };
+    btn.disabled = true; btn.textContent = '儲存中...';
+    try {
+      const r = await fetch(`${API}/admin/settings`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings })
+      });
+      const { success, message } = await r.json();
+      msg.style.display = 'block';
+      msg.style.color = success ? '#27ae60' : '#c0392b';
+      msg.textContent = success ? '✅ 已儲存' : ('❌ ' + (message || '儲存失敗'));
+    } catch(e) {
+      msg.style.display = 'block'; msg.style.color = '#c0392b'; msg.textContent = '❌ 連線失敗';
+    } finally {
+      btn.disabled = false; btn.textContent = '💾 儲存金鑰';
+    }
+  }
+
+  function copyLineWebhook() {
+    const url = document.getElementById('line-webhook-url').textContent;
+    navigator.clipboard?.writeText(url).then(() => alert('已複製 Webhook 網址'), () => {});
+  }
+
+  async function loadLineContacts() {
+    const box = document.getElementById('line-contacts');
+    box.innerHTML = '<div style="color:#aaa;padding:20px;">載入中...</div>';
+    try {
+      const r = await fetch(`${API}/admin/line/contacts`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+      const { data } = await r.json();
+      if (!data || !data.length) {
+        box.innerHTML = '<div style="color:#aaa;padding:16px;">尚無聯絡人。請用你的 LINE 加官方帳號好友並傳一則訊息，再按「🔄 重新整理」。</div>';
+        return;
+      }
+      box.innerHTML = data.map(c => `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #e7e7e0;border-radius:10px;padding:12px 16px;background:#fff;">
+          <div>
+            <div style="font-weight:700;">${(c.display_name || '（未取得名稱）').replace(/</g,'&lt;')}</div>
+            <div style="font-size:.72rem;color:#9a9a92;font-family:monospace;">${c.user_id.slice(0,12)}…</div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" ${c.notify_enabled ? 'checked' : ''} onchange="toggleLineContact(${c.id}, this.checked)" />
+            設為通知對象
+          </label>
+        </div>`).join('');
+    } catch(e) {
+      box.innerHTML = '<div style="color:#e74c3c;padding:16px;">載入失敗</div>';
+    }
+  }
+
+  async function toggleLineContact(id, enabled) {
+    try {
+      await fetch(`${API}/admin/line/contacts/${id}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notify_enabled: enabled })
+      });
+    } catch(e) { alert('❌ 設定失敗'); loadLineContacts(); }
+  }
+
+  async function testLinePush() {
+    const msg = document.getElementById('line-test-msg');
+    msg.style.display = 'block'; msg.style.color = '#888'; msg.textContent = '⏳ 發送中...';
+    try {
+      const r = await fetch(`${API}/admin/line/test`, {
+        method: 'POST', headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const { success, message } = await r.json();
+      msg.style.color = success ? '#27ae60' : '#c0392b';
+      msg.textContent = (success ? '✅ ' : '❌ ') + message;
+    } catch(e) {
+      msg.style.color = '#c0392b'; msg.textContent = '❌ 連線失敗';
+    }
   }
 
   // ═══════════════════════════════════════════════

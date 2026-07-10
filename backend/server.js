@@ -38,6 +38,8 @@ const adminCarouselRouter    = require('./routes/admin/carousel');
 const carouselRouter         = require('./routes/carousel');
 const adminEventsRouter      = require('./routes/admin/events');
 const eventsRouter           = require('./routes/events');
+const adminLineRouter        = require('./routes/admin/line');
+const lineRouter             = require('./routes/line');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -81,7 +83,8 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 
 // ─── Body Parser ────────────────────────────────────
-app.use(express.json({ limit: '512kb' }));
+// verify 保留原始 body（LINE webhook 簽章驗證需要）
+app.use(express.json({ limit: '512kb', verify: (req, res, buf) => { req.rawBody = buf; } }));
 app.use(express.urlencoded({ extended: true, limit: '512kb' }));
 
 // ─── Static Files（前台網頁 + 上傳圖片）───────────────
@@ -99,6 +102,7 @@ app.use('/api/appearance',    appearanceRouter);
 app.use('/api/promotions',    promotionsRouter);
 app.use('/api/carousel',      carouselRouter);
 app.use('/api/events',        eventsRouter);
+app.use('/api/line',          lineRouter);
 
 // Admin Routes
 app.use('/api/admin/auth',     adminAuthRouter);
@@ -111,6 +115,7 @@ app.use('/api/admin/settings',    adminSettingsRouter);
 app.use('/api/admin/promotions',  adminPromotionsRouter);
 app.use('/api/admin/carousel',    adminCarouselRouter);
 app.use('/api/admin/events',      adminEventsRouter);
+app.use('/api/admin/line',        adminLineRouter);
 
 // ─── Health Check ───────────────────────────────────
 app.get('/api/health', (req, res) => {

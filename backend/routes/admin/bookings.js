@@ -120,6 +120,12 @@ router.post('/', async (req, res, next) => {
       }
     }
 
+    // ── LINE：推播新預約通知給管理員（失敗不阻斷）──
+    try {
+      const LineSvc = require('../../services/lineService');
+      await LineSvc.pushToOwners(LineSvc.buildBookingAlert(created));
+    } catch (e) { console.warn('[LINE] 後台新增預約通知失敗:', e.message); }
+
     await auditLog(req, 'create', 'booking', created.booking_no, `新增預約 ${created.contact_name} ${created.booking_date}`);
     res.status(201).json({ success: true, data: created, message: `預約 ${created.booking_no} 已建立` });
   } catch (err) { next(err); }
