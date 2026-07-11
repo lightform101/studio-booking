@@ -139,6 +139,34 @@ const EmailService = {
   // ─── 24 小時前提醒 ─────────────────────────────
   async sendReminder24h(booking) {
     const vars = buildBookingVars(booking);
+
+    // 地址：從系統設定讀取（contact_address 優先）
+    let address = '';
+    try {
+      const { pool } = require('../config/database');
+      const [rows] = await pool.query(
+        "SELECT key_name, key_value FROM settings WHERE key_name IN ('contact_address','site_address')"
+      );
+      const map = {}; rows.forEach(r => map[r.key_name] = r.key_value);
+      address = map.contact_address || map.site_address || '';
+    } catch (e) { /* 讀取失敗則不顯示地址 */ }
+
+    // 進門密碼區塊：有密碼才顯示，否則提示現場/另行通知
+    vars.access_block = booking.ttlock_passcode
+      ? `<div class="code-box">
+           <div style="font-size:.82rem;color:#6f8060;margin-bottom:6px;">🔐 進門密碼</div>
+           <div style="font-size:1.9rem;font-weight:800;letter-spacing:.18em;color:#3a3a36;font-family:monospace;">${booking.ttlock_passcode}</div>
+           <div style="font-size:.76rem;color:#888;margin-top:6px;">有效時間：預約開始前 15 分鐘 ～ 結束後 15 分鐘</div>
+         </div>`
+      : `<div class="code-box" style="background:#fff8e1;border-color:#ffe082;">
+           <div style="font-size:.85rem;color:#8a6d3b;">🔐 進門方式將於入場前另行通知，或由現場人員協助。</div>
+         </div>`;
+
+    // 地址區塊
+    vars.address_block = address
+      ? `<div class="detail-row"><span>地址</span><span>${address}</span></div>`
+      : '';
+
     const html = loadTemplate('reminder-24h', vars);
     if (!html) return;
     try {
