@@ -184,8 +184,11 @@ async function createTTLockForBooking(booking) {
   if (!studio?.ttlock_lock_id) return; // 場地未設 lock_id，靜默跳過
 
   const dateStr  = dayjs(booking.booking_date).format('YYYY-MM-DD');
-  const startMs  = dayjs(`${dateStr} ${String(booking.start_time).slice(0,5)}`).subtract(15, 'minute').valueOf();
-  const endMs    = dayjs(`${dateStr} ${String(booking.end_time).slice(0,5)}`).add(15, 'minute').valueOf();
+  const sHHMM    = String(booking.start_time).slice(0, 5);
+  const eHHMM    = String(booking.end_time).slice(0, 5);
+  // 以固定 +08:00（台灣）解析牆上時間，避免伺服器時區(UTC)導致 8 小時偏移
+  const startMs  = new Date(`${dateStr}T${sHHMM}:00+08:00`).getTime() - 15 * 60 * 1000;
+  const endMs    = new Date(`${dateStr}T${eHHMM}:00+08:00`).getTime() + 15 * 60 * 1000;
 
   const { passcode, passkeyId, effectiveStartMs, effectiveEndMs } = await createPasscode({
     lockId:    studio.ttlock_lock_id,

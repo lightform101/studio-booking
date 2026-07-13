@@ -202,15 +202,21 @@ const EmailService = {
   async sendAccessCode(booking, passcode, ttlockWindow = {}) {
     const dayjs = require('dayjs');
     const base  = buildBookingVars(booking);
+    // 一律以台灣時區顯示時間（避免伺服器 UTC 造成偏移）
+    const fmtHM = (ms) => new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Taipei', hour: '2-digit', minute: '2-digit', hour12: false
+    }).format(new Date(ms));
     // 優先使用 TTLock 實際生效區間（整點對齊後），fallback 到 ±15 分鐘估算
     let validFrom, validUntil;
     if (ttlockWindow.validFromMs && ttlockWindow.validUntilMs) {
-      validFrom  = dayjs(ttlockWindow.validFromMs).format('HH:mm');
-      validUntil = dayjs(ttlockWindow.validUntilMs).format('HH:mm');
+      validFrom  = fmtHM(ttlockWindow.validFromMs);
+      validUntil = fmtHM(ttlockWindow.validUntilMs);
     } else {
       const dateStr = dayjs(booking.booking_date).format('YYYY-MM-DD');
-      validFrom  = dayjs(`${dateStr} ${String(booking.start_time).slice(0,5)}`).subtract(15,'minute').format('HH:mm');
-      validUntil = dayjs(`${dateStr} ${String(booking.end_time).slice(0,5)}`).add(15,'minute').format('HH:mm');
+      const sMs = new Date(`${dateStr}T${String(booking.start_time).slice(0,5)}:00+08:00`).getTime() - 15 * 60 * 1000;
+      const eMs = new Date(`${dateStr}T${String(booking.end_time).slice(0,5)}:00+08:00`).getTime() + 15 * 60 * 1000;
+      validFrom  = fmtHM(sMs);
+      validUntil = fmtHM(eMs);
     }
     const vars = {
       ...base,

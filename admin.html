@@ -1672,6 +1672,8 @@
         onclick="deleteBookingFromModal()">🗑️ 刪除此預約</button>
       <button id="bk-ttlock-btn" style="padding:8px 16px;border-radius:7px;border:1px solid #6c757d;background:#f8f9fa;cursor:pointer;display:none;"
         onclick="triggerTTLock()">🔐 發送進門密碼</button>
+      <button id="bk-ttlock-regen-btn" style="padding:8px 16px;border-radius:7px;border:1px solid #b8860b;background:#fff8e1;color:#8a6d3b;cursor:pointer;display:none;"
+        onclick="triggerTTLock(true)">🔄 重新產生密碼（修正時間）</button>
       <button onclick="closeModal()" style="padding:8px 18px;border-radius:7px;border:1px solid #d0d4db;background:#fff;cursor:pointer;">關閉</button>
       <button class="btn btn-add" id="bk-save-btn" onclick="saveBookingFromModal()">💾 儲存</button>
     </div>
@@ -2404,6 +2406,10 @@
       const ttlockBtn = document.getElementById('bk-ttlock-btn');
       ttlockBtn.style.display = b.status === 'confirmed' ? '' : 'none';
       ttlockBtn.dataset.bookingId = b.id;
+      // 「重新產生密碼」按鈕：已確認且已有密碼時顯示（用於修正舊的錯誤時間密碼）
+      const regenBtn = document.getElementById('bk-ttlock-regen-btn');
+      regenBtn.style.display = (b.status === 'confirmed' && b.ttlock_passcode_id) ? '' : 'none';
+      regenBtn.dataset.bookingId = b.id;
 
       // ─── 電子發票區塊 ───────────────────────────
       const invSection = document.getElementById('bk-invoice-section');
@@ -2466,11 +2472,13 @@
     }
   }
 
-  // 手動觸發 TTLock 密碼建立
-  async function triggerTTLock() {
-    const btn = document.getElementById('bk-ttlock-btn');
+  // 手動觸發 TTLock 密碼建立（regenerate=true 為重新產生，修正舊的錯誤時間密碼）
+  async function triggerTTLock(regenerate = false) {
+    const btn = document.getElementById(regenerate ? 'bk-ttlock-regen-btn' : 'bk-ttlock-btn');
     const bookingId = btn.dataset.bookingId;
     if (!bookingId) return;
+    if (regenerate && !confirm('將重新產生一組正確時間的進門密碼並寄給客戶。\n（舊密碼因門鎖無網關可能無法自動刪除，屬正常，不影響使用）\n確定要重新產生嗎？')) return;
+    const origText = btn.textContent;
     btn.disabled = true;
     btn.textContent = '⏳ 處理中...';
     const ctrl = new AbortController();
@@ -2478,7 +2486,8 @@
     try {
       const r = await fetch(`${API}/admin/settings/trigger-ttlock/${bookingId}`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${adminToken}` },
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regenerate }),
         signal: ctrl.signal
       });
       clearTimeout(tid);
@@ -2494,7 +2503,7 @@
       }
     } finally {
       btn.disabled = false;
-      btn.textContent = '🔐 發送進門密碼';
+      btn.textContent = origText;
     }
   }
 

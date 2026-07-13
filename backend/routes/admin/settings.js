@@ -404,7 +404,23 @@ router.post('/trigger-ttlock/:bookingId', requireSuperAdmin, async (req, res) =>
       return res.json({ success: false, report: report.join('\n'), message: `只有已確認的預約才能建立門鎖密碼（目前狀態：${booking.status}）` });
     }
 
-    // 已有密碼：直接重寄 Email（不重新建立）
+    const regenerate = req.body?.regenerate || req.query?.regenerate;
+
+    // 重新產生模式：刪除舊密碼（best-effort）、清除欄位後重建（修正時間用）
+    if (regenerate && booking.ttlock_passcode_id) {
+      report.push(`重新產生：先嘗試刪除舊密碼 ID ${booking.ttlock_passcode_id}`);
+      try {
+        await TTLockSvc.deleteTTLockForBooking(booking);
+        report.push('✅ 舊密碼已刪除');
+      } catch (e) {
+        report.push(`⚠️ 舊密碼刪除失敗（無網關屬正常，將直接建立新密碼）：${e.message}`);
+        await pool.query('UPDATE bookings SET ttlock_passcode=NULL, ttlock_passcode_id=NULL WHERE id=?', [booking.id]);
+      }
+      booking.ttlock_passcode = null;
+      booking.ttlock_passcode_id = null;
+    }
+
+    // 已有密碼（且非重新產生）：直接重寄 Email（不重新建立）
     if (booking.ttlock_passcode_id) {
       report.push(`已有密碼：${booking.ttlock_passcode}（ID: ${booking.ttlock_passcode_id}）`);
       report.push('--- 重新寄送進門密碼 Email ---');
