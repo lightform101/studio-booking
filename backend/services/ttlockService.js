@@ -56,48 +56,61 @@ async function createPasscode({ lockId, name, startDate, endDate }) {
   // keyboardPwdType=3 = 限時密碼；TTLock 時間只精確到小時，須對齊整點
   const startMs    = Math.floor(Number(startDate) / 3600000) * 3600000;          // 捨去到整點
   const endMsRaw   = Math.ceil(Number(endDate)   / 3600000) * 3600000;          // 進位到整點
-  const endMs      = Math.max(endMsRaw, startMs + 3_600_000);                    // 確保至少 1 小時差距
+  let   endMs      = Math.max(endMsRaw, startMs + 3_600_000);                    // 確保至少 1 小時差距
 
-  const body = qs.stringify({
-    clientId:        CLIENT_ID(),
-    accessToken:     token,
-    lockId:          String(lockId),
-    keyboardPwdType: '3',
-    keyboardPwdName: name || '臨時密碼',
-    startDate:       String(startMs),
-    endDate:         String(endMs),
-    date:            String(Date.now()),
-  });
-  const bodyBuf = Buffer.from(body, 'utf8');
-
-  // 用原生 https 模組確保 Content-Length 正確（避免老 Tomcat 拒絕 chunked）
   const https = require('https');
-  const data = await new Promise((resolve, reject) => {
-    const req = https.request({
-      hostname: 'euapi.ttlock.com',
-      path:     '/v3/keyboardPwd/get',
-      method:   'POST',
-      headers: {
-        'Content-Type':   'application/x-www-form-urlencoded',
-        'Content-Length': bodyBuf.length,
-        'User-Agent':     'Mozilla/5.0',
-        'Accept':         '*/*',
-        'Connection':     'close',
-      },
-      timeout: 12000,
-    }, res => {
-      let raw = '';
-      res.on('data', d => raw += d);
-      res.on('end', () => {
-        try { resolve(JSON.parse(raw)); }
-        catch(_) { reject(new Error(`TTLock 非 JSON 回應: ${raw.slice(0, 200)}`)); }
-      });
+  // 單次呼叫
+  const callOnce = (sMs, eMs) => {
+    const body = qs.stringify({
+      clientId:        CLIENT_ID(),
+      accessToken:     token,
+      lockId:          String(lockId),
+      keyboardPwdType: '3',
+      keyboardPwdName: name || '臨時密碼',
+      startDate:       String(sMs),
+      endDate:         String(eMs),
+      date:            String(Date.now()),
     });
-    req.on('error', reject);
-    req.on('timeout', () => { req.destroy(); reject(new Error('TTLock API timeout')); });
-    req.write(bodyBuf);
-    req.end();
-  });
+    const bodyBuf = Buffer.from(body, 'utf8');
+    return new Promise((resolve, reject) => {
+      const req = https.request({
+        hostname: 'euapi.ttlock.com',
+        path:     '/v3/keyboardPwd/get',
+        method:   'POST',
+        headers: {
+          'Content-Type':   'application/x-www-form-urlencoded',
+          'Content-Length': bodyBuf.length,
+          'User-Agent':     'Mozilla/5.0',
+          'Accept':         '*/*',
+          'Connection':     'close',
+        },
+        timeout: 12000,
+      }, res => {
+        let raw = '';
+        res.on('data', d => raw += d);
+        res.on('end', () => {
+          try { resolve(JSON.parse(raw)); }
+          catch(_) { reject(new Error(`TTLock 非 JSON 回應: ${raw.slice(0, 200)}`)); }
+        });
+      });
+      req.on('error', reject);
+      req.on('timeout', () => { req.destroy(); reject(new Error('TTLock API timeout')); });
+      req.write(bodyBuf);
+      req.end();
+    });
+  };
+
+  // errcode -1026：同一時段曾產生並刪除過，無法重用 → 自動把結束時間延後 1 小時換新時段重試
+  let data;
+  for (let attempt = 0; attempt <= 4; attempt++) {
+    data = await callOnce(startMs, endMs);
+    if (data.errcode === -1026 && attempt < 4) {
+      endMs += 3_600_000; // 延後 1 小時成為新時段
+      console.log(`[TTLock] 時段已用過(-1026)，延長結束時間重試 (第 ${attempt + 1} 次)`);
+      continue;
+    }
+    break;
+  }
 
   if (data.errcode && data.errcode !== 0) {
     throw new Error(`[TTLock] 建立密碼失敗 (errcode ${data.errcode}): ${data.errmsg || JSON.stringify(data)}`);
