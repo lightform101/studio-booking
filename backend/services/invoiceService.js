@@ -89,7 +89,7 @@ function buildInvoiceData(booking) {
     TaxAmount:            taxAmt,
     TotalAmount:          total,
     ProductItem: [{
-      Description: `${booking.studio_name || '場地'} 場地使用（${booking.booking_no}）`,
+      Description: '場地租借費',
       Quantity:    1,
       UnitPrice:   total,   // 含稅單價
       Amount:      total,   // 含稅金額（光貿以此加總驗證 SalesAmount）
