@@ -122,12 +122,35 @@ const EmailService = {
   // ─── 待付款提醒 ────────────────────────────────
   async sendPaymentPending(booking) {
     const vars = buildBookingVars(booking);
+
+    // ATM 轉帳帳戶資訊（本店採 ATM 轉帳）
+    let atm = {};
+    try {
+      const { pool } = require('../config/database');
+      const [rows] = await pool.query(
+        "SELECT key_name, key_value FROM settings WHERE key_name IN ('atm_bank_code','atm_bank_name','atm_account','atm_account_name')"
+      );
+      rows.forEach(r => atm[r.key_name] = r.key_value);
+    } catch (e) { /* 讀取失敗則顯示聯繫提示 */ }
+
+    const hasAtm = atm.atm_account;
+    vars.atm_block = hasAtm
+      ? `<div class="atm-box">
+           <div style="font-size:.82rem;color:#6f8060;margin-bottom:10px;font-weight:700;">🏦 付款方式：ATM 轉帳</div>
+           <div class="atm-row"><span>銀行</span><span>${atm.atm_bank_code ? '(' + atm.atm_bank_code + ') ' : ''}${atm.atm_bank_name || ''}</span></div>
+           <div class="atm-row"><span>戶名</span><span>${atm.atm_account_name || ''}</span></div>
+           <div class="atm-row"><span>帳號</span><span style="font-family:monospace;font-size:1.05rem;letter-spacing:.05em;color:#3a3a36;">${atm.atm_account}</span></div>
+           <div class="atm-row"><span>金額</span><span style="font-weight:700;">NT$ ${vars.total_amount}</span></div>
+           <p style="font-size:.78rem;color:#888;margin:10px 0 0;">完成轉帳後，我們確認入帳即會寄出確認信與進門密碼。若轉帳帳號末五碼與系統不符，請主動聯繫我們核對。</p>
+         </div>`
+      : `<div class="atm-box"><p style="font-size:.85rem;color:#856404;margin:0;">🏦 本店採 ATM 轉帳付款，轉帳帳號將由專人與您聯繫提供。如有疑問請來信洽詢。</p></div>`;
+
     const html = loadTemplate('payment-pending', vars);
     if (!html) return;
     try {
       await this.send({
         to: booking.contact_email,
-        subject: `【LightForm Studio】請於 2 小時內完成付款 - ${booking.booking_no}`,
+        subject: `【LightForm Studio】請於 48 小時內完成付款 - ${booking.booking_no}`,
         html
       });
       await logNotification(booking.id, 'payment_pending', booking.contact_email, 'sent');

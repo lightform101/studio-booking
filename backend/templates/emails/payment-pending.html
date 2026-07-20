@@ -5,7 +5,7 @@
 <style>
   body{margin:0;padding:0;background:#f4f6f9;font-family:Arial,sans-serif;}
   .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);}
-  .header{background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:28px;text-align:center;}
+  .header{background:linear-gradient(135deg,#6f8060,#8a9a7b);padding:28px;text-align:center;}
   .header .logo{font-size:1.8rem;margin-bottom:6px;}
   .header h1{color:#fff;font-size:1.2rem;margin:0;}
   .body{padding:28px 32px;}
@@ -17,7 +17,10 @@
   .detail-row{display:flex;justify-content:space-between;padding:5px 0;font-size:.87rem;border-bottom:1px solid #eee;}
   .detail-row:last-child{border-bottom:none;font-weight:700;font-size:.95rem;}
   .detail-row span:first-child{color:#6c757d;}
-  .cta-btn{display:block;background:#e94560;color:#fff;text-decoration:none;text-align:center;padding:14px;border-radius:8px;font-weight:700;font-size:.95rem;margin:16px 0;}
+  .atm-box{background:#f6f8f2;border:1px solid #dde7d8;border-radius:10px;padding:18px;margin:16px 0;}
+  .atm-row{display:flex;justify-content:space-between;padding:6px 0;font-size:.9rem;border-bottom:1px solid #e7e7e0;}
+  .atm-row:last-of-type{border-bottom:none;}
+  .atm-row span:first-child{color:#6c757d;}
   .footer{background:#f0f2f5;padding:16px 32px;text-align:center;font-size:.75rem;color:#888;}
 </style>
 </head>
@@ -38,7 +41,7 @@
       <div class="detail-row"><span>日期</span><span>{{booking_date}} {{start_time}}-{{end_time}}</span></div>
       <div class="detail-row"><span>應付金額</span><span>NT$ {{total_amount}}</span></div>
     </div>
-    <a href="{{base_url}}/booking.html?booking_no={{booking_no}}" class="cta-btn">立即前往付款 →</a>
+    {{atm_block}}
     <p style="font-size:.8rem;color:#888;">如已完成付款，請忽略此信件。如有疑問請聯繫 <a href="mailto:{{site_email}}">{{site_email}}</a></p>
   </div>
   <div class="footer">© 2026 LightForm Studio ｜ 系統自動發送，請勿回覆</div>
