@@ -340,8 +340,42 @@ router.post('/:id/issue-invoice', async (req, res, next) => {
         invoice_random: booking.invoice_random,
       });
     }
+
+    // 後台若帶入發票資訊 → 先寫回預約（可補開客戶當初未勾發票的訂單）
+    const body = req.body || {};
+    if (body.invoice_type) {
+      const VALID = ['cloud', 'personal', 'company', 'donate'];
+      const type  = VALID.includes(body.invoice_type) ? body.invoice_type : 'cloud';
+      const taxId   = String(body.invoice_tax_id  || '').trim();
+      const carrier = String(body.invoice_carrier || '').trim();
+      const company = String(body.invoice_company || '').trim();
+      const donate  = String(body.invoice_donate  || '').trim();
+
+      // 後端驗證
+      if (type === 'company' && !/^\d{8}$/.test(taxId))
+        return res.status(400).json({ success: false, message: '統一編號須為 8 碼數字' });
+      if (type === 'personal' && carrier && !/^\/[A-Z0-9+\-.]{7}$/.test(carrier))
+        return res.status(400).json({ success: false, message: '手機載具格式錯誤' });
+      if (type === 'donate' && !donate)
+        return res.status(400).json({ success: false, message: '請輸入捐贈碼' });
+
+      await pool.query(
+        `UPDATE bookings
+         SET need_invoice=1, invoice_type=?, invoice_tax_id=?, invoice_company=?,
+             invoice_carrier=?, invoice_donate=?, invoice_status=NULL
+         WHERE id=?`,
+        [type, taxId || null, company || null, carrier || null, donate || null, booking.id]
+      );
+      // 重新讀取，帶入最新發票欄位
+      const [[fresh]] = await pool.query(
+        `SELECT b.*, s.name AS studio_name FROM bookings b JOIN studios s ON b.studio_id=s.id WHERE b.id=?`,
+        [booking.id]
+      );
+      Object.assign(booking, fresh);
+    }
+
     if (!booking.need_invoice) {
-      return res.status(400).json({ success: false, message: '此預約未勾選需要發票' });
+      return res.status(400).json({ success: false, message: '此預約未勾選發票，請於上方選擇發票類型後再開立' });
     }
 
     const result = await InvoiceSvc.issue(booking);

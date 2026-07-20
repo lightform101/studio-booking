@@ -1658,10 +1658,46 @@
         </div>
       </div>
       <!-- 電子發票資訊 -->
-      <div id="bk-invoice-section" style="margin-top:14px;padding:14px 16px;background:#f8f9fa;border:1px solid #e0e4ea;border-radius:8px;display:none;">
+      <div id="bk-invoice-section" style="margin-top:14px;padding:14px 16px;background:#f6f8f2;border:1px solid #dde7d8;border-radius:8px;display:none;">
         <div style="font-weight:700;font-size:.88rem;margin-bottom:10px;">🧾 電子發票</div>
-        <div id="bk-invoice-info" style="font-size:.84rem;line-height:1.8;color:#444;"></div>
-        <div id="bk-invoice-actions" style="margin-top:10px;"></div>
+
+        <!-- 已開立：顯示發票號碼（唯讀）-->
+        <div id="bk-invoice-issued" style="display:none;font-size:.85rem;line-height:1.9;color:#444;"></div>
+
+        <!-- 未開立：可填寫/修改發票資訊後開立 -->
+        <div id="bk-invoice-form">
+          <div style="font-size:.8rem;color:#888;margin-bottom:10px;">可直接填寫或修改發票資訊後開立（客戶當初未勾選發票也能補開）。</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="form-group" style="grid-column:1/-1;">
+              <div class="form-label">發票類型</div>
+              <select id="bk-inv-type" class="form-input" onchange="toggleInvFields()">
+                <option value="cloud">個人（雲端發票，無載具）</option>
+                <option value="personal">個人（手機載具）</option>
+                <option value="company">公司（統一編號）</option>
+                <option value="donate">捐贈發票</option>
+              </select>
+            </div>
+            <div class="form-group" id="bk-inv-carrier-wrap" style="display:none;grid-column:1/-1;">
+              <div class="form-label">手機載具（格式 /XXXXXXX）</div>
+              <input id="bk-inv-carrier" class="form-input" placeholder="/ABC.123" />
+            </div>
+            <div class="form-group" id="bk-inv-taxid-wrap" style="display:none;">
+              <div class="form-label">統一編號（8 碼）</div>
+              <input id="bk-inv-taxid" class="form-input" placeholder="12345678" maxlength="8" />
+            </div>
+            <div class="form-group" id="bk-inv-company-wrap" style="display:none;">
+              <div class="form-label">公司抬頭</div>
+              <input id="bk-inv-company" class="form-input" placeholder="○○有限公司" />
+            </div>
+            <div class="form-group" id="bk-inv-donate-wrap" style="display:none;grid-column:1/-1;">
+              <div class="form-label">愛心捐贈碼</div>
+              <input id="bk-inv-donate" class="form-input" placeholder="例：25885" />
+            </div>
+          </div>
+          <div id="bk-invoice-msg" style="display:none;font-size:.82rem;margin:8px 0;"></div>
+          <button id="bk-invoice-btn" onclick="issueInvoice()"
+            style="padding:8px 16px;border-radius:7px;border:1px solid #6f8060;background:#6f8060;color:#fff;cursor:pointer;font-size:.85rem;margin-top:6px;">🧾 填入並開立發票</button>
+        </div>
       </div>
       <div id="bk-modal-err" style="display:none;margin-top:10px;background:#fff3f3;border:1px solid #ffcccc;border-radius:8px;padding:10px 14px;color:#c0392b;font-size:.85rem;"></div>
     </div>
@@ -2413,35 +2449,31 @@
 
       // ─── 電子發票區塊 ───────────────────────────
       const invSection = document.getElementById('bk-invoice-section');
-      const invInfo    = document.getElementById('bk-invoice-info');
-      const invActions = document.getElementById('bk-invoice-actions');
-      if (b.need_invoice) {
+      const invIssued  = document.getElementById('bk-invoice-issued');
+      const invForm    = document.getElementById('bk-invoice-form');
+      // 只對「已確認 / 已完成」的預約顯示發票功能
+      if (b.status === 'confirmed' || b.status === 'completed') {
         invSection.style.display = '';
-        const INV_TYPE = { personal: '個人（手機載具）', company: '公司（統編）', donate: '捐贈發票' };
-        const INV_STATUS = {
-          not_needed: '', pending: '⏳ 開立中',
-          issued: '✅ 已開立', failed: '❌ 開立失敗',
-        };
-        let infoHtml = `<b>類型：</b>${INV_TYPE[b.invoice_type] || b.invoice_type || '—'}<br>`;
-        if (b.invoice_type === 'personal' && b.invoice_carrier)
-          infoHtml += `<b>載具：</b>${b.invoice_carrier}<br>`;
-        if (b.invoice_type === 'company')
-          infoHtml += `<b>統編：</b>${b.invoice_tax_id || '—'}　<b>公司：</b>${b.invoice_company || '—'}<br>`;
-        if (b.invoice_type === 'donate')
-          infoHtml += `<b>捐贈碼：</b>${b.invoice_donate || '—'}<br>`;
-        if (b.invoice_no)
-          infoHtml += `<b>發票號碼：</b><span style="color:#27ae60;font-weight:700;">${b.invoice_no}</span>　<b>隨機碼：</b>${b.invoice_random || '—'}<br>`;
-        infoHtml += `<b>狀態：</b>${INV_STATUS[b.invoice_status] || b.invoice_status || '—'}`;
-        invInfo.innerHTML = infoHtml;
-
-        // 補開按鈕（未開立時顯示）
-        if (b.invoice_status !== 'issued') {
-          invActions.innerHTML = `
-            <button id="bk-invoice-btn"
-              style="padding:6px 14px;border-radius:6px;border:1px solid #2980b9;background:#eaf4fd;color:#2980b9;cursor:pointer;font-size:.84rem;"
-              onclick="issueInvoice(${b.id})">🧾 手動補開發票</button>`;
+        if (b.invoice_status === 'issued') {
+          // 已開立 → 顯示發票號碼（唯讀）
+          invIssued.style.display = '';
+          invForm.style.display   = 'none';
+          invIssued.innerHTML =
+            `<b>狀態：</b><span style="color:#27ae60;font-weight:700;">✅ 已開立</span><br>` +
+            `<b>發票號碼：</b><span style="color:#27ae60;font-weight:700;">${b.invoice_no || '—'}</span>　` +
+            `<b>隨機碼：</b>${b.invoice_random || '—'}`;
         } else {
-          invActions.innerHTML = '';
+          // 未開立 → 顯示可編輯表單，並帶入客戶原本填的資訊
+          invIssued.style.display = 'none';
+          invForm.style.display   = '';
+          const t = b.invoice_type || (b.need_invoice ? 'cloud' : 'cloud');
+          document.getElementById('bk-inv-type').value    = ['cloud','personal','company','donate'].includes(t) ? t : 'cloud';
+          document.getElementById('bk-inv-carrier').value = b.invoice_carrier || '';
+          document.getElementById('bk-inv-taxid').value   = b.invoice_tax_id || '';
+          document.getElementById('bk-inv-company').value = b.invoice_company || '';
+          document.getElementById('bk-inv-donate').value  = b.invoice_donate || '';
+          document.getElementById('bk-invoice-msg').style.display = 'none';
+          toggleInvFields();
         }
       } else {
         invSection.style.display = 'none';
@@ -2449,26 +2481,58 @@
     } catch(e) { alert('載入失敗'); closeModal(); }
   }
 
-  // ─── 手動補開電子發票 ─────────────────────────────
-  async function issueInvoice(bookingId) {
+  // 依發票類型顯示對應欄位
+  function toggleInvFields() {
+    const t = document.getElementById('bk-inv-type').value;
+    document.getElementById('bk-inv-carrier-wrap').style.display = t === 'personal' ? '' : 'none';
+    document.getElementById('bk-inv-taxid-wrap').style.display   = t === 'company'  ? '' : 'none';
+    document.getElementById('bk-inv-company-wrap').style.display = t === 'company'  ? '' : 'none';
+    document.getElementById('bk-inv-donate-wrap').style.display  = t === 'donate'   ? '' : 'none';
+  }
+
+  // ─── 後台填寫發票資訊並開立 ─────────────────────────
+  async function issueInvoice() {
+    const bookingId = window._editBookingId;
+    if (!bookingId) return;
+    const type    = document.getElementById('bk-inv-type').value;
+    const carrier = document.getElementById('bk-inv-carrier').value.trim();
+    const taxid   = document.getElementById('bk-inv-taxid').value.trim();
+    const company = document.getElementById('bk-inv-company').value.trim();
+    const donate  = document.getElementById('bk-inv-donate').value.trim();
+    const msg     = document.getElementById('bk-invoice-msg');
+    const showErr = (m) => { msg.style.display='block'; msg.style.color='#c0392b'; msg.textContent = m; };
+    msg.style.display = 'none';
+
+    // 前端基本驗證
+    if (type === 'company' && !/^\d{8}$/.test(taxid)) return showErr('統一編號須為 8 碼數字');
+    if (type === 'personal' && carrier && !/^\/[A-Z0-9+\-.]{7}$/.test(carrier)) return showErr('手機載具格式錯誤（/ 加 7 碼大寫英數）');
+    if (type === 'donate' && !donate) return showErr('請輸入愛心捐贈碼');
+
     const btn = document.getElementById('bk-invoice-btn');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ 開立中...'; }
+    btn.disabled = true; btn.textContent = '⏳ 開立中...';
     try {
       const r = await fetch(`${API}/admin/bookings/${bookingId}/issue-invoice`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${adminToken}` }
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoice_type:    type,
+          invoice_carrier: type === 'personal' ? carrier : '',
+          invoice_tax_id:  type === 'company'  ? taxid   : '',
+          invoice_company: type === 'company'  ? company : '',
+          invoice_donate:  type === 'donate'   ? donate  : '',
+        })
       });
       const d = await r.json();
       if (d.success) {
         alert(`✅ 發票開立成功！\n發票號碼：${d.invoice_no}\n隨機碼：${d.invoice_random}`);
-        openEditModal(bookingId); // 重新載入以更新顯示
+        openEditBookingModal(bookingId); // 重新載入以更新顯示
       } else {
-        alert(`❌ 失敗：${d.message}`);
-        if (btn) { btn.disabled = false; btn.textContent = '🧾 手動補開發票'; }
+        showErr('❌ ' + (d.message || '開立失敗'));
+        btn.disabled = false; btn.textContent = '🧾 填入並開立發票';
       }
     } catch(e) {
-      alert('發票開立失敗：' + e.message);
-      if (btn) { btn.disabled = false; btn.textContent = '🧾 手動補開發票'; }
+      showErr('❌ 連線失敗：' + e.message);
+      btn.disabled = false; btn.textContent = '🧾 填入並開立發票';
     }
   }
 
