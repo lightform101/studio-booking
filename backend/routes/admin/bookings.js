@@ -362,7 +362,7 @@ router.post('/:id/issue-invoice', async (req, res, next) => {
       await pool.query(
         `UPDATE bookings
          SET need_invoice=1, invoice_type=?, invoice_tax_id=?, invoice_company=?,
-             invoice_carrier=?, invoice_donate=?, invoice_status=NULL
+             invoice_carrier=?, invoice_donate=?, invoice_status='pending'
          WHERE id=?`,
         [type, taxId || null, company || null, carrier || null, donate || null, booking.id]
       );
