@@ -40,6 +40,12 @@ const adminEventsRouter      = require('./routes/admin/events');
 const eventsRouter           = require('./routes/events');
 const adminLineRouter        = require('./routes/admin/line');
 const lineRouter             = require('./routes/line');
+// 多租戶平台（Phase 0）
+const adminTenantsRouter     = require('./routes/admin/tenants');
+const adminOrdersRouter      = require('./routes/admin/orders');
+const adminThemesRouter      = require('./routes/admin/themes');
+const siteRouter             = require('./routes/site');
+const renderTenantSite       = require('./middleware/renderTenantSite');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -56,6 +62,17 @@ app.use(helmet({
       fontSrc:         ["'self'", "data:", "https://fonts.gstatic.com"],
       objectSrc:       ["'none'"],
       frameAncestors:  ["'none'"],
+      // 允許嵌入的第三方 iframe：影片平台 + 360環景/3D導覽服務
+      // （未列出的服務會被瀏覽器擋下，需要時在此新增網域）
+      frameSrc: [
+        "'self'",
+        "https://www.youtube.com", "https://youtube.com", "https://www.youtube-nocookie.com",
+        "https://player.vimeo.com",
+        "https://kuula.co", "https://www.kuula.co",
+        "https://720yun.com", "https://www.720yun.com",
+        "https://my.matterport.com",
+        "https://www.google.com",
+      ],
       // 允許 HTML inline 事件屬性（onsubmit, onclick 等），Helmet v7 預設為 'none' 會封鎖登入按鈕
       scriptSrcAttr:   ["'unsafe-inline'"],
       // 允許藍新金流表單提交（沙盒 + 正式站）
@@ -87,6 +104,10 @@ app.use('/api/', apiLimiter);
 app.use(express.json({ limit: '512kb', verify: (req, res, buf) => { req.rawBody = buf; } }));
 app.use(express.urlencoded({ extended: true, limit: '512kb' }));
 
+// ─── 多租戶站台渲染 ─────────────────────────────────
+// Host 命中平台租戶 → 渲染其版型；非租戶（如 studio 本站）→ next() 交下方靜態服務
+app.use(renderTenantSite);
+
 // ─── Static Files（前台網頁 + 上傳圖片）───────────────
 app.use(express.static(path.join(__dirname, '../')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -103,6 +124,7 @@ app.use('/api/promotions',    promotionsRouter);
 app.use('/api/carousel',      carouselRouter);
 app.use('/api/events',        eventsRouter);
 app.use('/api/line',          lineRouter);
+app.use('/api/site',          siteRouter);        // 站台前台（tenant-facing，經 resolveTenant）
 
 // Admin Routes
 app.use('/api/admin/auth',     adminAuthRouter);
@@ -116,6 +138,9 @@ app.use('/api/admin/promotions',  adminPromotionsRouter);
 app.use('/api/admin/carousel',    adminCarouselRouter);
 app.use('/api/admin/events',      adminEventsRouter);
 app.use('/api/admin/line',        adminLineRouter);
+app.use('/api/admin/tenants',     adminTenantsRouter);
+app.use('/api/admin/orders',      adminOrdersRouter);
+app.use('/api/admin/themes',      adminThemesRouter);
 
 // ─── Health Check ───────────────────────────────────
 app.get('/api/health', (req, res) => {

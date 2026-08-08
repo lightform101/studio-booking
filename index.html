@@ -484,6 +484,36 @@
     .ev-modal-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
     .ev-modal-gallery img { width: 100%; border-radius: 12px; display: block; }
     .ev-modal .event-link { display: inline-block; }
+
+    /* ─── 360° 環景導覽彈窗 ─── */
+    .pano-overlay {
+      display: none; position: fixed; inset: 0; z-index: 10000;
+      background: rgba(43,46,39,.75); backdrop-filter: blur(3px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .pano-overlay.open { display: flex; }
+    .pano-box {
+      background: #fff; border-radius: 20px; width: 100%; max-width: 1080px;
+      overflow: hidden; box-shadow: 0 24px 70px rgba(0,0,0,.35);
+    }
+    .pano-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
+    }
+    .pano-title { font-family: var(--head); font-size: 1.05rem; font-weight: 500; color: var(--text); }
+    .pano-close {
+      border: none; background: var(--soft); color: var(--sage-d);
+      width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1rem;
+      transition: background .2s;
+    }
+    .pano-close:hover { background: #e3e7dd; }
+    .pano-frame { width: 100%; aspect-ratio: 16/9; border: none; display: block; background: #111; }
+    .pano-hint { padding: 10px 20px; font-size: .78rem; color: var(--gray); background: var(--soft); }
+    @media (max-width: 600px) {
+      .pano-overlay { padding: 10px; }
+      .pano-frame { aspect-ratio: 3/4; }
+      .pano-title { font-size: .95rem; }
+    }
     @media (max-width: 600px) {
       .events-grid { grid-template-columns: 1fr; gap: 18px; }
       .event-body { padding: 18px 20px 20px; }
@@ -848,6 +878,18 @@
   </div>
 </footer>
 
+<!-- ─── 360° 環景導覽彈窗 ─── -->
+<div class="pano-overlay" id="pano-overlay" onclick="if(event.target===this)closePanorama()">
+  <div class="pano-box">
+    <div class="pano-head">
+      <div class="pano-title" id="pano-title">360° 環景導覽</div>
+      <button class="pano-close" onclick="closePanorama()">✕</button>
+    </div>
+    <div id="pano-body"></div>
+    <div class="pano-hint">💡 用滑鼠拖曳可環顧四周，手機可直接轉動裝置；點畫面中的熱點可切換到其他角落。</div>
+  </div>
+</div>
+
 <!-- ─── 活動詳情彈窗 ─── -->
 <div class="ev-modal-overlay" id="ev-modal-overlay" onclick="if(event.target===this)closeEventDetail()">
   <div class="ev-modal">
@@ -1131,6 +1173,7 @@
   // 場地動態載入 + 照片輪播
   // ═══════════════════════════════════════════════
   const carouselState = {}; // key = studio id (string)
+  let _studiosData = [];    // 場地資料快取（360° 環景用）
   const EMOJIS = ['📸','🎬','🎭','🌟','🏠'];
 
   // 渲染場地卡片 HTML
@@ -1171,6 +1214,7 @@
           ${features ? `<div class="studio-features">${features}</div>` : ''}
           <div class="studio-actions">
             <a href="booking.html?studio=${s.id}" class="btn-book">🗓 預約此場地</a>
+            ${s.panorama_url ? `<button class="btn-detail" onclick="openPanorama(${s.id})">🏠 360° 環景</button>` : ''}
           </div>
         </div>
       </div>`;
@@ -1182,6 +1226,7 @@
       if (!r.ok) return;
       const { data: studios } = await r.json();
       if (!studios || studios.length === 0) return;
+      _studiosData = studios;   // 供 360° 環景彈窗取用
 
       // 更新標題
       const count = studios.length;
@@ -1297,6 +1342,35 @@
   setInterval(() => {
     Object.keys(carouselState).forEach(key => carouselMove(key, 1));
   }, 5000);
+
+  // ═══════════════════════════════════════════════
+  // 360° 環景導覽（後台於場地設定貼上連結）
+  // ═══════════════════════════════════════════════
+  function openPanorama(id) {
+    const s = _studiosData.find(x => String(x.id) === String(id));
+    if (!s || !s.panorama_url) return;
+    const url = safeSrc(s.panorama_url);
+    if (!url) return;
+    document.getElementById('pano-title').textContent = `${s.name}　360° 環景`;
+    document.getElementById('pano-body').innerHTML =
+      `<iframe class="pano-frame" src="${url}" allowfullscreen
+         allow="xr-spatial-tracking; gyroscope; accelerometer; fullscreen; vr"
+         loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+    document.getElementById('pano-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePanorama() {
+    document.getElementById('pano-overlay').classList.remove('open');
+    document.getElementById('pano-body').innerHTML = ''; // 清空以停止載入
+    document.body.style.overflow = '';
+  }
+  // Esc 關閉彈窗
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (document.getElementById('pano-overlay')?.classList.contains('open')) closePanorama();
+      if (document.getElementById('ev-modal-overlay')?.classList.contains('open')) closeEventDetail();
+    }
+  });
 
   // ═══════════════════════════════════════════════
   // 最新消息 / 優惠輪播（後台管理）

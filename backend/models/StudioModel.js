@@ -116,7 +116,7 @@ const StudioModel = {
       await pool.query(`UPDATE studios SET ${sets.join(',')} WHERE id=?`, [...vals, id]);
     }
     // TTLock Lock ID（欄位可能尚未建立，獨立處理避免影響主儲存）
-    const { ttlock_lock_id, features } = data;
+    const { ttlock_lock_id, panorama_url, features } = data;
     if (ttlock_lock_id !== undefined) {
       try {
         await pool.query(
@@ -125,6 +125,17 @@ const StudioModel = {
         );
       } catch(e) {
         console.warn('[Studio] ttlock_lock_id 欄位尚未建立，請執行 Migration:', e.message);
+      }
+    }
+    // 360 環景連結（欄位可能尚未建立，獨立處理）
+    if (panorama_url !== undefined) {
+      try {
+        await pool.query(
+          `UPDATE studios SET panorama_url=? WHERE id=?`,
+          [panorama_url || null, id]
+        );
+      } catch(e) {
+        console.warn('[Studio] panorama_url 欄位尚未建立，請執行 Migration:', e.message);
       }
     }
     if (features && Array.isArray(features)) {

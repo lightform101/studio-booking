@@ -3005,6 +3005,10 @@
               <div class="form-label">🔐 TTLock 鎖 ID <span style="font-size:.75rem;color:#888;">（在 TTLock App → 鎖資訊 → MAC/ID 斜線後的數字）</span></div>
               <input class="form-input" type="number" id="si_lock_${sid}" value="${studio.ttlock_lock_id || ''}" placeholder="例：31272832" />
             </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <div class="form-label">🏠 360° 環景連結 <span style="font-size:.75rem;color:#888;">（貼上 Kuula／720雲／Matterport 的分享或嵌入網址，留空=前台不顯示）</span></div>
+              <input class="form-input" id="si_pano_${sid}" value="${(studio.panorama_url || '').replace(/"/g,'&quot;')}" placeholder="例：https://kuula.co/share/xxxxx" />
+            </div>
           </div>
         </div>
       </div>
@@ -3048,6 +3052,7 @@
     const is_active  = document.getElementById(`activeToggle_${sid}`)?.classList.contains('on') ? 1 : 0;
     const lockIdVal  = document.getElementById(`si_lock_${sid}`)?.value?.trim();
     const ttlock_lock_id = lockIdVal ? parseInt(lockIdVal) : null;
+    const panorama_url = document.getElementById(`si_pano_${sid}`)?.value?.trim() || null;
 
     if (!name) return alert('請填入場地名稱');
     try {
@@ -3057,7 +3062,7 @@
         body: JSON.stringify({ name, name_en, description: desc,
           hourly_rate, photo_rate, video_rate,
           min_hours: min_h, max_hours: max_h, capacity: cap, size_sqm: sqm, is_active, features,
-          ttlock_lock_id })
+          ttlock_lock_id, panorama_url })
       });
       const d = await r.json();
       if (d.success) {
