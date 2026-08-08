@@ -41,11 +41,25 @@ const eventsRouter           = require('./routes/events');
 const adminLineRouter        = require('./routes/admin/line');
 const lineRouter             = require('./routes/line');
 // 多租戶平台（Phase 0）
-const adminTenantsRouter     = require('./routes/admin/tenants');
-const adminOrdersRouter      = require('./routes/admin/orders');
-const adminThemesRouter      = require('./routes/admin/themes');
-const siteRouter             = require('./routes/site');
-const renderTenantSite       = require('./middleware/renderTenantSite');
+// ─── 多租戶平台（開發中）─────────────────────────────
+// 這些模組尚未納入版控，正式站不存在。用 optionalRequire 優雅略過，
+// 避免因缺少檔案導致整個服務啟動失敗（本機開發時檔案存在則正常載入）。
+function optionalRequire(p) {
+  try {
+    return require(p);
+  } catch (e) {
+    if (e.code === 'MODULE_NOT_FOUND') {
+      console.warn(`[Startup] 略過尚未部署的模組：${p}`);
+      return null;
+    }
+    throw e;
+  }
+}
+const adminTenantsRouter     = optionalRequire('./routes/admin/tenants');
+const adminOrdersRouter      = optionalRequire('./routes/admin/orders');
+const adminThemesRouter      = optionalRequire('./routes/admin/themes');
+const siteRouter             = optionalRequire('./routes/site');
+const renderTenantSite       = optionalRequire('./middleware/renderTenantSite');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -106,7 +120,7 @@ app.use(express.urlencoded({ extended: true, limit: '512kb' }));
 
 // ─── 多租戶站台渲染 ─────────────────────────────────
 // Host 命中平台租戶 → 渲染其版型；非租戶（如 studio 本站）→ next() 交下方靜態服務
-app.use(renderTenantSite);
+if (renderTenantSite) app.use(renderTenantSite);
 
 // ─── Static Files（前台網頁 + 上傳圖片）───────────────
 app.use(express.static(path.join(__dirname, '../')));
@@ -124,7 +138,7 @@ app.use('/api/promotions',    promotionsRouter);
 app.use('/api/carousel',      carouselRouter);
 app.use('/api/events',        eventsRouter);
 app.use('/api/line',          lineRouter);
-app.use('/api/site',          siteRouter);        // 站台前台（tenant-facing，經 resolveTenant）
+if (siteRouter) app.use('/api/site', siteRouter);        // 站台前台（tenant-facing，經 resolveTenant）
 
 // Admin Routes
 app.use('/api/admin/auth',     adminAuthRouter);
@@ -138,9 +152,9 @@ app.use('/api/admin/promotions',  adminPromotionsRouter);
 app.use('/api/admin/carousel',    adminCarouselRouter);
 app.use('/api/admin/events',      adminEventsRouter);
 app.use('/api/admin/line',        adminLineRouter);
-app.use('/api/admin/tenants',     adminTenantsRouter);
-app.use('/api/admin/orders',      adminOrdersRouter);
-app.use('/api/admin/themes',      adminThemesRouter);
+if (adminTenantsRouter) app.use('/api/admin/tenants', adminTenantsRouter);
+if (adminOrdersRouter) app.use('/api/admin/orders', adminOrdersRouter);
+if (adminThemesRouter) app.use('/api/admin/themes', adminThemesRouter);
 
 // ─── Health Check ───────────────────────────────────
 app.get('/api/health', (req, res) => {
