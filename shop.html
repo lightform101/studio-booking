@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>選物商店 · LightForm Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@200;300;400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary:#3a3a36; --accent:#6f8060; --gold:#8a9a7b;
+      --light:#f7f7f4; --cream:#eef0ea; --gray:#9a9a92; --border:#e7e7e0;
+      --card-bg:#fff; --text:#3a3a36; --sage:#8a9a7b; --sage-d:#6f8060; --soft:#eef0ea;
+      --shadow:0 8px 30px rgba(120,130,110,.08);
+      --head:'Zen Kaku Gothic New','Noto Sans TC',sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Noto Sans TC',sans-serif;background:var(--light);color:var(--text);line-height:1.9;font-weight:300;letter-spacing:.02em}
+
+    nav{position:fixed;top:0;width:100%;z-index:999;background:rgba(247,247,244,.9);backdrop-filter:blur(12px);
+        display:flex;align-items:center;justify-content:space-between;padding:0 6%;height:70px;border-bottom:1px solid var(--border)}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .nav-logo .logo-icon{width:36px;height:36px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    .nav-logo .logo-icon img{width:100%;height:100%;object-fit:contain}
+    .nav-logo span{color:var(--sage-d);font-family:var(--head);font-size:1.1rem;font-weight:500;letter-spacing:.04em}
+    .nav-links{display:flex;gap:28px;align-items:center}
+    .nav-links a{color:var(--text);text-decoration:none;font-size:.88rem;opacity:.7;transition:opacity .2s}
+    .nav-links a:hover{opacity:1;color:var(--sage-d)}
+    .nav-links a.active{opacity:1;color:var(--sage-d);font-weight:500}
+    .nav-cta{background:var(--sage)!important;color:#fff!important;padding:11px 26px;border-radius:30px;
+             font-size:.86rem!important;font-weight:500!important;opacity:1!important}
+    .nav-cta:hover{background:var(--sage-d)!important;color:#fff!important}
+
+    .page-hero{margin-top:70px;padding:56px 6% 36px;text-align:center}
+    .page-tag{display:inline-flex;align-items:center;gap:8px;color:var(--sage-d);font-size:1rem;font-weight:500;letter-spacing:.12em;margin-bottom:14px}
+    .page-tag::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--sage)}
+    .page-hero h1{font-family:var(--head);font-size:clamp(1.9rem,3.4vw,2.6rem);font-weight:500;letter-spacing:.03em;margin-bottom:12px}
+    .page-hero p{color:var(--gray);font-size:.95rem}
+
+    .tabs{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:0 6% 34px}
+    .tab-btn{font-family:var(--head);background:#fff;color:var(--sage-d);border:1px solid var(--sage);
+             padding:11px 26px;border-radius:30px;font-size:.92rem;font-weight:500;cursor:pointer;transition:all .25s}
+    .tab-btn:hover{background:var(--soft)}
+    .tab-btn.active{background:var(--sage);color:#fff;box-shadow:0 8px 22px rgba(138,154,123,.3)}
+
+    .wrap{max-width:1180px;margin:0 auto;padding:0 6% 80px}
+    .panel{display:none;animation:fade .3s ease}
+    .panel.active{display:block}
+    @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+    .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:26px}
+    .item{background:#fff;border:1px solid var(--border);border-radius:22px;overflow:hidden;
+          box-shadow:var(--shadow);transition:transform .3s,box-shadow .3s;display:flex;flex-direction:column;position:relative}
+    .item:hover{transform:translateY(-5px);box-shadow:0 18px 44px rgba(120,130,110,.14)}
+    .item.sold{opacity:.62}
+    .item-img{aspect-ratio:4/3;background:linear-gradient(135deg,var(--cream),#e3e7dd);position:relative;overflow:hidden;cursor:pointer}
+    .item-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
+    .item:hover .item-img img{transform:scale(1.04)}
+    .item-noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.4rem}
+    .item-count{position:absolute;bottom:10px;right:10px;background:rgba(43,46,39,.7);color:#fff;
+                font-size:.72rem;padding:3px 10px;border-radius:20px}
+    .badge{position:absolute;top:12px;left:12px;padding:5px 14px;border-radius:20px;font-size:.74rem;font-weight:500;z-index:2}
+    .badge.available{background:rgba(111,128,96,.92);color:#fff}
+    .badge.reserved{background:rgba(210,162,76,.94);color:#fff}
+    .badge.sold{background:rgba(90,90,86,.9);color:#fff}
+    .item-body{padding:20px 22px 22px;display:flex;flex-direction:column;flex:1}
+    .item-title{font-family:var(--head);font-size:1.08rem;font-weight:500;margin-bottom:8px}
+    .item-price{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+    .item-price b{font-family:var(--head);font-size:1.4rem;font-weight:500;color:var(--sage-d)}
+    .item-price s{font-size:.85rem;color:var(--gray)}
+    .item-cond{display:inline-block;font-size:.76rem;color:var(--sage-d);background:var(--soft);
+               padding:3px 12px;border-radius:20px;margin-bottom:10px;align-self:flex-start}
+    .item-desc{color:var(--gray);font-size:.86rem;line-height:1.8;white-space:pre-wrap;flex:1;margin-bottom:16px}
+    .item-btn{background:var(--sage);color:#fff;border:none;padding:11px 20px;border-radius:30px;
+              font-size:.86rem;font-weight:500;cursor:pointer;transition:background .25s;font-family:inherit}
+    .item-btn:hover{background:var(--sage-d)}
+    .item-btn:disabled{background:#c8ccc2;cursor:not-allowed}
+
+    .empty{text-align:center;color:var(--gray);padding:70px 20px;font-size:.95rem}
+
+    /* 詢問購買彈窗 */
+    .modal{display:none;position:fixed;inset:0;z-index:10000;background:rgba(43,46,39,.7);
+           align-items:center;justify-content:center;padding:20px}
+    .modal.open{display:flex}
+    .modal-box{background:#fff;border-radius:22px;max-width:420px;width:100%;padding:30px 32px;text-align:center}
+    .modal-box h3{font-family:var(--head);font-size:1.25rem;font-weight:500;margin-bottom:8px}
+    .modal-item{color:var(--sage-d);font-size:.95rem;margin-bottom:6px}
+    .modal-box p{color:var(--gray);font-size:.86rem;margin-bottom:22px}
+    .contact-btn{display:block;background:var(--soft);color:var(--text);text-decoration:none;padding:13px;
+                 border-radius:12px;margin-bottom:10px;font-size:.92rem;transition:background .2s}
+    .contact-btn:hover{background:#e3e7dd}
+    .contact-btn.line{background:#06c755;color:#fff}
+    .contact-btn.line:hover{background:#05b34c}
+    .modal-close{margin-top:8px;background:none;border:none;color:var(--gray);cursor:pointer;font-size:.88rem;font-family:inherit}
+
+    /* 商品詳情彈窗 */
+    .detail{display:none;position:fixed;inset:0;z-index:10000;background:rgba(43,46,39,.7);backdrop-filter:blur(3px);
+            align-items:center;justify-content:center;padding:20px}
+    .detail.open{display:flex}
+    .detail-box{background:#fff;border-radius:24px;max-width:960px;width:100%;max-height:90vh;overflow-y:auto;position:relative;
+                box-shadow:0 24px 70px rgba(0,0,0,.3)}
+    .detail-close{position:sticky;top:14px;float:right;margin:14px 14px 0 0;width:36px;height:36px;border:none;border-radius:50%;
+                  background:rgba(43,46,39,.6);color:#fff;font-size:1rem;cursor:pointer;z-index:3}
+    .detail-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:0}
+    .detail-imgs{padding:26px 0 26px 26px}
+    .detail-main{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px;display:block;cursor:zoom-in;background:var(--cream)}
+    .detail-main-ph{width:100%;aspect-ratio:4/3;border-radius:16px;display:flex;align-items:center;justify-content:center;
+                    font-size:3rem;background:linear-gradient(135deg,var(--cream),#e3e7dd)}
+    .detail-thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+    .detail-thumbs img{width:64px;height:64px;object-fit:cover;border-radius:10px;cursor:pointer;
+                       border:2px solid transparent;transition:border-color .2s}
+    .detail-thumbs img.on{border-color:var(--sage)}
+    .detail-info{padding:26px 30px 30px}
+    .detail-badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:.76rem;font-weight:500;margin-bottom:12px}
+    .detail-badge.available{background:rgba(111,128,96,.92);color:#fff}
+    .detail-badge.reserved{background:rgba(210,162,76,.94);color:#fff}
+    .detail-badge.sold{background:rgba(90,90,86,.9);color:#fff}
+    .detail-title{font-family:var(--head);font-size:1.5rem;font-weight:500;margin-bottom:12px;line-height:1.5}
+    .detail-price{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+    .detail-price b{font-family:var(--head);font-size:1.9rem;font-weight:500;color:var(--sage-d)}
+    .detail-price s{font-size:.95rem;color:var(--gray)}
+    .detail-cond{display:inline-block;font-size:.82rem;color:var(--sage-d);background:var(--soft);
+                 padding:5px 15px;border-radius:20px;margin-bottom:18px}
+    .detail-sec{font-family:var(--head);font-size:.95rem;font-weight:500;color:var(--text);
+                margin:0 0 8px;padding-top:16px;border-top:1px solid var(--border)}
+    .detail-desc{color:#5c5c56;font-size:.93rem;line-height:1.95;white-space:pre-wrap;margin-bottom:24px}
+    .detail-btn{width:100%;background:var(--sage);color:#fff;border:none;padding:15px;border-radius:30px;
+                font-size:.98rem;font-weight:500;cursor:pointer;font-family:inherit;transition:background .25s}
+    .detail-btn:hover{background:var(--sage-d)}
+    .detail-btn:disabled{background:#c8ccc2;cursor:not-allowed}
+    @media(max-width:760px){
+      .detail-grid{grid-template-columns:1fr}
+      .detail-imgs{padding:20px 20px 0}
+      .detail-info{padding:18px 22px 26px}
+      .detail-title{font-size:1.25rem}
+      .detail-price b{font-size:1.6rem}
+    }
+
+    /* 燈箱 */
+    .lb{display:none;position:fixed;inset:0;z-index:10001;background:rgba(43,46,39,.92);align-items:center;justify-content:center;padding:24px;flex-direction:column;gap:14px}
+    .lb.open{display:flex}
+    .lb img{max-width:92vw;max-height:78vh;border-radius:12px;object-fit:contain}
+    .lb-nav{display:flex;gap:14px;align-items:center}
+    .lb-nav button{background:rgba(255,255,255,.9);border:none;width:42px;height:42px;border-radius:50%;font-size:1.1rem;cursor:pointer}
+    .lb-count{color:#fff;font-size:.86rem}
+    .lb-close{position:absolute;top:22px;right:26px;background:rgba(255,255,255,.9);border:none;width:40px;height:40px;border-radius:50%;font-size:1.1rem;cursor:pointer}
+
+    footer{background:#2b2e27;color:rgba(255,255,255,.5);padding:34px 6%;text-align:center;font-size:.82rem}
+    footer a{color:rgba(255,255,255,.75);text-decoration:none}
+
+    @media(max-width:600px){
+      .nav-links a:not(.nav-cta){display:none}
+      nav{height:60px;padding:0 5%}
+      .page-hero{margin-top:60px;padding:36px 5% 24px}
+      .wrap{padding:0 5% 56px}
+      .tabs{padding:0 5% 24px}
+      .items{grid-template-columns:1fr 1fr;gap:14px}
+      .item-body{padding:14px 15px 16px}
+      .item-title{font-size:.94rem}
+      .item-price b{font-size:1.15rem}
+      .item-desc{display:none}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <div class="logo-icon"><img src="logo.png" alt="Logo"></div>
+    <span>LightForm Studio</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html#studios">場地介紹</a>
+    <a href="services.html">攝影服務</a>
+    <a href="shop.html" class="active">選物商店</a>
+    <a href="index.html#how">預約流程</a>
+    <a href="booking.html" class="nav-cta">立即預約</a>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="page-tag">選物商店</div>
+  <h1>好物與二手釋出</h1>
+  <p>攝影棚嚴選好物，以及汰換釋出的傢俱道具</p>
+</section>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="furniture" onclick="switchTab('furniture')">🪑 二手傢俱出清</button>
+  <button class="tab-btn"        data-tab="goods"     onclick="switchTab('goods')">✨ 優選好物</button>
+</div>
+
+<div class="wrap">
+  <div class="panel active" id="tab-furniture"><div class="items" id="grid-furniture"></div></div>
+  <div class="panel" id="tab-goods"><div class="items" id="grid-goods"></div></div>
+</div>
+
+<!-- 詢問購買 -->
+<div class="modal" id="ask-modal" onclick="if(event.target===this)closeAsk()">
+  <div class="modal-box">
+    <h3>詢問購買</h3>
+    <div class="modal-item" id="ask-item"></div>
+    <p>請透過以下方式與我們聯繫，確認商品狀況與取貨方式</p>
+    <div id="ask-contacts"></div>
+    <button class="modal-close" onclick="closeAsk()">關閉</button>
+  </div>
+</div>
+
+<!-- 商品詳情 -->
+<div class="detail" id="detail" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-box">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- 圖片燈箱 -->
+<div class="lb" id="lb">
+  <button class="lb-close" onclick="closeLb()">✕</button>
+  <img id="lb-img" src="" alt="" />
+  <div class="lb-nav">
+    <button onclick="lbMove(-1)">‹</button>
+    <span class="lb-count" id="lb-count"></span>
+    <button onclick="lbMove(1)">›</button>
+  </div>
+</div>
+
+<footer>
+  © 2026 LightForm Studio ｜ <a href="index.html">回首頁</a> ｜ <a href="services.html">攝影服務</a>
+</footer>
+
+<script>
+
+  // ─── 分頁開放開關：未開放時顯示「準備中」（網址加 ?preview=1 可自行預覽）───
+  (async ()=>{
+    if (new URLSearchParams(location.search).get('preview') === '1') return;
+    let enabled = false;
+    try {
+      const r = await fetch('/api/appearance');
+      if (r.ok) { const j = await r.json(); enabled = (j.data && j.data['nav_shop_enabled']) === '1'; }
+    } catch(e) { enabled = false; }
+    if (enabled) return;
+    document.body.innerHTML = `
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:30px;text-align:center;">
+        <div>
+          <div style="font-size:3rem;margin-bottom:16px;">🍃</div>
+          <h1 style="font-family:var(--head);font-size:1.6rem;font-weight:500;color:var(--text);margin-bottom:12px;">內容準備中</h1>
+          <p style="color:var(--gray);font-size:.95rem;margin-bottom:26px;">這個頁面正在整理中，敬請期待</p>
+          <a href="index.html" style="display:inline-block;background:var(--sage);color:#fff;text-decoration:none;
+             padding:13px 30px;border-radius:30px;font-size:.92rem;">← 回首頁</a>
+        </div>
+      </div>`;
+    document.body.style.overflow='';
+  })();
+
+  function escapeHTML(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function safeSrc(u){ if(!u) return ''; const s=String(u); return /^https?:\/\/|^\//.test(s)?escapeHTML(s):''; }
+
+  let _items = [], _contact = {};
+
+  function switchTab(name){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='tab-'+name));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  }
+
+  // ─── 商品詳情 ───
+  const STATUS_D = { available:{t:'販售中',c:'available'}, reserved:{t:'已預訂',c:'reserved'}, sold:{t:'已售出',c:'sold'} };
+  let _dImgs=[], _dIdx=0;
+
+  function openDetail(id){
+    const it=_items.find(x=>String(x.id)===String(id));
+    if(!it) return;
+    _dImgs=(it.images||[]).filter(u=>safeSrc(u)); _dIdx=0;
+    const st=STATUS_D[it.status]||STATUS_D.available;
+    const soldOut=it.status==='sold';
+    const priceHtml = it.price!=null
+      ? `<div class="detail-price"><b>NT$ ${Number(it.price).toLocaleString()}</b>${it.original_price?`<s>NT$ ${Number(it.original_price).toLocaleString()}</s>`:''}</div>`
+      : `<div class="detail-price"><b>價格面議</b></div>`;
+    const mainHtml = _dImgs.length
+      ? `<img class="detail-main" id="d-main" src="${safeSrc(_dImgs[0])}" alt="${escapeHTML(it.title)}" onclick="openLbFromDetail()" title="點擊放大" />`
+      : `<div class="detail-main-ph">🪑</div>`;
+    const thumbsHtml = _dImgs.length>1
+      ? `<div class="detail-thumbs" id="d-thumbs">${_dImgs.map((u,i)=>
+          `<img src="${safeSrc(u)}" class="${i===0?'on':''}" onclick="setDetailImg(${i})" alt="" loading="lazy" />`).join('')}</div>`
+      : '';
+
+    document.getElementById('detail-content').innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-imgs">
+          ${mainHtml}
+          ${thumbsHtml}
+          ${_dImgs.length>1?`<div style="font-size:.76rem;color:var(--gray);margin-top:8px;">共 ${_dImgs.length} 張 · 點主圖可放大</div>`:''}
+        </div>
+        <div class="detail-info">
+          <span class="detail-badge ${st.c}">${st.t}</span>
+          <div class="detail-title">${escapeHTML(it.title)}</div>
+          ${priceHtml}
+          ${it.condition_note?`<div class="detail-cond">${escapeHTML(it.condition_note)}</div>`:''}
+          ${it.description
+            ? `<div class="detail-sec">商品說明</div><div class="detail-desc">${escapeHTML(it.description)}</div>`
+            : `<div class="detail-sec">商品說明</div><div class="detail-desc" style="color:var(--gray);">賣家尚未填寫詳細說明，歡迎直接詢問 🍃</div>`}
+          <button class="detail-btn" ${soldOut?'disabled':''} onclick="askBuy(${it.id})">
+            ${soldOut?'已售出':'💬 詢問購買'}
+          </button>
+        </div>
+      </div>`;
+    document.getElementById('detail').classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function setDetailImg(i){
+    _dIdx=i;
+    const m=document.getElementById('d-main'); if(m) m.src=safeSrc(_dImgs[i]);
+    document.querySelectorAll('#d-thumbs img').forEach((el,idx)=>el.classList.toggle('on',idx===i));
+  }
+  function closeDetail(){
+    document.getElementById('detail').classList.remove('open');
+    document.getElementById('detail-content').innerHTML='';
+    document.body.style.overflow='';
+  }
+  function openLbFromDetail(){
+    if(!_dImgs.length) return;
+    _lbImgs=_dImgs.slice(); _lbIdx=_dIdx;
+    renderLb(); document.getElementById('lb').classList.add('open');
+  }
+
+  // ─── 燈箱 ───
+  let _lbImgs=[], _lbIdx=0;
+  function openLb(id){
+    const it=_items.find(x=>String(x.id)===String(id));
+    if(!it||!it.images?.length) return;
+    _lbImgs=it.images.filter(u=>safeSrc(u)); _lbIdx=0;
+    if(!_lbImgs.length) return;
+    renderLb(); document.getElementById('lb').classList.add('open'); document.body.style.overflow='hidden';
+  }
+  function renderLb(){
+    document.getElementById('lb-img').src=safeSrc(_lbImgs[_lbIdx]);
+    document.getElementById('lb-count').textContent=`${_lbIdx+1} / ${_lbImgs.length}`;
+    document.querySelector('.lb-nav').style.display=_lbImgs.length>1?'flex':'none';
+  }
+  function lbMove(d){ _lbIdx=(_lbIdx+d+_lbImgs.length)%_lbImgs.length; renderLb(); if(document.getElementById('detail').classList.contains('open')) setDetailImg(_lbIdx); }
+  function closeLb(){
+    document.getElementById('lb').classList.remove('open');
+    document.getElementById('lb-img').src='';
+    // 詳情彈窗若仍開著，維持鎖定捲動
+    if(!document.getElementById('detail').classList.contains('open')) document.body.style.overflow='';
+  }
+  document.addEventListener('keydown',e=>{
+    const lbOpen=document.getElementById('lb').classList.contains('open');
+    if(lbOpen){
+      if(e.key==='Escape') closeLb();
+      if(e.key==='ArrowLeft') lbMove(-1);
+      if(e.key==='ArrowRight') lbMove(1);
+      return;
+    }
+    if(e.key!=='Escape') return;
+    if(document.getElementById('ask-modal').classList.contains('open')) { closeAsk(); return; }
+    if(document.getElementById('detail').classList.contains('open')) closeDetail();
+  });
+
+  // ─── 詢問購買 ───
+  function askBuy(id){
+    const it=_items.find(x=>String(x.id)===String(id));
+    if(!it) return;
+    const priceTxt = it.price!=null ? `NT$ ${Number(it.price).toLocaleString()}` : '價格面議';
+    document.getElementById('ask-item').textContent = `${it.title}（${priceTxt}）`;
+    const subject = encodeURIComponent(`商品詢問：${it.title}`);
+    const body    = encodeURIComponent(`您好，我想詢問這件商品：\n\n商品：${it.title}\n價格：${priceTxt}\n\n請問是否還有貨？謝謝！`);
+    let html='';
+    if(_contact.contact_line)  html += `<a class="contact-btn line" href="${safeSrc(_contact.contact_line)}" target="_blank" rel="noopener">💬 用 LINE 詢問</a>`;
+    if(_contact.contact_email) html += `<a class="contact-btn" href="mailto:${escapeHTML(_contact.contact_email)}?subject=${subject}&body=${body}">✉️ Email 詢問</a>`;
+    if(_contact.contact_phone) html += `<a class="contact-btn" href="tel:${escapeHTML(String(_contact.contact_phone).replace(/[^0-9+]/g,''))}">📞 撥打電話 ${escapeHTML(_contact.contact_phone)}</a>`;
+    if(!html) html = '<p style="color:#c0392b;font-size:.88rem;">尚未設定聯絡方式，請於後台填寫聯絡資訊。</p>';
+    document.getElementById('ask-contacts').innerHTML = html;
+    document.getElementById('ask-modal').classList.add('open'); document.body.style.overflow='hidden';
+  }
+  function closeAsk(){ document.getElementById('ask-modal').classList.remove('open'); document.body.style.overflow=''; }
+
+  // ─── 渲染 ───
+  const STATUS = { available:{t:'販售中',c:'available'}, reserved:{t:'已預訂',c:'reserved'}, sold:{t:'已售出',c:'sold'} };
+
+  function buildItem(it){
+    const st = STATUS[it.status] || STATUS.available;
+    const imgs = (it.images||[]).filter(u=>safeSrc(u));
+    const cover = imgs.length
+      ? `<img src="${safeSrc(imgs[0])}" alt="${escapeHTML(it.title)}" loading="lazy" />
+         ${imgs.length>1?`<span class="item-count">📷 ${imgs.length}</span>`:''}`
+      : `<div class="item-noimg">🪑</div>`;
+    const priceHtml = it.price!=null
+      ? `<div class="item-price"><b>NT$ ${Number(it.price).toLocaleString()}</b>${it.original_price?`<s>NT$ ${Number(it.original_price).toLocaleString()}</s>`:''}</div>`
+      : `<div class="item-price"><b>價格面議</b></div>`;
+    const soldOut = it.status==='sold';
+    // 整張卡片可點 → 開啟商品詳情（完整說明 + 所有圖片）
+    return `<div class="item ${soldOut?'sold':''}" onclick="openDetail(${it.id})" style="cursor:pointer;">
+      <span class="badge ${st.c}">${st.t}</span>
+      <div class="item-img">${cover}</div>
+      <div class="item-body">
+        <div class="item-title">${escapeHTML(it.title)}</div>
+        ${priceHtml}
+        ${it.condition_note?`<span class="item-cond">${escapeHTML(it.condition_note)}</span>`:''}
+        ${it.description?`<p class="item-desc">${escapeHTML(it.description)}</p>`:'<div style="flex:1"></div>'}
+        <button class="item-btn" ${soldOut?'disabled':''}
+          onclick="event.stopPropagation(); ${soldOut?'':`openDetail(${it.id})`}">
+          ${soldOut?'已售出':'查看詳情 →'}
+        </button>
+      </div>
+    </div>`;
+  }
+
+  (async ()=>{
+    try{ const r=await fetch('/api/shop'); if(r.ok){ const j=await r.json(); _items=j.data||[]; } }catch(e){}
+    try{ const r=await fetch('/api/appearance'); if(r.ok){ const j=await r.json(); _contact=j.data||{}; } }catch(e){}
+
+    [['furniture','🪑 二手傢俱出清'],['goods','✨ 優選好物']].forEach(([cat,label])=>{
+      const list=_items.filter(i=>i.category===cat);
+      document.getElementById('grid-'+cat).innerHTML = list.length
+        ? list.map(buildItem).join('')
+        : `<div class="empty" style="grid-column:1/-1;">「${label}」目前沒有商品，敬請期待 🍃</div>`;
+    });
+  })();
+</script>
+</body>
+</html>

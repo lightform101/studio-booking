@@ -40,6 +40,10 @@ const adminEventsRouter      = require('./routes/admin/events');
 const eventsRouter           = require('./routes/events');
 const adminLineRouter        = require('./routes/admin/line');
 const lineRouter             = require('./routes/line');
+const adminServicesRouter    = require('./routes/admin/services');
+const servicesRouter         = require('./routes/services');
+const adminShopRouter        = require('./routes/admin/shop');
+const shopRouter             = require('./routes/shop');
 // 多租戶平台（Phase 0）
 // ─── 多租戶平台（開發中）─────────────────────────────
 // 這些模組尚未納入版控，正式站不存在。用 optionalRequire 優雅略過，
@@ -138,6 +142,8 @@ app.use('/api/promotions',    promotionsRouter);
 app.use('/api/carousel',      carouselRouter);
 app.use('/api/events',        eventsRouter);
 app.use('/api/line',          lineRouter);
+app.use('/api/services',      servicesRouter);
+app.use('/api/shop',          shopRouter);
 if (siteRouter) app.use('/api/site', siteRouter);        // 站台前台（tenant-facing，經 resolveTenant）
 
 // Admin Routes
@@ -152,6 +158,8 @@ app.use('/api/admin/promotions',  adminPromotionsRouter);
 app.use('/api/admin/carousel',    adminCarouselRouter);
 app.use('/api/admin/events',      adminEventsRouter);
 app.use('/api/admin/line',        adminLineRouter);
+app.use('/api/admin/services',    adminServicesRouter);
+app.use('/api/admin/shop',        adminShopRouter);
 if (adminTenantsRouter) app.use('/api/admin/tenants', adminTenantsRouter);
 if (adminOrdersRouter) app.use('/api/admin/orders', adminOrdersRouter);
 if (adminThemesRouter) app.use('/api/admin/themes', adminThemesRouter);

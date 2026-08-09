@@ -64,7 +64,10 @@ const PUBLIC_KEYS = [
   'atm_bank_code',      // 銀行代號
   'atm_bank_name',      // 銀行名稱
   'atm_account',        // 銀行帳號
-  'atm_account_name'    // 戶名
+  'atm_account_name',   // 戶名
+  // 分頁開關（0=前台灰階不開放，1=正式開放）
+  'nav_services_enabled',
+  'nav_shop_enabled'
 ];
 
 // ─── GET 公開外觀設定 ─────────────────────────────

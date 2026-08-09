@@ -605,9 +605,10 @@
   </a>
   <div class="nav-links">
     <a href="#studios">場地介紹</a>
+    <a href="services.html" id="nav-services-link">攝影服務</a>
+    <a href="shop.html" id="nav-shop-link">選物商店</a>
     <a href="#events" id="nav-events-link" style="display:none;">活動專區</a>
     <a href="#how">預約流程</a>
-    <a href="#rules">注意事項</a>
     <a href="#explore" onclick="switchTab('faq')">常見問題</a>
     <a href="booking.html" class="nav-cta">立即預約</a>
   </div>
@@ -1100,6 +1101,17 @@
           }
         } catch(e) { /* 解析失敗保持預設 */ }
       }
+
+      // ── 新分頁開關：未開放時灰階、不可點 ──────────
+      [['nav_services_enabled','nav-services-link'],['nav_shop_enabled','nav-shop-link']].forEach(([key,id])=>{
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (ap[key] === '1') return;          // 已開放，維持正常
+        el.style.opacity = '.38';
+        el.style.cursor = 'not-allowed';
+        el.title = '內容準備中，敬請期待';
+        el.addEventListener('click', e => e.preventDefault());
+      });
 
       // ── 頁面內容：聯絡資訊 ───────────────────────
       const footerContact = document.getElementById('footer-contact');

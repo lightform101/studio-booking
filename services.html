@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>攝影服務 · LightForm Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@200;300;400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary:#3a3a36; --accent:#6f8060; --gold:#8a9a7b;
+      --light:#f7f7f4; --cream:#eef0ea; --gray:#9a9a92; --border:#e7e7e0;
+      --card-bg:#fff; --text:#3a3a36; --sage:#8a9a7b; --sage-d:#6f8060; --soft:#eef0ea;
+      --shadow:0 8px 30px rgba(120,130,110,.08);
+      --head:'Zen Kaku Gothic New','Noto Sans TC',sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Noto Sans TC',sans-serif;background:var(--light);color:var(--text);line-height:1.9;font-weight:300;letter-spacing:.02em}
+
+    /* NAV */
+    nav{position:fixed;top:0;width:100%;z-index:999;background:rgba(247,247,244,.9);backdrop-filter:blur(12px);
+        display:flex;align-items:center;justify-content:space-between;padding:0 6%;height:70px;border-bottom:1px solid var(--border)}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .nav-logo .logo-icon{width:36px;height:36px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    .nav-logo .logo-icon img{width:100%;height:100%;object-fit:contain}
+    .nav-logo span{color:var(--sage-d);font-family:var(--head);font-size:1.1rem;font-weight:500;letter-spacing:.04em}
+    .nav-links{display:flex;gap:28px;align-items:center}
+    .nav-links a{color:var(--text);text-decoration:none;font-size:.88rem;opacity:.7;transition:opacity .2s}
+    .nav-links a:hover{opacity:1;color:var(--sage-d)}
+    .nav-links a.active{opacity:1;color:var(--sage-d);font-weight:500}
+    .nav-cta{background:var(--sage)!important;color:#fff!important;padding:11px 26px;border-radius:30px;
+             font-size:.86rem!important;font-weight:500!important;opacity:1!important}
+    .nav-cta:hover{background:var(--sage-d)!important;color:#fff!important}
+
+    /* HERO */
+    .page-hero{margin-top:70px;padding:56px 6% 36px;text-align:center;background:var(--light)}
+    .page-tag{display:inline-flex;align-items:center;gap:8px;color:var(--sage-d);font-size:1rem;font-weight:500;letter-spacing:.12em;margin-bottom:14px}
+    .page-tag::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--sage)}
+    .page-hero h1{font-family:var(--head);font-size:clamp(1.9rem,3.4vw,2.6rem);font-weight:500;letter-spacing:.03em;margin-bottom:12px}
+    .page-hero p{color:var(--gray);font-size:.95rem}
+
+    /* TABS */
+    .tabs{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:0 6% 34px}
+    .tab-btn{font-family:var(--head);background:#fff;color:var(--sage-d);border:1px solid var(--sage);
+             padding:11px 24px;border-radius:30px;font-size:.92rem;font-weight:500;cursor:pointer;transition:all .25s}
+    .tab-btn:hover{background:var(--soft)}
+    .tab-btn.active{background:var(--sage);color:#fff;box-shadow:0 8px 22px rgba(138,154,123,.3)}
+
+    /* CONTENT */
+    .wrap{max-width:1180px;margin:0 auto;padding:0 6% 80px}
+    .panel{display:none;animation:fade .3s ease}
+    .panel.active{display:block}
+    @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+    .svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:28px}
+    .svc-card{background:#fff;border:1px solid var(--border);border-radius:26px;overflow:hidden;
+              box-shadow:var(--shadow);transition:transform .3s,box-shadow .3s;display:flex;flex-direction:column}
+    .svc-card:hover{transform:translateY(-5px);box-shadow:0 18px 44px rgba(120,130,110,.14)}
+    .svc-imgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:2px;background:var(--cream)}
+    .svc-imgs img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:pointer;transition:opacity .2s}
+    .svc-imgs img:hover{opacity:.88}
+    .svc-noimg{aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-size:2.6rem;background:linear-gradient(135deg,var(--cream),#e3e7dd)}
+    .svc-body{padding:24px 26px 26px;display:flex;flex-direction:column;flex:1}
+    .svc-title{font-family:var(--head);font-size:1.25rem;font-weight:500;margin-bottom:8px}
+    .svc-price{color:var(--sage-d);font-family:var(--head);font-size:1.05rem;font-weight:500;margin-bottom:12px}
+    .svc-desc{color:var(--gray);font-size:.9rem;line-height:1.85;white-space:pre-wrap;flex:1;margin-bottom:20px}
+    .svc-btn{align-self:flex-start;background:var(--sage);color:#fff;text-decoration:none;padding:11px 26px;
+             border-radius:30px;font-size:.88rem;font-weight:500;transition:background .25s}
+    .svc-btn:hover{background:var(--sage-d)}
+
+    /* 攝影師 */
+    .pg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px}
+    .pg-card{background:#fff;border:1px solid var(--border);border-radius:22px;padding:28px 24px;text-align:center;
+             text-decoration:none;color:inherit;display:block;transition:transform .3s,box-shadow .3s;box-shadow:var(--shadow)}
+    .pg-card:hover{transform:translateY(-5px);box-shadow:0 18px 44px rgba(120,130,110,.14)}
+    .pg-avatar{width:82px;height:82px;border-radius:50%;object-fit:cover;margin:0 auto 14px;display:block;background:var(--cream)}
+    .pg-avatar-ph{width:82px;height:82px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;
+                  justify-content:center;font-size:2rem;background:var(--soft)}
+    .pg-name{font-family:var(--head);font-size:1.15rem;font-weight:500;margin-bottom:6px}
+    .pg-spec{font-size:.82rem;color:var(--sage-d);margin-bottom:10px}
+    .pg-note{font-size:.84rem;color:var(--gray);line-height:1.8;margin-bottom:14px}
+    .pg-link{display:inline-block;font-size:.82rem;color:var(--sage-d);border-bottom:1px solid var(--sage);padding-bottom:2px}
+
+    .empty{text-align:center;color:var(--gray);padding:70px 20px;font-size:.95rem}
+
+    /* 服務詳情彈窗 */
+    .detail{display:none;position:fixed;inset:0;z-index:9999;background:rgba(43,46,39,.7);backdrop-filter:blur(3px);
+            align-items:center;justify-content:center;padding:20px}
+    .detail.open{display:flex}
+    .detail-box{background:#fff;border-radius:24px;max-width:960px;width:100%;max-height:90vh;overflow-y:auto;position:relative;
+                box-shadow:0 24px 70px rgba(0,0,0,.3)}
+    .detail-close{position:sticky;top:14px;float:right;margin:14px 14px 0 0;width:36px;height:36px;border:none;border-radius:50%;
+                  background:rgba(43,46,39,.6);color:#fff;font-size:1rem;cursor:pointer;z-index:3}
+    .detail-grid{display:grid;grid-template-columns:1.05fr .95fr}
+    .detail-imgs{padding:26px 0 26px 26px}
+    .detail-main{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px;display:block;cursor:zoom-in;background:var(--cream)}
+    .detail-main-ph{width:100%;aspect-ratio:4/3;border-radius:16px;display:flex;align-items:center;justify-content:center;
+                    font-size:3rem;background:linear-gradient(135deg,var(--cream),#e3e7dd)}
+    .detail-thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+    .detail-thumbs img{width:64px;height:64px;object-fit:cover;border-radius:10px;cursor:pointer;border:2px solid transparent;transition:border-color .2s}
+    .detail-thumbs img.on{border-color:var(--sage)}
+    .detail-info{padding:26px 30px 30px}
+    .detail-cat{display:inline-block;padding:5px 14px;border-radius:20px;font-size:.76rem;font-weight:500;
+                background:rgba(111,128,96,.92);color:#fff;margin-bottom:12px}
+    .detail-title{font-family:var(--head);font-size:1.5rem;font-weight:500;margin-bottom:10px;line-height:1.5}
+    .detail-price{font-family:var(--head);font-size:1.55rem;font-weight:500;color:var(--sage-d);margin-bottom:18px}
+    .detail-sec{font-family:var(--head);font-size:.95rem;font-weight:500;color:var(--text);
+                margin:0 0 8px;padding-top:16px;border-top:1px solid var(--border)}
+    .detail-desc{color:#5c5c56;font-size:.93rem;line-height:1.95;white-space:pre-wrap;margin-bottom:24px}
+    .detail-btn{display:block;width:100%;text-align:center;background:#06c755;color:#fff;border:none;padding:15px;border-radius:30px;
+                font-size:.98rem;font-weight:500;cursor:pointer;font-family:inherit;text-decoration:none;transition:background .25s}
+    .detail-btn:hover{background:#05b34c}
+    @media(max-width:760px){
+      .detail-grid{grid-template-columns:1fr}
+      .detail-imgs{padding:20px 20px 0}
+      .detail-info{padding:18px 22px 26px}
+      .detail-title{font-size:1.25rem}
+    }
+
+    /* 圖片燈箱 */
+    .lb{display:none;position:fixed;inset:0;z-index:10001;background:rgba(43,46,39,.9);align-items:center;justify-content:center;padding:24px}
+    .lb.open{display:flex}
+    .lb img{max-width:92vw;max-height:88vh;border-radius:12px;object-fit:contain}
+    .lb-close{position:absolute;top:22px;right:26px;background:rgba(255,255,255,.9);border:none;width:40px;height:40px;
+              border-radius:50%;font-size:1.1rem;cursor:pointer;color:var(--text)}
+
+    footer{background:#2b2e27;color:rgba(255,255,255,.5);padding:34px 6%;text-align:center;font-size:.82rem}
+    footer a{color:rgba(255,255,255,.75);text-decoration:none}
+
+    @media(max-width:600px){
+      .nav-links a:not(.nav-cta){display:none}
+      nav{height:60px;padding:0 5%}
+      .page-hero{margin-top:60px;padding:36px 5% 24px}
+      .wrap{padding:0 5% 56px}
+      .tabs{gap:8px;padding:0 5% 24px}
+      .tab-btn{padding:10px 16px;font-size:.86rem}
+      .svc-grid{grid-template-columns:1fr;gap:20px}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <div class="logo-icon"><img src="logo.png" alt="Logo"></div>
+    <span>LightForm Studio</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html#studios">場地介紹</a>
+    <a href="services.html" class="active">攝影服務</a>
+    <a href="shop.html">選物商店</a>
+    <a href="index.html#how">預約流程</a>
+    <a href="booking.html" class="nav-cta">立即預約</a>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="page-tag">攝影服務</div>
+  <h1>專業拍攝，交給我們</h1>
+  <p>從形象照到活動紀錄，依需求提供合適的拍攝方案</p>
+</section>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="portrait"  onclick="switchTab('portrait')">📸 形象照拍攝</button>
+  <button class="tab-btn"        data-tab="product"   onclick="switchTab('product')">📦 產品攝影</button>
+  <button class="tab-btn"        data-tab="ecommerce" onclick="switchTab('ecommerce')">🛍 網拍攝影</button>
+  <button class="tab-btn"        data-tab="event"     onclick="switchTab('event')">🎉 活動紀錄</button>
+  <button class="tab-btn"        data-tab="team"      onclick="switchTab('team')">🤝 合作攝影師</button>
+</div>
+
+<div class="wrap">
+  <div class="panel active" id="tab-portrait"><div class="svc-grid" id="grid-portrait"></div></div>
+  <div class="panel" id="tab-product"><div class="svc-grid" id="grid-product"></div></div>
+  <div class="panel" id="tab-ecommerce"><div class="svc-grid" id="grid-ecommerce"></div></div>
+  <div class="panel" id="tab-event"><div class="svc-grid" id="grid-event"></div></div>
+  <div class="panel" id="tab-team"><div class="pg-grid" id="grid-team"></div></div>
+</div>
+
+<!-- 服務詳情 -->
+<div class="detail" id="detail" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-box">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<div class="lb" id="lb" onclick="closeLb()">
+  <button class="lb-close" onclick="closeLb()">✕</button>
+  <img id="lb-img" src="" alt="" />
+</div>
+
+<footer>
+  © 2026 LightForm Studio ｜ <a href="index.html">回首頁</a> ｜ <a href="booking.html">立即預約</a>
+</footer>
+
+<script>
+
+  // ─── 分頁開放開關：未開放時顯示「準備中」（網址加 ?preview=1 可自行預覽）───
+  (async ()=>{
+    if (new URLSearchParams(location.search).get('preview') === '1') return;
+    let enabled = false;
+    try {
+      const r = await fetch('/api/appearance');
+      if (r.ok) { const j = await r.json(); enabled = (j.data && j.data['nav_services_enabled']) === '1'; }
+    } catch(e) { enabled = false; }
+    if (enabled) return;
+    document.body.innerHTML = `
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:30px;text-align:center;">
+        <div>
+          <div style="font-size:3rem;margin-bottom:16px;">🍃</div>
+          <h1 style="font-family:var(--head);font-size:1.6rem;font-weight:500;color:var(--text);margin-bottom:12px;">內容準備中</h1>
+          <p style="color:var(--gray);font-size:.95rem;margin-bottom:26px;">這個頁面正在整理中，敬請期待</p>
+          <a href="index.html" style="display:inline-block;background:var(--sage);color:#fff;text-decoration:none;
+             padding:13px 30px;border-radius:30px;font-size:.92rem;">← 回首頁</a>
+        </div>
+      </div>`;
+    document.body.style.overflow='';
+  })();
+
+  function escapeHTML(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function safeSrc(u){ if(!u) return ''; const s=String(u); return /^https?:\/\/|^\//.test(s)?escapeHTML(s):''; }
+
+  function switchTab(name){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='tab-'+name));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  }
+  function openLb(url){ document.getElementById('lb-img').src=url; document.getElementById('lb').classList.add('open'); }
+  function closeLb(){
+    document.getElementById('lb').classList.remove('open');
+    document.getElementById('lb-img').src='';
+    // 詳情彈窗若仍開著，維持鎖定捲動
+    if(!document.getElementById('detail').classList.contains('open')) document.body.style.overflow='';
+  }
+  document.addEventListener('keydown',e=>{
+    if(e.key!=='Escape') return;
+    if(document.getElementById('lb').classList.contains('open')) { closeLb(); return; }
+    if(document.getElementById('detail').classList.contains('open')) closeDetail();
+  });
+
+  const CAT_EMPTY = {
+    portrait:'📸 形象照拍攝', product:'📦 產品攝影',
+    ecommerce:'🛍 網拍攝影', event:'🎉 活動紀錄'
+  };
+
+  let _services = [], _contact = {};
+
+  // 洽詢連結：服務自訂連結 > 後台 LINE > Email
+  function contactHref(s){
+    if (s && s.link_url && safeSrc(s.link_url)) return safeSrc(s.link_url);
+    if (_contact.contact_line && safeSrc(_contact.contact_line)) return safeSrc(_contact.contact_line);
+    if (_contact.contact_email) {
+      const subj = encodeURIComponent(`服務詢問：${s ? s.title : ''}`);
+      return `mailto:${escapeHTML(_contact.contact_email)}?subject=${subj}`;
+    }
+    return 'index.html#explore';
+  }
+  const contactLabel = s => escapeHTML((s && s.link_label) || '💬 LINE 洽詢');
+
+  function buildServiceCard(s){
+    const imgs=(s.gallery||[]).filter(u=>safeSrc(u)).slice(0,4);
+    const imgHtml = imgs.length
+      ? `<div class="svc-imgs" style="grid-template-columns:repeat(${Math.min(imgs.length,2)},1fr);">
+           ${imgs.map(u=>`<img src="${safeSrc(u)}" alt="${escapeHTML(s.title)}" loading="lazy" />`).join('')}
+         </div>`
+      : `<div class="svc-noimg">📷</div>`;
+    // 整張卡片可點 → 開啟完整服務說明
+    return `<div class="svc-card" onclick="openServiceDetail(${s.id})" style="cursor:pointer;">
+      ${imgHtml}
+      <div class="svc-body">
+        <div class="svc-title">${escapeHTML(s.title)}</div>
+        ${s.price_note?`<div class="svc-price">${escapeHTML(s.price_note)}</div>`:''}
+        ${s.description?`<p class="svc-desc">${escapeHTML(s.description)}</p>`:'<div style="flex:1"></div>'}
+        <button class="svc-btn" style="border:none;font-family:inherit;cursor:pointer;"
+          onclick="event.stopPropagation(); openServiceDetail(${s.id})">查看詳情 →</button>
+      </div>
+    </div>`;
+  }
+
+  // ─── 服務詳情彈窗 ───
+  let _dImgs=[], _dIdx=0;
+  function openServiceDetail(id){
+    const s=_services.find(x=>String(x.id)===String(id)); if(!s) return;
+    _dImgs=(s.gallery||[]).filter(u=>safeSrc(u)); _dIdx=0;
+    const mainHtml = _dImgs.length
+      ? `<img class="detail-main" id="d-main" src="${safeSrc(_dImgs[0])}" alt="${escapeHTML(s.title)}" onclick="openLb(document.getElementById('d-main').src)" title="點擊放大" />`
+      : `<div class="detail-main-ph">📷</div>`;
+    const thumbs = _dImgs.length>1
+      ? `<div class="detail-thumbs" id="d-thumbs">${_dImgs.map((u,i)=>
+          `<img src="${safeSrc(u)}" class="${i===0?'on':''}" onclick="setDetailImg(${i})" alt="" loading="lazy" />`).join('')}</div>`
+      : '';
+    document.getElementById('detail-content').innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-imgs">
+          ${mainHtml}${thumbs}
+          ${_dImgs.length>1?`<div style="font-size:.76rem;color:var(--gray);margin-top:8px;">共 ${_dImgs.length} 張 · 點主圖可放大</div>`:''}
+        </div>
+        <div class="detail-info">
+          <span class="detail-cat">${CAT_EMPTY[s.category]||'📷 攝影服務'}</span>
+          <div class="detail-title">${escapeHTML(s.title)}</div>
+          ${s.price_note?`<div class="detail-price">${escapeHTML(s.price_note)}</div>`:''}
+          <div class="detail-sec">服務說明</div>
+          <div class="detail-desc">${s.description?escapeHTML(s.description):'<span style="color:var(--gray);">詳細內容歡迎直接洽詢 🍃</span>'}</div>
+          <a class="detail-btn" href="${contactHref(s)}" target="_blank" rel="noopener">${contactLabel(s)}</a>
+        </div>
+      </div>`;
+    document.getElementById('detail').classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function setDetailImg(i){
+    _dIdx=i;
+    const m=document.getElementById('d-main'); if(m) m.src=safeSrc(_dImgs[i]);
+    document.querySelectorAll('#d-thumbs img').forEach((el,idx)=>el.classList.toggle('on',idx===i));
+  }
+  function closeDetail(){
+    document.getElementById('detail').classList.remove('open');
+    document.getElementById('detail-content').innerHTML='';
+    document.body.style.overflow='';
+  }
+
+  (async ()=>{
+    let photographers=[];
+    try{
+      const r=await fetch('/api/services');
+      if(r.ok){ const j=await r.json(); _services=j.data?.services||[]; photographers=j.data?.photographers||[]; }
+    }catch(e){}
+    try{ const r=await fetch('/api/appearance'); if(r.ok){ const j=await r.json(); _contact=j.data||{}; } }catch(e){}
+    const services=_services;
+
+    // 四類服務
+    Object.keys(CAT_EMPTY).forEach(cat=>{
+      const list=services.filter(s=>s.category===cat);
+      const grid=document.getElementById('grid-'+cat);
+      grid.innerHTML = list.length
+        ? list.map(buildServiceCard).join('')
+        : `<div class="empty" style="grid-column:1/-1;">「${CAT_EMPTY[cat]}」的服務內容準備中，歡迎<a href="booking.html" style="color:var(--sage-d);">來訊詢問</a> 🍃</div>`;
+    });
+
+    // 合作攝影師
+    const team=document.getElementById('grid-team');
+    team.innerHTML = photographers.length
+      ? photographers.map(p=>{
+          const av = p.avatar_url&&safeSrc(p.avatar_url)
+            ? `<img class="pg-avatar" src="${safeSrc(p.avatar_url)}" alt="${escapeHTML(p.name)}" loading="lazy" />`
+            : `<div class="pg-avatar-ph">📷</div>`;
+          const href = p.portfolio_url&&safeSrc(p.portfolio_url) ? safeSrc(p.portfolio_url) : '';
+          const inner = `${av}
+            <div class="pg-name">${escapeHTML(p.name)}</div>
+            ${p.specialty?`<div class="pg-spec">${escapeHTML(p.specialty)}</div>`:''}
+            ${p.note?`<div class="pg-note">${escapeHTML(p.note)}</div>`:''}
+            ${href?`<span class="pg-link">查看作品集 →</span>`:''}`;
+          return href
+            ? `<a class="pg-card" href="${href}" target="_blank" rel="noopener">${inner}</a>`
+            : `<div class="pg-card">${inner}</div>`;
+        }).join('')
+      : `<div class="empty" style="grid-column:1/-1;">合作攝影師名單準備中 🍃</div>`;
+  })();
+</script>
+</body>
+</html>

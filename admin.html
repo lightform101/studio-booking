@@ -354,6 +354,12 @@
     <button class="sb-item" onclick="showPage('events', this)">
       <span class="icon">🎪</span> 活動專區
     </button>
+    <button class="sb-item" onclick="showPage('services', this)">
+      <span class="icon">📸</span> 攝影服務
+    </button>
+    <button class="sb-item" onclick="showPage('shop', this)">
+      <span class="icon">🛍</span> 選物商店
+    </button>
     <button class="sb-item" onclick="showPage('line', this)">
       <span class="icon">💬</span> LINE 通知
     </button>
@@ -1486,6 +1492,212 @@
       </div>
     </div>
 
+    <!-- ─── 攝影服務管理 ─────────────────────────── -->
+    <div class="page" id="page-services">
+      <div class="settings-section" style="background:#fff8e1;border:1px solid #ffe082;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+          <div style="font-size:.9rem;color:#8a6d3b;line-height:1.7;">
+            <strong>前台開放狀態</strong>：<span id="nav_services_enabled-state">讀取中…</span><br>
+            <span style="font-size:.82rem;">未開放時，首頁導覽列的「攝影服務」會呈現<strong>灰階且不可點</strong>，直接輸入網址也會顯示「準備中」。<br>
+            你可以用 <a href="services.html?preview=1" target="_blank" style="color:#6f8060;">services.html?preview=1</a> 先自行預覽。</span>
+          </div>
+          <div style="display:flex;gap:8px;white-space:nowrap;">
+            <button class="btn-add" onclick="setNavFlag('nav_services_enabled','1')">✅ 開放前台</button>
+            <button onclick="setNavFlag('nav_services_enabled','0')" style="padding:8px 16px;border-radius:7px;border:1px solid #d0d4db;background:#fff;cursor:pointer;">🚧 暫不開放</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3 style="margin:0 0 6px;" id="sv-form-title">📸 新增攝影服務</h3>
+        <p style="color:#888;font-size:.85rem;margin:0 0 16px;">顯示在前台「攝影服務」頁。<strong>所有圖片使用外連網址</strong>（不佔硬碟）。</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:820px;">
+          <input type="hidden" id="sv-id" />
+          <div class="form-group">
+            <div class="form-label">服務分類</div>
+            <select id="sv-category" class="form-select">
+              <option value="portrait">📸 形象照拍攝</option>
+              <option value="product">📦 產品攝影</option>
+              <option value="ecommerce">🛍 網拍攝影</option>
+              <option value="event">🎉 活動紀錄</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">服務名稱 *</div>
+            <input type="text" id="sv-title" class="form-input" placeholder="例：個人形象照方案" />
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <div class="form-label">服務說明</div>
+            <textarea id="sv-desc" class="form-input" rows="3" style="resize:vertical;" placeholder="包含內容、拍攝時長、交件方式…"></textarea>
+          </div>
+          <div class="form-group">
+            <div class="form-label">價格／方案</div>
+            <input type="text" id="sv-price" class="form-input" placeholder="例：NT$3,000 起 / 來電洽詢" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">排序（數字小優先）</div>
+            <input type="number" id="sv-sort" class="form-input" value="0" min="0" />
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <div class="form-label">作品圖片網址 <span style="font-size:.75rem;color:#888;">（一行一個網址，最多顯示 4 張）</span></div>
+            <textarea id="sv-gallery" class="form-input" rows="3" style="resize:vertical;font-size:.82rem;" placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"></textarea>
+          </div>
+          <div class="form-group">
+            <div class="form-label">詢價／預約按鈕連結（留空=連到預約頁）</div>
+            <input type="text" id="sv-link" class="form-input" placeholder="例：LINE 連結" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">按鈕文字（預設：立即詢價 →）</div>
+            <input type="text" id="sv-link-label" class="form-input" placeholder="立即詢價 →" />
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:24px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;">
+              <input type="checkbox" id="sv-active" checked style="width:16px;height:16px;" /> 顯示此服務
+            </label>
+          </div>
+        </div>
+        <div id="sv-msg" style="display:none;margin-top:10px;font-size:.85rem;"></div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn-add" id="sv-submit" onclick="submitService()">＋ 新增服務</button>
+          <button id="sv-cancel" onclick="resetServiceForm()" style="display:none;padding:8px 18px;border-radius:7px;border:1px solid #d0d4db;background:#fff;cursor:pointer;">取消編輯</button>
+        </div>
+      </div>
+
+      <div class="settings-section" style="margin-top:20px;">
+        <h3 style="margin:0 0 16px;">目前服務項目</h3>
+        <div id="services-list" style="display:grid;gap:10px;"><div style="color:#aaa;padding:20px;">載入中...</div></div>
+      </div>
+
+      <!-- 合作攝影師 -->
+      <div class="settings-section" style="margin-top:20px;">
+        <h3 style="margin:0 0 6px;" id="pg-form-title">🤝 新增合作攝影師</h3>
+        <p style="color:#888;font-size:.85rem;margin:0 0 16px;">前台點攝影師卡片會外連到其作品集。</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:820px;">
+          <input type="hidden" id="pg-id" />
+          <div class="form-group">
+            <div class="form-label">攝影師名稱 *</div>
+            <input type="text" id="pg-name" class="form-input" placeholder="例：陳小明" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">專長</div>
+            <input type="text" id="pg-specialty" class="form-input" placeholder="例：人像 / 商業空間" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">作品集連結</div>
+            <input type="text" id="pg-portfolio" class="form-input" placeholder="https://instagram.com/..." />
+          </div>
+          <div class="form-group">
+            <div class="form-label">頭像網址（外連，可留空）</div>
+            <input type="text" id="pg-avatar" class="form-input" placeholder="https://..." />
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <div class="form-label">簡介</div>
+            <textarea id="pg-note" class="form-input" rows="2" style="resize:vertical;"></textarea>
+          </div>
+          <div class="form-group">
+            <div class="form-label">排序</div>
+            <input type="number" id="pg-sort" class="form-input" value="0" min="0" />
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:24px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;">
+              <input type="checkbox" id="pg-active" checked style="width:16px;height:16px;" /> 顯示
+            </label>
+          </div>
+        </div>
+        <div id="pg-msg" style="display:none;margin-top:10px;font-size:.85rem;"></div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn-add" id="pg-submit" onclick="submitPhotographer()">＋ 新增攝影師</button>
+          <button id="pg-cancel" onclick="resetPgForm()" style="display:none;padding:8px 18px;border-radius:7px;border:1px solid #d0d4db;background:#fff;cursor:pointer;">取消編輯</button>
+        </div>
+        <div id="photographers-list" style="display:grid;gap:10px;margin-top:18px;"></div>
+      </div>
+    </div>
+
+    <!-- ─── 選物商店管理 ─────────────────────────── -->
+    <div class="page" id="page-shop">
+      <div class="settings-section" style="background:#fff8e1;border:1px solid #ffe082;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+          <div style="font-size:.9rem;color:#8a6d3b;line-height:1.7;">
+            <strong>前台開放狀態</strong>：<span id="nav_shop_enabled-state">讀取中…</span><br>
+            <span style="font-size:.82rem;">未開放時，首頁導覽列的「選物商店」會呈現<strong>灰階且不可點</strong>，直接輸入網址也會顯示「準備中」。<br>
+            你可以用 <a href="shop.html?preview=1" target="_blank" style="color:#6f8060;">shop.html?preview=1</a> 先自行預覽。</span>
+          </div>
+          <div style="display:flex;gap:8px;white-space:nowrap;">
+            <button class="btn-add" onclick="setNavFlag('nav_shop_enabled','1')">✅ 開放前台</button>
+            <button onclick="setNavFlag('nav_shop_enabled','0')" style="padding:8px 16px;border-radius:7px;border:1px solid #d0d4db;background:#fff;cursor:pointer;">🚧 暫不開放</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3 style="margin:0 0 6px;" id="sh-form-title">🛍 新增商品</h3>
+        <p style="color:#888;font-size:.85rem;margin:0 0 16px;">顯示在前台「選物商店」頁。客人點「詢問購買」會用 LINE／Email 聯繫你。<strong>圖片一律外連網址</strong>。</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:820px;">
+          <input type="hidden" id="sh-id" />
+          <div class="form-group">
+            <div class="form-label">分類</div>
+            <select id="sh-category" class="form-select">
+              <option value="furniture">🪑 二手傢俱出清</option>
+              <option value="goods">✨ 優選好物</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">商品名稱 *</div>
+            <input type="text" id="sh-title" class="form-input" placeholder="例：北歐風實木餐桌" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">售價 NT$（留空=面議）</div>
+            <input type="number" id="sh-price" class="form-input" min="0" placeholder="3000" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">原價（劃線對比，可留空）</div>
+            <input type="number" id="sh-original" class="form-input" min="0" placeholder="6000" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">狀況說明</div>
+            <input type="text" id="sh-condition" class="form-input" placeholder="例：九成新、些微使用痕跡" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">販售狀態</div>
+            <select id="sh-status" class="form-select">
+              <option value="available">販售中</option>
+              <option value="reserved">已預訂</option>
+              <option value="sold">已售出</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <div class="form-label">商品說明</div>
+            <textarea id="sh-desc" class="form-input" rows="3" style="resize:vertical;" placeholder="尺寸、材質、購買年份、瑕疵說明…"></textarea>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <div class="form-label">商品圖片網址 <span style="font-size:.75rem;color:#888;">（一行一個網址，第一張為封面）</span></div>
+            <textarea id="sh-images" class="form-input" rows="3" style="resize:vertical;font-size:.82rem;" placeholder="https://example.com/item1.jpg&#10;https://example.com/item2.jpg"></textarea>
+          </div>
+          <div class="form-group">
+            <div class="form-label">排序（數字小優先）</div>
+            <input type="number" id="sh-sort" class="form-input" value="0" min="0" />
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:24px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;">
+              <input type="checkbox" id="sh-active" checked style="width:16px;height:16px;" /> 顯示此商品
+            </label>
+          </div>
+        </div>
+        <div id="sh-msg" style="display:none;margin-top:10px;font-size:.85rem;"></div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn-add" id="sh-submit" onclick="submitShopItem()">＋ 新增商品</button>
+          <button id="sh-cancel" onclick="resetShopForm()" style="display:none;padding:8px 18px;border-radius:7px;border:1px solid #d0d4db;background:#fff;cursor:pointer;">取消編輯</button>
+        </div>
+      </div>
+
+      <div class="settings-section" style="margin-top:20px;">
+        <h3 style="margin:0 0 16px;">目前商品</h3>
+        <div id="shop-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
+          <div style="color:#aaa;padding:20px;">載入中...</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1803,7 +2015,7 @@
   const titles = {
     dashboard: '📊 儀表板', bookings: '📅 預約管理', calendar: '🗓 排程日曆',
     revenue: '💰 收入報表', studios: '🏠 場地設定', photos: '📷 場地照片',
-    promotions: '🎁 優惠方案', carousel: '🖼 首頁輪播', events: '🎪 活動專區', line: '💬 LINE 通知', notify: '🔔 通知設定', invoice: '🧾 發票設定',
+    promotions: '🎁 優惠方案', carousel: '🖼 首頁輪播', events: '🎪 活動專區', services: '📸 攝影服務', shop: '🛍 選物商店', line: '💬 LINE 通知', notify: '🔔 通知設定', invoice: '🧾 發票設定',
     system: '⚙️ 系統設定', appearance: '🎨 外觀設定', content: '📝 頁面內容',
     admins: '👤 帳號管理'
   };
@@ -1862,6 +2074,8 @@
     if (id === 'carousel')   loadCarousel();
     if (id === 'events')     loadEvents();
     if (id === 'line')       loadLineSettings();
+    if (id === 'services')   { loadServices(); loadPhotographers(); loadNavFlags(); }
+    if (id === 'shop')       { loadShopItems(); loadNavFlags(); }
     if (id === 'notify')    loadSmtpSettings();
   }
 
@@ -4029,6 +4243,320 @@
       const { success, message } = await r.json();
       if (success) loadCarousel();
       else alert('❌ ' + (message || '刪除失敗'));
+    } catch(e) { alert('❌ 連線失敗'); }
+  }
+
+
+  // ─── 新分頁前台開放開關 ───────────────────────
+  async function loadNavFlags() {
+    try {
+      const r = await fetch(`${API}/admin/settings`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+      const { data } = await r.json();
+      ['nav_services_enabled','nav_shop_enabled'].forEach(k => {
+        const el = document.getElementById(k + '-state');
+        if (el) el.innerHTML = data[k] === '1'
+          ? '<span style="color:#27ae60;font-weight:700;">✅ 已開放</span>'
+          : '<span style="color:#c0623e;font-weight:700;">🚧 尚未開放（前台灰階）</span>';
+      });
+    } catch(e) {}
+  }
+  async function setNavFlag(key, val) {
+    try {
+      const r = await fetch(`${API}/admin/settings`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: { [key]: val } })
+      });
+      const { success, message } = await r.json();
+      if (success) { alert(val === '1' ? '✅ 已開放到前台' : '🚧 已設為未開放（前台灰階）'); loadNavFlags(); }
+      else alert('❌ ' + (message || '設定失敗'));
+    } catch(e) { alert('❌ 連線失敗'); }
+  }
+
+  // ═══════════════════════════════════════════════
+  // 攝影服務 + 合作攝影師
+  // ═══════════════════════════════════════════════
+  const SV_CAT = { portrait:'📸 形象照拍攝', product:'📦 產品攝影', ecommerce:'🛍 網拍攝影', event:'🎉 活動紀錄' };
+  let _svCache = [], _pgCache = [];
+  const authHdr = () => ({ 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' });
+  const esc = t => String(t == null ? '' : t).replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+  async function loadServices() {
+    const box = document.getElementById('services-list');
+    box.innerHTML = '<div style="color:#aaa;padding:20px;">載入中...</div>';
+    try {
+      const r = await fetch(`${API}/admin/services`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+      const { data } = await r.json();
+      _svCache = data || [];
+      if (!_svCache.length) { box.innerHTML = '<div style="color:#aaa;padding:16px;">尚無服務項目，請於上方新增。</div>'; return; }
+      box.innerHTML = _svCache.map(s => `
+        <div style="display:flex;align-items:center;gap:14px;border:1px solid #e7e7e0;border-radius:10px;padding:12px 16px;background:#fff;${s.is_active?'':'opacity:.55;'}">
+          ${(s.gallery&&s.gallery[0]) ? `<img src="${esc(s.gallery[0])}" style="width:58px;height:58px;object-fit:cover;border-radius:8px;flex-shrink:0;" />` : '<div style="width:58px;height:58px;border-radius:8px;background:#eef0ea;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📷</div>'}
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:.72rem;color:#6f8060;background:#eef0ea;display:inline-block;padding:2px 9px;border-radius:12px;margin-bottom:4px;">${SV_CAT[s.category]||s.category}</div>
+            ${s.is_active?'':'<span style="font-size:.72rem;background:#f5e6e0;color:#c0623e;padding:2px 9px;border-radius:12px;margin-left:6px;">已隱藏</span>'}
+            <div style="font-weight:700;">${esc(s.title)}</div>
+            <div style="font-size:.8rem;color:#9a9a92;">${esc(s.price_note||'')}　${(s.gallery||[]).length?`🖼 ${s.gallery.length} 張`:''}</div>
+          </div>
+          <button onclick="editService(${s.id})" style="padding:7px 14px;border-radius:6px;border:1px solid #8a9a7b;background:#8a9a7b;color:#fff;cursor:pointer;font-size:.82rem;">✏️ 編輯</button>
+          <button onclick="deleteService(${s.id})" style="padding:7px 12px;border-radius:6px;border:1px solid #fcc;background:#fff5f5;color:#c0392b;cursor:pointer;font-size:.82rem;">🗑</button>
+        </div>`).join('');
+    } catch(e) { box.innerHTML = '<div style="color:#e74c3c;padding:16px;">載入失敗</div>'; }
+  }
+
+  async function submitService() {
+    const id = document.getElementById('sv-id').value;
+    const title = document.getElementById('sv-title').value.trim();
+    const msg = document.getElementById('sv-msg'), btn = document.getElementById('sv-submit');
+    msg.style.display='none';
+    if (!title) { msg.style.display='block'; msg.style.color='#c0392b'; msg.textContent='請輸入服務名稱'; return; }
+    const body = {
+      category:   document.getElementById('sv-category').value,
+      title,
+      description:document.getElementById('sv-desc').value.trim(),
+      price_note: document.getElementById('sv-price').value.trim(),
+      gallery:    document.getElementById('sv-gallery').value,
+      link_url:   document.getElementById('sv-link').value.trim(),
+      link_label: document.getElementById('sv-link-label').value.trim(),
+      sort_order: document.getElementById('sv-sort').value || 0,
+      is_active:  document.getElementById('sv-active').checked
+    };
+    btn.disabled = true; btn.textContent = '儲存中...';
+    try {
+      const r = await fetch(id ? `${API}/admin/services/${id}` : `${API}/admin/services`,
+        { method: id?'PUT':'POST', headers: authHdr(), body: JSON.stringify(body) });
+      const { success, message } = await r.json();
+      msg.style.display='block';
+      if (success) { msg.style.color='#27ae60'; msg.textContent = id?'✅ 已更新':'✅ 已新增'; resetServiceForm(); loadServices(); }
+      else { msg.style.color='#c0392b'; msg.textContent='❌ '+(message||'儲存失敗'); }
+    } catch(e) { msg.style.display='block'; msg.style.color='#c0392b'; msg.textContent='❌ 連線失敗'; }
+    finally { btn.disabled=false; btn.textContent = document.getElementById('sv-id').value ? '💾 更新服務' : '＋ 新增服務'; }
+  }
+
+  function editService(id) {
+    const s = _svCache.find(x => x.id === id); if (!s) return;
+    document.getElementById('sv-id').value        = s.id;
+    document.getElementById('sv-category').value  = s.category || 'portrait';
+    document.getElementById('sv-title').value     = s.title || '';
+    document.getElementById('sv-desc').value      = s.description || '';
+    document.getElementById('sv-price').value     = s.price_note || '';
+    document.getElementById('sv-gallery').value   = (s.gallery || []).join('\n');
+    document.getElementById('sv-link').value      = s.link_url || '';
+    document.getElementById('sv-link-label').value= s.link_label || '';
+    document.getElementById('sv-sort').value      = s.sort_order || 0;
+    document.getElementById('sv-active').checked  = !!s.is_active;
+    document.getElementById('sv-form-title').textContent = '✏️ 編輯攝影服務';
+    document.getElementById('sv-submit').textContent = '💾 更新服務';
+    document.getElementById('sv-cancel').style.display = '';
+    document.getElementById('page-services').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  function resetServiceForm() {
+    document.getElementById('sv-id').value = '';
+    ['sv-title','sv-desc','sv-price','sv-gallery','sv-link','sv-link-label'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('sv-category').value='portrait';
+    document.getElementById('sv-sort').value='0';
+    document.getElementById('sv-active').checked=true;
+    document.getElementById('sv-form-title').textContent='📸 新增攝影服務';
+    document.getElementById('sv-submit').textContent='＋ 新增服務';
+    document.getElementById('sv-cancel').style.display='none';
+  }
+
+  async function deleteService(id) {
+    if (!confirm('確定刪除這個服務項目嗎？')) return;
+    try {
+      const r = await fetch(`${API}/admin/services/${id}`, { method:'DELETE', headers:{ 'Authorization':`Bearer ${adminToken}` } });
+      const { success, message } = await r.json();
+      if (success) loadServices(); else alert('❌ '+(message||'刪除失敗'));
+    } catch(e) { alert('❌ 連線失敗'); }
+  }
+
+  // ─── 合作攝影師 ───
+  async function loadPhotographers() {
+    const box = document.getElementById('photographers-list');
+    try {
+      const r = await fetch(`${API}/admin/services/photographers`, { headers:{ 'Authorization':`Bearer ${adminToken}` } });
+      const { data } = await r.json();
+      _pgCache = data || [];
+      box.innerHTML = _pgCache.length ? _pgCache.map(p => `
+        <div style="display:flex;align-items:center;gap:14px;border:1px solid #e7e7e0;border-radius:10px;padding:12px 16px;background:#fff;${p.is_active?'':'opacity:.55;'}">
+          ${p.avatar_url ? `<img src="${esc(p.avatar_url)}" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;" />` : '<div style="width:46px;height:46px;border-radius:50%;background:#eef0ea;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📷</div>'}
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;">${esc(p.name)}${p.is_active?'':' <span style="font-size:.72rem;color:#c0623e;">（已隱藏）</span>'}</div>
+            <div style="font-size:.8rem;color:#9a9a92;">${esc(p.specialty||'')}</div>
+            ${p.portfolio_url?`<div style="font-size:.74rem;color:#6f8060;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🔗 ${esc(p.portfolio_url)}</div>`:''}
+          </div>
+          <button onclick="editPhotographer(${p.id})" style="padding:7px 14px;border-radius:6px;border:1px solid #8a9a7b;background:#8a9a7b;color:#fff;cursor:pointer;font-size:.82rem;">✏️</button>
+          <button onclick="deletePhotographer(${p.id})" style="padding:7px 12px;border-radius:6px;border:1px solid #fcc;background:#fff5f5;color:#c0392b;cursor:pointer;font-size:.82rem;">🗑</button>
+        </div>`).join('') : '<div style="color:#aaa;padding:12px;">尚無合作攝影師</div>';
+    } catch(e) { box.innerHTML = '<div style="color:#e74c3c;padding:12px;">載入失敗</div>'; }
+  }
+
+  async function submitPhotographer() {
+    const id = document.getElementById('pg-id').value;
+    const name = document.getElementById('pg-name').value.trim();
+    const msg = document.getElementById('pg-msg'), btn = document.getElementById('pg-submit');
+    msg.style.display='none';
+    if (!name) { msg.style.display='block'; msg.style.color='#c0392b'; msg.textContent='請輸入攝影師名稱'; return; }
+    const body = {
+      name,
+      specialty:     document.getElementById('pg-specialty').value.trim(),
+      portfolio_url: document.getElementById('pg-portfolio').value.trim(),
+      avatar_url:    document.getElementById('pg-avatar').value.trim(),
+      note:          document.getElementById('pg-note').value.trim(),
+      sort_order:    document.getElementById('pg-sort').value || 0,
+      is_active:     document.getElementById('pg-active').checked
+    };
+    btn.disabled=true; btn.textContent='儲存中...';
+    try {
+      const r = await fetch(id ? `${API}/admin/services/photographers/${id}` : `${API}/admin/services/photographers`,
+        { method: id?'PUT':'POST', headers: authHdr(), body: JSON.stringify(body) });
+      const { success, message } = await r.json();
+      msg.style.display='block';
+      if (success) { msg.style.color='#27ae60'; msg.textContent = id?'✅ 已更新':'✅ 已新增'; resetPgForm(); loadPhotographers(); }
+      else { msg.style.color='#c0392b'; msg.textContent='❌ '+(message||'儲存失敗'); }
+    } catch(e) { msg.style.display='block'; msg.style.color='#c0392b'; msg.textContent='❌ 連線失敗'; }
+    finally { btn.disabled=false; btn.textContent = document.getElementById('pg-id').value ? '💾 更新攝影師' : '＋ 新增攝影師'; }
+  }
+
+  function editPhotographer(id) {
+    const p = _pgCache.find(x=>x.id===id); if(!p) return;
+    document.getElementById('pg-id').value        = p.id;
+    document.getElementById('pg-name').value      = p.name || '';
+    document.getElementById('pg-specialty').value = p.specialty || '';
+    document.getElementById('pg-portfolio').value = p.portfolio_url || '';
+    document.getElementById('pg-avatar').value    = p.avatar_url || '';
+    document.getElementById('pg-note').value      = p.note || '';
+    document.getElementById('pg-sort').value      = p.sort_order || 0;
+    document.getElementById('pg-active').checked  = !!p.is_active;
+    document.getElementById('pg-form-title').textContent='✏️ 編輯合作攝影師';
+    document.getElementById('pg-submit').textContent='💾 更新攝影師';
+    document.getElementById('pg-cancel').style.display='';
+  }
+
+  function resetPgForm() {
+    document.getElementById('pg-id').value='';
+    ['pg-name','pg-specialty','pg-portfolio','pg-avatar','pg-note'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('pg-sort').value='0';
+    document.getElementById('pg-active').checked=true;
+    document.getElementById('pg-form-title').textContent='🤝 新增合作攝影師';
+    document.getElementById('pg-submit').textContent='＋ 新增攝影師';
+    document.getElementById('pg-cancel').style.display='none';
+  }
+
+  async function deletePhotographer(id) {
+    if (!confirm('確定刪除這位攝影師嗎？')) return;
+    try {
+      const r = await fetch(`${API}/admin/services/photographers/${id}`, { method:'DELETE', headers:{ 'Authorization':`Bearer ${adminToken}` } });
+      const { success, message } = await r.json();
+      if (success) loadPhotographers(); else alert('❌ '+(message||'刪除失敗'));
+    } catch(e) { alert('❌ 連線失敗'); }
+  }
+
+  // ═══════════════════════════════════════════════
+  // 選物商店
+  // ═══════════════════════════════════════════════
+  const SH_CAT = { furniture:'🪑 二手傢俱出清', goods:'✨ 優選好物' };
+  const SH_ST  = { available:'販售中', reserved:'已預訂', sold:'已售出' };
+  let _shCache = [];
+
+  async function loadShopItems() {
+    const box = document.getElementById('shop-list');
+    box.innerHTML = '<div style="color:#aaa;padding:20px;">載入中...</div>';
+    try {
+      const r = await fetch(`${API}/admin/shop`, { headers:{ 'Authorization':`Bearer ${adminToken}` } });
+      const { data } = await r.json();
+      _shCache = data || [];
+      if (!_shCache.length) { box.innerHTML = '<div style="color:#aaa;padding:16px;grid-column:1/-1;">尚無商品，請於上方新增。</div>'; return; }
+      box.innerHTML = _shCache.map(i => `
+        <div style="border:1px solid #e7e7e0;border-radius:12px;overflow:hidden;background:#fff;${i.is_active?'':'opacity:.55;'}">
+          <div style="aspect-ratio:4/3;background:#eef0ea center/cover ${i.images&&i.images[0]?`url('${esc(i.images[0])}')`:''};display:flex;align-items:center;justify-content:center;position:relative;">
+            ${i.images&&i.images[0]?'':'<span style="font-size:2rem;">🪑</span>'}
+            <span style="position:absolute;top:8px;left:8px;background:rgba(111,128,96,.92);color:#fff;font-size:.7rem;padding:2px 9px;border-radius:12px;">${SH_ST[i.status]||i.status}</span>
+          </div>
+          <div style="padding:12px 14px;">
+            <div style="font-size:.72rem;color:#6f8060;background:#eef0ea;display:inline-block;padding:2px 9px;border-radius:12px;margin-bottom:5px;">${SH_CAT[i.category]||i.category}</div>
+            <div style="font-weight:700;font-size:.95rem;">${esc(i.title)}</div>
+            <div style="font-size:.85rem;color:#6f8060;font-weight:700;margin:3px 0 8px;">
+              ${i.price!=null?`NT$ ${Number(i.price).toLocaleString()}`:'面議'}
+              ${(i.images||[]).length?`<span style="font-weight:400;color:#9a9a92;font-size:.75rem;">・🖼 ${i.images.length}</span>`:''}
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="editShopItem(${i.id})" style="flex:1;padding:7px;border-radius:6px;border:1px solid #8a9a7b;background:#8a9a7b;color:#fff;cursor:pointer;font-size:.82rem;">✏️ 編輯</button>
+              <button onclick="deleteShopItem(${i.id})" style="padding:7px 12px;border-radius:6px;border:1px solid #fcc;background:#fff5f5;color:#c0392b;cursor:pointer;font-size:.82rem;">🗑</button>
+            </div>
+          </div>
+        </div>`).join('');
+    } catch(e) { box.innerHTML='<div style="color:#e74c3c;padding:16px;">載入失敗</div>'; }
+  }
+
+  async function submitShopItem() {
+    const id = document.getElementById('sh-id').value;
+    const title = document.getElementById('sh-title').value.trim();
+    const msg = document.getElementById('sh-msg'), btn = document.getElementById('sh-submit');
+    msg.style.display='none';
+    if (!title) { msg.style.display='block'; msg.style.color='#c0392b'; msg.textContent='請輸入商品名稱'; return; }
+    const body = {
+      category:      document.getElementById('sh-category').value,
+      title,
+      description:   document.getElementById('sh-desc').value.trim(),
+      price:         document.getElementById('sh-price').value,
+      original_price:document.getElementById('sh-original').value,
+      images:        document.getElementById('sh-images').value,
+      condition_note:document.getElementById('sh-condition').value.trim(),
+      status:        document.getElementById('sh-status').value,
+      sort_order:    document.getElementById('sh-sort').value || 0,
+      is_active:     document.getElementById('sh-active').checked
+    };
+    btn.disabled=true; btn.textContent='儲存中...';
+    try {
+      const r = await fetch(id ? `${API}/admin/shop/${id}` : `${API}/admin/shop`,
+        { method:id?'PUT':'POST', headers:authHdr(), body:JSON.stringify(body) });
+      const { success, message } = await r.json();
+      msg.style.display='block';
+      if (success) { msg.style.color='#27ae60'; msg.textContent = id?'✅ 已更新':'✅ 已新增'; resetShopForm(); loadShopItems(); }
+      else { msg.style.color='#c0392b'; msg.textContent='❌ '+(message||'儲存失敗'); }
+    } catch(e) { msg.style.display='block'; msg.style.color='#c0392b'; msg.textContent='❌ 連線失敗'; }
+    finally { btn.disabled=false; btn.textContent = document.getElementById('sh-id').value ? '💾 更新商品' : '＋ 新增商品'; }
+  }
+
+  function editShopItem(id) {
+    const i = _shCache.find(x=>x.id===id); if(!i) return;
+    document.getElementById('sh-id').value        = i.id;
+    document.getElementById('sh-category').value  = i.category || 'furniture';
+    document.getElementById('sh-title').value     = i.title || '';
+    document.getElementById('sh-price').value     = i.price != null ? i.price : '';
+    document.getElementById('sh-original').value  = i.original_price != null ? i.original_price : '';
+    document.getElementById('sh-condition').value = i.condition_note || '';
+    document.getElementById('sh-status').value    = i.status || 'available';
+    document.getElementById('sh-desc').value      = i.description || '';
+    document.getElementById('sh-images').value    = (i.images || []).join('\n');
+    document.getElementById('sh-sort').value      = i.sort_order || 0;
+    document.getElementById('sh-active').checked  = !!i.is_active;
+    document.getElementById('sh-form-title').textContent='✏️ 編輯商品';
+    document.getElementById('sh-submit').textContent='💾 更新商品';
+    document.getElementById('sh-cancel').style.display='';
+    document.getElementById('page-shop').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  function resetShopForm() {
+    document.getElementById('sh-id').value='';
+    ['sh-title','sh-price','sh-original','sh-condition','sh-desc','sh-images'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('sh-category').value='furniture';
+    document.getElementById('sh-status').value='available';
+    document.getElementById('sh-sort').value='0';
+    document.getElementById('sh-active').checked=true;
+    document.getElementById('sh-form-title').textContent='🛍 新增商品';
+    document.getElementById('sh-submit').textContent='＋ 新增商品';
+    document.getElementById('sh-cancel').style.display='none';
+  }
+
+  async function deleteShopItem(id) {
+    if (!confirm('確定刪除這個商品嗎？')) return;
+    try {
+      const r = await fetch(`${API}/admin/shop/${id}`, { method:'DELETE', headers:{ 'Authorization':`Bearer ${adminToken}` } });
+      const { success, message } = await r.json();
+      if (success) loadShopItems(); else alert('❌ '+(message||'刪除失敗'));
     } catch(e) { alert('❌ 連線失敗'); }
   }
 

@@ -51,6 +51,8 @@ const ALLOWED_SETTING_KEYS = new Set([
   'atm_bank_code','atm_bank_name','atm_account','atm_account_name',
   // LINE 通知
   'line_channel_access_token','line_channel_secret','line_notify_enabled',
+  // 新分頁開關
+  'nav_services_enabled','nav_shop_enabled',
 ]);
 
 // 批次更新設定
