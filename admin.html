@@ -339,18 +339,24 @@
       <span class="icon">💰</span> 收入報表
     </button>
     <div class="sb-section-label">設定</div>
-    <button class="sb-item" onclick="showPage('studios', this)">
+    <button class="sb-item" id="sb-studios-btn" onclick="toggleSubMenu('studios', this)">
       <span class="icon">🏠</span> 場地設定
+      <span class="sb-arrow">▼</span>
     </button>
-    <button class="sb-item" onclick="showPage('photos', this)">
-      <span class="icon">📷</span> 場地照片
-    </button>
-    <button class="sb-item" onclick="showPage('promotions', this)">
-      <span class="icon">🎁</span> 優惠方案
-    </button>
-    <button class="sb-item" onclick="showPage('carousel', this)">
-      <span class="icon">🖼</span> 首頁輪播
-    </button>
+    <div class="sb-sub-menu" id="studios-submenu">
+      <button class="sb-sub-item" id="sb-sub-studios" onclick="showSubPage('studios', this)">
+        <span class="icon">🔧</span> 場地基本設定
+      </button>
+      <button class="sb-sub-item" id="sb-sub-photos" onclick="showSubPage('photos', this)">
+        <span class="icon">📷</span> 場地照片
+      </button>
+      <button class="sb-sub-item" id="sb-sub-carousel" onclick="showSubPage('carousel', this)">
+        <span class="icon">🖼</span> 首頁輪播
+      </button>
+      <button class="sb-sub-item" id="sb-sub-promotions" onclick="showSubPage('promotions', this)">
+        <span class="icon">🎁</span> 優惠方案
+      </button>
+    </div>
     <button class="sb-item" onclick="showPage('events', this)">
       <span class="icon">🎪</span> 活動專區
     </button>
@@ -360,16 +366,22 @@
     <button class="sb-item" onclick="showPage('shop', this)">
       <span class="icon">🛍</span> 選物商店
     </button>
-    <button class="sb-item" onclick="showPage('line', this)">
-      <span class="icon">💬</span> LINE 通知
-    </button>
-    <button class="sb-item" onclick="showPage('notify', this)">
+    <button class="sb-item" id="sb-notify-btn" onclick="toggleSubMenu('notify', this)">
       <span class="icon">🔔</span> 通知設定
+      <span class="sb-arrow">▼</span>
     </button>
+    <div class="sb-sub-menu" id="notify-submenu">
+      <button class="sb-sub-item" id="sb-sub-notify" onclick="showSubPage('notify', this)">
+        <span class="icon">🔧</span> 通知基本設定
+      </button>
+      <button class="sb-sub-item" id="sb-sub-line" onclick="showSubPage('line', this)">
+        <span class="icon">💬</span> LINE 通知
+      </button>
+    </div>
     <button class="sb-item" onclick="showPage('invoice', this)">
       <span class="icon">🧾</span> 發票設定
     </button>
-    <button class="sb-item" id="sb-system-btn" onclick="toggleSystemMenu(this)">
+    <button class="sb-item" id="sb-system-btn" onclick="toggleSubMenu('system', this)">
       <span class="icon">⚙️</span> 系統設定
       <span class="sb-arrow">▼</span>
     </button>
@@ -2002,22 +2014,44 @@
     admins: '👤 帳號管理'
   };
 
-  // 屬於「系統設定」子選單的頁面 ID
-  const SUB_PAGES = ['system', 'appearance', 'content', 'admins'];
+  // 子選單群組設定：父按鈕 id、子選單容器 id、包含的頁面、預設子頁
+  const SUBMENU_GROUPS = {
+    studios: { btn: 'sb-studios-btn', menu: 'studios-submenu', pages: ['studios', 'photos', 'carousel', 'promotions'], defaultPage: 'studios' },
+    notify:  { btn: 'sb-notify-btn',  menu: 'notify-submenu',  pages: ['notify', 'line'],                              defaultPage: 'notify' },
+    system:  { btn: 'sb-system-btn',  menu: 'system-submenu',  pages: ['system', 'appearance', 'content', 'admins'],   defaultPage: 'system' },
+  };
 
-  // 展開/收合系統設定子選單（點擊父項目時）
-  function toggleSystemMenu(parentBtn) {
-    const submenu = document.getElementById('system-submenu');
+  // 反查：某頁面屬於哪個子選單群組（不屬於任何群組則回傳 null）
+  function groupOfPage(id) {
+    return Object.values(SUBMENU_GROUPS).find(g => g.pages.includes(id)) || null;
+  }
+
+  // 收合指定群組以外的所有子選單
+  function collapseOtherGroups(exceptKey) {
+    Object.entries(SUBMENU_GROUPS).forEach(([key, g]) => {
+      if (key === exceptKey) return;
+      document.getElementById(g.menu)?.classList.remove('open');
+      document.getElementById(g.btn)?.classList.remove('parent-open');
+    });
+  }
+
+  // 展開/收合子選單（點擊父項目時）
+  function toggleSubMenu(groupKey, parentBtn) {
+    const g = SUBMENU_GROUPS[groupKey];
+    if (!g) return;
+    const submenu = document.getElementById(g.menu);
     const isOpen  = submenu.classList.contains('open');
+    // 手風琴：展開一組時先收合其他組
+    collapseOtherGroups(groupKey);
     if (isOpen) {
       submenu.classList.remove('open');
       parentBtn.classList.remove('parent-open', 'active');
     } else {
       submenu.classList.add('open');
       parentBtn.classList.add('parent-open');
-      // 展開時若無子項目 active，則導到「基本設定」
+      // 展開時若無子項目 active，則導到該群組預設頁
       const hasActive = submenu.querySelector('.sb-sub-item.active');
-      if (!hasActive) showSubPage('system', document.getElementById('sb-sub-system'));
+      if (!hasActive) showSubPage(g.defaultPage, document.getElementById('sb-sub-' + g.defaultPage));
     }
   }
 
@@ -2026,12 +2060,15 @@
     // 清除所有主項目與子項目的 active
     document.querySelectorAll('.sb-item').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.sb-sub-item').forEach(s => s.classList.remove('active'));
-    // 父按鈕標示 open 狀態（不同於 active 選中）
-    const parentBtn = document.getElementById('sb-system-btn');
-    if (parentBtn) parentBtn.classList.add('parent-open');
-    // 確保子選單展開
-    document.getElementById('system-submenu').classList.add('open');
-    if (btn) btn.classList.add('active');
+    // 找出所屬群組，展開它、收合其他組
+    const g = groupOfPage(id);
+    if (g) {
+      collapseOtherGroups(Object.keys(SUBMENU_GROUPS).find(k => SUBMENU_GROUPS[k] === g));
+      document.getElementById(g.btn)?.classList.add('parent-open');
+      document.getElementById(g.menu)?.classList.add('open');
+    }
+    const sub = btn || document.getElementById('sb-sub-' + id);
+    if (sub) sub.classList.add('active');
     // 導向頁面
     showPageContent(id);
   }
@@ -2244,17 +2281,19 @@
     // 清除所有 active
     document.querySelectorAll('.sb-item').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.sb-sub-item').forEach(s => s.classList.remove('active'));
-    const parentBtn = document.getElementById('sb-system-btn');
 
-    if (SUB_PAGES.includes(id)) {
-      // 子頁面：父項目保持 open，子項目設 active
-      if (parentBtn) parentBtn.classList.add('parent-open');
-      document.getElementById('system-submenu').classList.add('open');
+    const g = groupOfPage(id);
+    if (g) {
+      // 子頁面：展開所屬群組、收合其他群組，子項目設 active
+      const key = Object.keys(SUBMENU_GROUPS).find(k => SUBMENU_GROUPS[k] === g);
+      collapseOtherGroups(key);
+      document.getElementById(g.btn)?.classList.add('parent-open');
+      document.getElementById(g.menu)?.classList.add('open');
       const subBtn = document.getElementById('sb-sub-' + id);
       if (subBtn) subBtn.classList.add('active');
     } else {
-      // 一般頁面：父項目收合，設 active
-      if (parentBtn) parentBtn.classList.remove('parent-open');
+      // 一般頁面：收合所有群組，設 active
+      collapseOtherGroups(null);
       if (btn) btn.classList.add('active');
     }
     showPageContent(id);
