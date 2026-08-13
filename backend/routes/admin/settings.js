@@ -44,6 +44,9 @@ const ALLOWED_SETTING_KEYS = new Set([
   // 系統設定
   'booking_lock_minutes','min_advance_hours',
   'notify_email_enabled','notify_sms_enabled',
+  // 通知事件開關（後台「通知事件設定」，未設定＝預設開啟）
+  'notify_event_confirmed','notify_event_reminder','notify_event_cancelled',
+  'notify_event_payment','notify_event_admin',
   'invoice_auto_issue','invoice_auto_email',
   'overtime_rate_30min',
   'site_email','site_phone','site_address',

@@ -759,24 +759,17 @@
         </div>
       </div>
       <div class="settings-section">
-        <h3>📱 簡訊設定（SMS）</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-          <div class="form-group"><div class="form-label">簡訊服務商</div>
-            <select class="form-select"><option>每日簡訊 (mitake)</option><option>亞太電信</option><option>TWSMS</option></select>
-          </div>
-          <div class="form-group"><div class="form-label">帳號</div><input class="form-input" value="lightformstudio" /></div>
-          <div class="form-group"><div class="form-label">密碼 / API Key</div><input class="form-input" type="password" value="••••••••" /></div>
-          <div class="form-group"><div class="form-label">發送者名稱</div><input class="form-input" value="StudioSP" /></div>
-        </div>
-        <button class="btn-add" style="margin-top:8px;">📱 測試簡訊</button>
-      </div>
-      <div class="settings-section">
         <h3>🔔 通知事件設定</h3>
-        <div class="settings-row"><div><div class="settings-label">預約成功通知</div><div class="settings-desc">付款完成後發送 Email + SMS 給客戶</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="settings-row"><div><div class="settings-label">使用前 24 小時提醒</div><div class="settings-desc">場地使用前一天自動發送提醒</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="settings-row"><div><div class="settings-label">取消預約通知</div><div class="settings-desc">預約取消或退款時通知客戶</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="settings-row"><div><div class="settings-label">待付款催繳通知</div><div class="settings-desc">付款期限前 1 小時自動催繳</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="settings-row"><div><div class="settings-label">管理員新預約通知</div><div class="settings-desc">每筆新預約成立後通知管理員</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <p style="font-size:.85rem;color:#666;margin:-4px 0 14px;">關閉後，該類通知將不會自動發送。修改後請按下方「儲存」。</p>
+        <div class="settings-row"><div><div class="settings-label">預約成功通知</div><div class="settings-desc">付款完成後發送確認信給客戶</div></div><div class="toggle on" id="notify_event_confirmed" onclick="this.classList.toggle('on')"></div></div>
+        <div class="settings-row"><div><div class="settings-label">使用前 24 小時提醒</div><div class="settings-desc">場地使用前一天自動發送提醒信（含進門密碼）</div></div><div class="toggle on" id="notify_event_reminder" onclick="this.classList.toggle('on')"></div></div>
+        <div class="settings-row"><div><div class="settings-label">取消預約通知</div><div class="settings-desc">預約取消或退款時通知客戶</div></div><div class="toggle on" id="notify_event_cancelled" onclick="this.classList.toggle('on')"></div></div>
+        <div class="settings-row"><div><div class="settings-label">待付款催繳通知</div><div class="settings-desc">付款期限前 1 小時自動催繳客戶</div></div><div class="toggle on" id="notify_event_payment" onclick="this.classList.toggle('on')"></div></div>
+        <div class="settings-row"><div><div class="settings-label">管理員新預約通知</div><div class="settings-desc">每筆新預約 / 完成付款後推播 LINE 給管理員</div></div><div class="toggle on" id="notify_event_admin" onclick="this.classList.toggle('on')"></div></div>
+        <div style="display:flex;gap:10px;margin-top:14px;align-items:center;">
+          <button class="btn-add" onclick="saveNotifyEvents()">💾 儲存通知設定</button>
+          <span id="notify-events-msg" style="font-size:.85rem;color:#28a745;display:none;"></span>
+        </div>
       </div>
     </div>
 
@@ -790,8 +783,8 @@
           APP_KEY：透過 Zeabur 環境變數 <code>AMEGO_APP_KEY</code> 設定<br>
           開票時機：預約結束後自動開立，或由後台手動補開
         </div>
-        <div class="settings-row"><div><div class="settings-label">預約結束後自動開票</div><div class="settings-desc">每小時自動掃描已結束的預約並開立發票</div></div><div class="toggle on"></div></div>
-        <div class="settings-row"><div><div class="settings-label">開立後自動寄送 Email</div><div class="settings-desc">將發票號碼寄送至客戶信箱</div></div><div class="toggle on"></div></div>
+        <div class="settings-row" style="opacity:.55;"><div><div class="settings-label">預約結束後自動開票 <span style="font-size:.72rem;color:#999;border:1px solid #ccc;border-radius:4px;padding:1px 6px;margin-left:6px;">未啟用（開發中）</span></div><div class="settings-desc">目前由系統排程每小時固定執行，此開關尚未接上，暫無作用</div></div><div class="toggle on" style="pointer-events:none;filter:grayscale(1);"></div></div>
+        <div class="settings-row" style="opacity:.55;"><div><div class="settings-label">開立後自動寄送 Email <span style="font-size:.72rem;color:#999;border:1px solid #ccc;border-radius:4px;padding:1px 6px;margin-left:6px;">未啟用（開發中）</span></div><div class="settings-desc">開立後一律寄送，此開關尚未接上，暫無作用</div></div><div class="toggle on" style="pointer-events:none;filter:grayscale(1);"></div></div>
 
         <!-- 診斷工具 -->
         <div style="margin-top:20px;padding:16px;background:#f8f9fa;border-radius:8px;border:1px solid #e0e4ea;">
@@ -861,23 +854,6 @@
           <span id="sys-save-msg" style="font-size:.85rem;color:var(--success);display:none;">✅ 已儲存</span>
         </div>
       </div>
-      <div class="settings-section">
-        <h3>💳 金流設定（藍新 NewebPay）</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-          <div class="form-group"><div class="form-label">商店代號</div><input class="form-input" placeholder="MerchantID" /></div>
-          <div class="form-group"><div class="form-label">Hash Key</div><input class="form-input" placeholder="HashKey" /></div>
-          <div class="form-group"><div class="form-label">Hash IV</div><input class="form-input" placeholder="HashIV" /></div>
-          <div class="form-group"><div class="form-label">環境</div>
-            <select class="form-select"><option>測試環境 (Sandbox)</option><option>正式環境 (Production)</option></select>
-          </div>
-        </div>
-        <div class="settings-row"><div><div class="settings-label">信用卡付款</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="settings-row"><div><div class="settings-label">ATM 轉帳</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="settings-row"><div><div class="settings-label">超商代碼</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="settings-row"><div><div class="settings-label">LINE Pay</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <button class="btn-add" style="margin-top:16px;">💾 儲存金流設定</button>
-      </div>
-
       <!-- TTLock 診斷 -->
       <div class="settings-section">
         <h3>🔐 TTLock 連線診斷</h3>
@@ -2099,7 +2075,43 @@
       if (data.smtp_port)       document.getElementById('smtp_port').value        = data.smtp_port;
       if (data.smtp_user)       document.getElementById('smtp_user').value        = data.smtp_user;
       // 密碼不回填（安全考量）
+
+      // 通知事件開關（未設定＝預設開啟；'0' 才是關閉）
+      [
+        'notify_event_confirmed','notify_event_reminder','notify_event_cancelled',
+        'notify_event_payment','notify_event_admin'
+      ].forEach(key => {
+        const el = document.getElementById(key);
+        if (el) el.classList.toggle('on', data[key] !== '0');
+      });
     } catch(e) { console.error('載入 SMTP 設定失敗', e); }
+  }
+
+  async function saveNotifyEvents() {
+    const keys = [
+      'notify_event_confirmed','notify_event_reminder','notify_event_cancelled',
+      'notify_event_payment','notify_event_admin'
+    ];
+    const settings = {};
+    keys.forEach(key => {
+      settings[key] = document.getElementById(key).classList.contains('on') ? '1' : '0';
+    });
+    const msgEl = document.getElementById('notify-events-msg');
+    try {
+      const r = await fetch(`${API}/admin/settings`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings })
+      });
+      const d = await r.json();
+      msgEl.textContent = d.success ? '✅ 通知設定已儲存' : `❌ ${d.message || '儲存失敗'}`;
+      msgEl.style.color = d.success ? '#28a745' : '#dc3545';
+    } catch(e) {
+      msgEl.textContent = '❌ 儲存失敗：' + e.message;
+      msgEl.style.color = '#dc3545';
+    }
+    msgEl.style.display = 'inline';
+    setTimeout(() => { msgEl.style.display = 'none'; }, 5000);
   }
 
   async function saveSmtpSettings() {

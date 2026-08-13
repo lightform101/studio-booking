@@ -13,9 +13,29 @@ async function getSetting(key) {
   } catch { return '1'; }
 }
 
+// 事件 → 後台「通知事件設定」開關 key（未設定＝預設開啟，'0' 才停用）
+const EVENT_SETTING = {
+  booking_confirmed: 'notify_event_confirmed',
+  reminder_24h:      'notify_event_reminder',
+  booking_cancelled: 'notify_event_cancelled',
+  payment_pending:   'notify_event_payment',
+};
+
 const NotifyService = {
 
+  // 管理員 LINE 推播是否啟用（供 pushToOwners 呼叫端判斷）
+  async ownersAlertEnabled() {
+    return (await getSetting('notify_event_admin')) !== '0';
+  },
+
   async send(event, booking) {
+    // 事件層級開關：後台可個別關閉某類通知
+    const evKey = EVENT_SETTING[event];
+    if (evKey && (await getSetting(evKey)) === '0') {
+      console.log(`[Notify] 事件「${event}」已於後台停用，略過發送`);
+      return;
+    }
+
     const emailEnabled = await getSetting('notify_email_enabled');
     const smsEnabled   = await getSetting('notify_sms_enabled');
 
