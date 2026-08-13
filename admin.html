@@ -635,19 +635,25 @@
 
       <!-- 營業時間 -->
       <div class="settings-section">
-        <h3>📅 營業時間設定</h3>
-        <table style="font-size:.85rem;">
-          <thead><tr><th>星期</th><th>開始時間</th><th>結束時間</th><th>是否開放</th></tr></thead>
-          <tbody>
-            <tr><td>週一</td><td><input class="form-input" style="width:100px;" value="09:00" /></td><td><input class="form-input" style="width:100px;" value="21:00" /></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td></tr>
-            <tr><td>週二</td><td><input class="form-input" style="width:100px;" value="09:00" /></td><td><input class="form-input" style="width:100px;" value="21:00" /></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td></tr>
-            <tr><td>週三</td><td><input class="form-input" style="width:100px;" value="09:00" /></td><td><input class="form-input" style="width:100px;" value="21:00" /></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td></tr>
-            <tr><td>週四</td><td><input class="form-input" style="width:100px;" value="09:00" /></td><td><input class="form-input" style="width:100px;" value="21:00" /></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td></tr>
-            <tr><td>週五</td><td><input class="form-input" style="width:100px;" value="09:00" /></td><td><input class="form-input" style="width:100px;" value="21:00" /></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td></tr>
-            <tr><td>週六</td><td><input class="form-input" style="width:100px;" value="09:00" /></td><td><input class="form-input" style="width:100px;" value="21:00" /></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td></tr>
-            <tr><td>週日</td><td><input class="form-input" style="width:100px;" value="09:00" /></td><td><input class="form-input" style="width:100px;" value="21:00" /></td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td></tr>
-          </tbody>
-        </table>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+          <h3 style="margin:0;">📅 營業時間設定</h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span id="bh-msg" style="display:none;font-size:.85rem;"></span>
+            <button onclick="loadBusinessHours()" style="padding:7px 14px;border-radius:7px;border:1px solid #d0d4db;background:#fff;cursor:pointer;font-size:.82rem;">🔄 重新載入</button>
+            <button class="btn-add" id="bh-save-btn" onclick="saveBusinessHours()">💾 儲存營業時間</button>
+          </div>
+        </div>
+        <p style="color:#888;font-size:.85rem;margin:0 0 14px;">
+          影響<strong>前台可預約的時段</strong>。例如設 07:00–23:00，客人最晚可預約到 22:00 開始（結束不得超過 23:00）。修改後請按「儲存」。
+        </p>
+        <div style="overflow-x:auto;">
+          <table style="font-size:.85rem;">
+            <thead><tr><th>星期</th><th>開始時間</th><th>結束時間</th><th>是否開放</th></tr></thead>
+            <tbody id="bh-tbody">
+              <tr><td colspan="4" style="text-align:center;padding:24px;color:#aaa;">載入中...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -2063,7 +2069,7 @@
     if (id === 'dashboard')  loadDashboard();
     if (id === 'calendar')   { initCalendarStudios().then(() => loadCalendarData()); }
     if (id === 'bookings')   { loadBookings(); loadStudiosForFilter(); }
-    if (id === 'studios')    loadStudioList();
+    if (id === 'studios')    { loadStudioList(); loadBusinessHours(); }
     if (id === 'photos')     loadPhotoManager();
     if (id === 'revenue')    loadRevenue();
     if (id === 'content')    loadPageContent();
@@ -3075,6 +3081,84 @@
   }
 
   // ─── 載入場地列表並渲染 Tab ───────────────────
+  // ═══════════════════════════════════════════════
+  // 營業時間設定（影響前台可預約時段）
+  // ═══════════════════════════════════════════════
+  const WEEKDAY_NAME = ['週日','週一','週二','週三','週四','週五','週六'];
+
+  async function loadBusinessHours() {
+    const tb = document.getElementById('bh-tbody');
+    if (!tb) return;
+    tb.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:#aaa;">載入中...</td></tr>';
+    try {
+      const r = await fetch(`${API}/admin/studios/business-hours`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+      const { success, data } = await r.json();
+      if (!success || !data || !data.length) {
+        tb.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:#c0392b;">找不到營業時間資料</td></tr>';
+        return;
+      }
+      // 依 weekday 0(日)~6(六) 排序，顯示成 週一→週日
+      const byDay = {};
+      data.forEach(h => { byDay[h.weekday] = h; });
+      const order = [1,2,3,4,5,6,0];
+      tb.innerHTML = order.map(w => {
+        const h = byDay[w] || { weekday:w, open_time:'09:00:00', close_time:'21:00:00', is_open:1 };
+        const o = String(h.open_time  || '09:00').slice(0,5);
+        const c = String(h.close_time || '21:00').slice(0,5);
+        return `<tr data-weekday="${w}">
+          <td>${WEEKDAY_NAME[w]}</td>
+          <td><input class="form-input bh-open"  type="time" step="3600" style="width:120px;" value="${o}" /></td>
+          <td><input class="form-input bh-close" type="time" step="3600" style="width:120px;" value="${c}" /></td>
+          <td><div class="toggle${h.is_open ? ' on' : ''}" onclick="this.classList.toggle('on')"></div></td>
+        </tr>`;
+      }).join('');
+    } catch(e) {
+      tb.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:#c0392b;">載入失敗</td></tr>';
+    }
+  }
+
+  async function saveBusinessHours() {
+    const rows = [...document.querySelectorAll('#bh-tbody tr[data-weekday]')];
+    if (!rows.length) return;
+    const msg = document.getElementById('bh-msg');
+    const btn = document.getElementById('bh-save-btn');
+    const show = (t, ok) => { msg.style.display=''; msg.style.color = ok ? '#27ae60' : '#c0392b'; msg.textContent = t; };
+    msg.style.display = 'none';
+
+    const hours = [];
+    for (const tr of rows) {
+      const open  = tr.querySelector('.bh-open').value;
+      const close = tr.querySelector('.bh-close').value;
+      const isOpen = tr.querySelector('.toggle').classList.contains('on');
+      if (isOpen) {
+        if (!open || !close) return show(`${WEEKDAY_NAME[tr.dataset.weekday]}：請填寫開始與結束時間`, false);
+        if (close <= open)   return show(`${WEEKDAY_NAME[tr.dataset.weekday]}：結束時間必須晚於開始時間`, false);
+      }
+      hours.push({
+        weekday: parseInt(tr.dataset.weekday),
+        open_time: (open || '09:00') + ':00',
+        close_time: (close || '21:00') + ':00',
+        is_open: isOpen ? 1 : 0
+      });
+    }
+
+    btn.disabled = true; btn.textContent = '儲存中...';
+    try {
+      const r = await fetch(`${API}/admin/studios/business-hours`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hours })
+      });
+      const { success, message } = await r.json();
+      show(success ? '✅ 已儲存，前台可預約時段立即更新' : ('❌ ' + (message || '儲存失敗')), success);
+      if (success) loadBusinessHours();
+    } catch(e) {
+      show('❌ 連線失敗', false);
+    } finally {
+      btn.disabled = false; btn.textContent = '💾 儲存營業時間';
+    }
+  }
+
   async function loadStudioList() {
     try {
       const r = await fetch(`${API}/admin/studios`, {

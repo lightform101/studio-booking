@@ -3,6 +3,7 @@
  */
 const router      = require('express').Router();
 const auth        = require('../../middleware/auth');
+const auditLog    = require('../../middleware/auditLog');
 const StudioModel = require('../../models/StudioModel');
 const { pool }    = require('../../config/database');
 
@@ -95,14 +96,50 @@ router.get('/business-hours', async (req, res, next) => {
 router.put('/business-hours', async (req, res, next) => {
   try {
     const { hours } = req.body; // [{ weekday, open_time, close_time, is_open }]
+    if (!Array.isArray(hours) || !hours.length)
+      return res.status(400).json({ success: false, message: '請提供營業時間資料' });
+
+    // 正規化為 HH:MM:SS
+    const norm = (t, fallback) => {
+      const s = String(t || '').trim();
+      if (/^\d{2}:\d{2}$/.test(s))       return s + ':00';
+      if (/^\d{2}:\d{2}:\d{2}$/.test(s)) return s;
+      return fallback;
+    };
+
     for (const h of hours) {
-      await pool.query(
+      const weekday = parseInt(h.weekday);
+      if (!(weekday >= 0 && weekday <= 6))
+        return res.status(400).json({ success: false, message: `星期值不正確：${h.weekday}` });
+
+      const open  = norm(h.open_time,  '09:00:00');
+      const close = norm(h.close_time, '21:00:00');
+      const isOpen = h.is_open ? 1 : 0;
+      if (isOpen && close <= open)
+        return res.status(400).json({ success: false, message: `星期 ${weekday}：結束時間必須晚於開始時間` });
+
+      // 先更新全場地設定（studio_id IS NULL）；若該天沒有資料列則新增
+      const [r] = await pool.query(
         'UPDATE business_hours SET open_time=?, close_time=?, is_open=? WHERE weekday=? AND studio_id IS NULL',
-        [h.open_time, h.close_time, h.is_open ? 1 : 0, h.weekday]
+        [open, close, isOpen, weekday]
+      );
+      if (r.affectedRows === 0) {
+        await pool.query(
+          'INSERT INTO business_hours (studio_id, weekday, open_time, close_time, is_open) VALUES (NULL,?,?,?,?)',
+          [weekday, open, close, isOpen]
+        );
+      }
+      // 同步覆寫各場地的個別設定，避免舊的場地專屬時段蓋過全場地設定
+      await pool.query(
+        'UPDATE business_hours SET open_time=?, close_time=?, is_open=? WHERE weekday=? AND studio_id IS NOT NULL',
+        [open, close, isOpen, weekday]
       );
     }
+    await auditLog(req, 'update', 'settings', 'business_hours', '更新營業時間');
     res.json({ success: true, message: '營業時間已更新' });
-  } catch (err) { next(err); }
+  } catch (err) {
+    res.status(500).json({ success: false, message: `儲存失敗：${err.sqlMessage || err.message}` });
+  }
 });
 
 module.exports = router;
