@@ -450,7 +450,7 @@
           <button class="duration-btn" onclick="changeDuration(-1)">−</button>
           <div class="duration-value" id="duration-val">2 小時</div>
           <button class="duration-btn" onclick="changeDuration(1)">＋</button>
-          <span style="font-size:.8rem;color:var(--gray)">（最少 2 小時，最多 8 小時）</span>
+          <span id="duration-hint" style="font-size:.8rem;color:var(--gray)">（最少 2 小時，最多 8 小時）</span>
         </div>
       </div>
 
@@ -680,7 +680,7 @@
 
   // ─── STATE ─────────────────────────────────
   const state = {
-    studioId: null, studioName: '', studioRate: 0, studioMinHours: 2,
+    studioId: null, studioName: '', studioRate: 0, studioMinHours: 2, studioMaxHours: 8,
     photoRate: 0, videoRate: 0,  // 從 DB 讀取的費率
     shootingType: 'photo',       // 'photo' | 'video' | 'event'
     effectiveRate: 0,  // 依類型決定的實際費率
@@ -797,9 +797,13 @@
     state.photoRate   = s && s.photo_rate ? +s.photo_rate : (s ? +s.hourly_rate : 0);
     state.videoRate   = s && s.video_rate ? +s.video_rate : 0;
     state.studioMinHours = s ? (+s.min_hours || 2) : 2;
-    state.duration    = Math.max(state.duration, state.studioMinHours);
+    state.studioMaxHours = s ? (+s.max_hours || 8) : 8;
+    // 夾在該場地的 min~max 範圍內
+    state.duration    = Math.min(state.studioMaxHours, Math.max(state.duration, state.studioMinHours));
     recalcRate();
     document.getElementById('duration-val').textContent = `${state.duration} 小時`;
+    const durHint = document.getElementById('duration-hint');
+    if (durHint) durHint.textContent = `（最少 ${state.studioMinHours} 小時，最多 ${state.studioMaxHours} 小時）`;
     updateSidebar();
     document.getElementById('sidebar-icon').textContent = EMOJIS_BK[(studios.indexOf(s)||0) % EMOJIS_BK.length];
     document.getElementById('sidebar-name').textContent = state.studioName;
@@ -915,7 +919,8 @@
 
   function changeDuration(d) {
     const min = state.studioMinHours || 2;
-    state.duration = Math.min(8, Math.max(min, state.duration + d));
+    const max = state.studioMaxHours || 8;
+    state.duration = Math.min(max, Math.max(min, state.duration + d));
     document.getElementById('duration-val').textContent = `${state.duration} 小時`;
     updateSidebar();
   }
